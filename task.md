@@ -1,39 +1,36 @@
-# Auth Implementation Plan
+# Feature batch
 
-## Obiettivo
-- Login/registrazione con email + password
-- Invite codes (solo chi ha codice può registrarsi)
-- Ogni utente vede solo i propri dati
-- Logout da impostazioni, sempre loggato se non fai logout
-- Dati attuali → assegnati all'admin (userId = 'admin')
+## 1. Note partita ✅ già esiste `notes` in `matches` — è già in InfoSection
+   → La sezione "info" ha già note. Skip — già implementato.
 
-## Struttura DB da aggiungere
-1. Tabella `users` (id, email, passwordHash, role, inviteCode, createdAt)
-2. Tabella `invite_codes` (id, code, createdBy, usedBy, usedAt, createdAt)
-3. Aggiungere `userId` a: players, exercises (custom), sessions, matches
+## 2. Valutazione giocatori post-partita
+   - Aggiungere colonna `rating` (real, nullable) a `matchConvocations`
+   - Migration Turso
+   - UI in RisultatoSection o nuova tab "Valutazioni": slider/stelle 1-10 per ogni convocato
+   - API PUT /matches/:id/ratings
+   - Stats giocatore in roster: media voti
 
-## API da aggiungere/modificare
-- POST /api/auth/register (email, password, inviteCode)
-- POST /api/auth/login (email, password) → JWT
-- POST /api/auth/logout
-- GET /api/auth/me
-- GET /api/admin/invite-codes (solo admin)
-- POST /api/admin/invite-codes (genera codice, solo admin)
+## 3. Statistiche giocatori
+   - Nessuna colonna nuova — calcolo a runtime dalla query
+   - Endpoint GET /players/:id/stats → presenze, gol, cartellini, media voto
+   - UI già presente in roster.tsx (statsGrid/wdlRow) — bisogna popolarla con dati reali
+   - Attualmente cosa mostra? Verificare
 
-## Middleware
-- authMiddleware: verifica JWT, injetta userId nel contesto
-- adminMiddleware: verifica ruolo admin
+## 4. Notifiche scadenza licenza (email)
+   - Endpoint POST /admin/notify-expiring → trova utenti con scadenza entro X giorni, manda email
+   - Oppure: all'apertura del panel admin, mostra banner utenti in scadenza entro 30gg
+   - Soluzione senza email: badge/alert nel panel "Utenti & Licenze" con utenti in scadenza
+   - NON serve SMTP esterno → banner visivo nel panel admin
 
-## Frontend
-- Schermata Login/Register (route /login)
-- Redirect automatico se non loggato
-- Settings: mostra email utente + logout + (se admin) genera codice invito
-- Token salvato in localStorage, inviato come Bearer header
+## 5. Calendario
+   - Vista mensile con partite + sedute
+   - Nuova tab in (tabs) oppure modal dal header
+   - Usa dati già presenti
 
-## Migrazione dati
-- Script: imposta userId = 'system-admin' su tutti i record esistenti
-- Il primo account creato (o quello con ADMIN_EMAIL) = admin
-
-## Deploy
-- Branch: feature/auth
-- Test locale → merge → push → Render redeploy automatico
+## Ordine esecuzione
+1. Schema migration (rating in matchConvocations)
+2. API stats + ratings
+3. UI valutazioni (in match/[id].tsx RisultatoSection)
+4. UI statistiche (in roster.tsx — già ha la struttura)
+5. Alert scadenze nel panel admin (no email)
+6. Calendario tab

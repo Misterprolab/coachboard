@@ -604,9 +604,34 @@ export default function SettingsModal({ visible, onClose }: Props) {
     </ScrollView>
   );
 
-  const renderUsers = () => (
+  const renderUsers = () => {
+    const now = Date.now();
+    const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+    const expiringSoon = usersList.filter((u: any) =>
+      u.role !== 'admin' &&
+      !u.subscriptionExpired &&
+      u.subscriptionExpiry != null &&
+      (u.subscriptionExpiry - now) > 0 &&
+      (u.subscriptionExpiry - now) < THIRTY_DAYS
+    );
+    return (
     <ScrollView style={s.form}>
       <Text style={s.hint}>{t('Gestisci lo stato della licenza di ogni utente. Imposta data di scadenza e stato.', 'Manage each user\'s license. Set expiry date and status.')}</Text>
+      {expiringSoon.length > 0 && (
+        <View style={{ backgroundColor: '#f39c1222', borderRadius: 12, padding: 12, marginBottom: 14, borderWidth: 1, borderColor: '#f39c12' }}>
+          <Text style={{ color: '#f39c12', fontWeight: '700', fontSize: 13, marginBottom: 6 }}>
+            ⚠ {t('Licenze in scadenza entro 30 giorni', 'Licenses expiring within 30 days')} ({expiringSoon.length})
+          </Text>
+          {expiringSoon.map((u: any) => {
+            const daysLeft = Math.ceil((u.subscriptionExpiry - now) / (24 * 60 * 60 * 1000));
+            return (
+              <Text key={u.id} style={{ color: '#f39c12', fontSize: 12, marginTop: 2 }}>
+                • {u.name || u.email} — {t('scade in', 'expires in')} {daysLeft} {t('giorni', 'days')}
+              </Text>
+            );
+          })}
+        </View>
+      )}
       {usersLoading && <Text style={{ color: c.textDim, textAlign: 'center', marginTop: 20 }}>{t('Caricamento...', 'Loading...')}</Text>}
       {usersList.filter(u => u.role !== 'admin').map((u: any) => {
         const isEditing = editingUserId === u.id;
@@ -705,7 +730,8 @@ export default function SettingsModal({ visible, onClose }: Props) {
         <Text style={{ color: c.textDim, textAlign: 'center', marginTop: 32 }}>{t('Nessun utente registrato', 'No users registered')}</Text>
       )}
     </ScrollView>
-  );
+    );
+  };
 
   const sectionTitle = () => {
     switch (section) {

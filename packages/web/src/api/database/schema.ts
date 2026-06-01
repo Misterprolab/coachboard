@@ -111,6 +111,7 @@ export const matchConvocations = sqliteTable("match_convocations", {
   matchId: text("match_id").notNull().references(() => matches.id, { onDelete: "cascade" }),
   playerId: text("player_id").notNull().references(() => players.id, { onDelete: "cascade" }),
   jerseyNumber: integer("jersey_number"), // numero maglia scelto per questa partita
+  rating: real("rating"), // valutazione post-partita 1-10
 });
 
 // Formazione titolare

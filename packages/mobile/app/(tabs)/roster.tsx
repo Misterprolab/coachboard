@@ -97,6 +97,7 @@ type PlayerStats = {
   wins: number;
   draws: number;
   losses: number;
+  avgRating?: number | null;
   matchHistory: {
     matchId: string;
     opponent: string;
@@ -486,6 +487,17 @@ export default function RosterScreen() {
               <StatCell emoji="🟨" value={st.yellowCards} label={t("AMMONIZIONI", "BOOKINGS")} color="#f1c40f" s={s} />
               <StatCell emoji="🟥" value={st.redCards} label={t("ESPULSIONI", "RED CARDS")} color="#e74c3c" s={s} />
             </View>
+            {st.avgRating != null && (
+              <View style={s.statsGrid}>
+                <StatCell
+                  emoji="⭐"
+                  value={st.avgRating.toFixed(1)}
+                  label={t("MEDIA VOTO", "AVG RATING")}
+                  color={st.avgRating >= 7 ? "#2ecc71" : st.avgRating >= 5 ? "#f1c40f" : "#e74c3c"}
+                  s={s}
+                />
+              </View>
+            )}
             <View style={s.wdlRow}>
               <View style={[s.wdlCell, { borderColor: "#2ecc71" + "40" }]}>
                 <Text style={{ fontSize: 18 }}>✅</Text>

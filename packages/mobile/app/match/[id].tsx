@@ -17,6 +17,7 @@ import {
 import {
   getMatch, getPlayers, updateMatch as dbUpdateMatch, deleteMatch as dbDeleteMatch,
   updateMatchSubstitutions as dbUpdateMatchSubstitutions, updateMatchCards as dbUpdateMatchCards,
+  updateMatchRatings as dbUpdateMatchRatings,
   setConvocations, setLineup as dbSetLineup, replaceGoals as dbReplaceGoals,
 } from "../../lib/db/queries";
 
@@ -34,7 +35,7 @@ type Match = {
   homeAway: string; competition?: string; formation?: string; notes?: string;
   goalsFor?: number; goalsAgainst?: number;
   substitutions?: Substitution[];
-  convocations: { playerId: string; jerseyNumber?: number | null; player?: Player }[];
+  convocations: { playerId: string; jerseyNumber?: number | null; rating?: number | null; player?: Player }[];
   lineup: LineupPlayer[]; goals: Goal[];
   cards?: { playerId: string; type: "yellow" | "red" | "injury"; minute?: number | null; notes?: string }[];
 };
@@ -988,6 +989,31 @@ function SpecialistiSection({ match, allPlayers, id, qc, c }: { match: Match; al
 function RisultatoSection({ match, allPlayers, id, qc, c }: { match: Match; allPlayers: Player[]; id: string; qc: any; c: ThemeColors }) {
   const s2 = useMemo(() => mkStyles2(c), [c]);
   const { t } = useI18n();
+
+  // ── Valutazioni ────────────────────────────────────────────────────────────
+  const initRatings = (): Record<string, string> => {
+    const m: Record<string, string> = {};
+    match.convocations.forEach(cv => { m[cv.playerId] = cv.rating != null ? String(cv.rating) : ""; });
+    return m;
+  };
+  const [ratings, setRatings] = useState<Record<string, string>>(initRatings);
+  const [ratingsSaved, setRatingsSaved] = useState(false);
+  const saveRatingsMutation = useMutation({
+    mutationFn: async () => {
+      const payload = Object.entries(ratings).map(([playerId, v]) => ({
+        playerId,
+        rating: v !== "" ? Math.min(10, Math.max(1, parseFloat(v))) : null,
+      }));
+      await dbUpdateMatchRatings(id, payload);
+    },
+    onSuccess: () => {
+      setRatingsSaved(true);
+      setTimeout(() => setRatingsSaved(false), 2000);
+      qc.invalidateQueries({ queryKey: ["match", id] });
+      qc.invalidateQueries({ queryKey: ["playerStats"] });
+    },
+  });
+
   type CardForm = { playerId: string; type: "yellow" | "red" | "injury"; minute: string; notes: string };
   const toCF = (cd: NonNullable<Match["cards"]>[0]): CardForm => ({ playerId: cd.playerId, type: cd.type, minute: cd.minute != null ? String(cd.minute) : "", notes: cd.notes ?? "" });
   const [cards, setCards] = useState<CardForm[]>((match.cards ?? []).map(toCF));
@@ -1171,6 +1197,69 @@ function RisultatoSection({ match, allPlayers, id, qc, c }: { match: Match; allP
       <TouchableOpacity style={s2.addPlayerBtn} onPress={() => setShowAddCard(true)}>
         <Plus color={c.primary} size={18} weight="bold" /><Text style={s2.addPlayerTxt}>{t("Aggiungi cartellino/infortunio","Add card/injury")}</Text>
       </TouchableOpacity>
+
+      {/* ── Valutazioni post-partita ── */}
+      {match.convocations.length > 0 && (
+        <View style={{ marginTop: 20 }}>
+          <View style={s2.sectionHeader}>
+            <Text style={s2.sectionTitle}>{t("Valutazioni giocatori","Player Ratings")}</Text>
+            <TouchableOpacity
+              style={[s2.saveSmall, ratingsSaved && { backgroundColor: c.primary }]}
+              onPress={() => saveRatingsMutation.mutate()}
+              disabled={saveRatingsMutation.isPending}
+            >
+              {saveRatingsMutation.isPending
+                ? <ActivityIndicator size={14} color="#000" />
+                : <Text style={[s2.saveSmallTxt, ratingsSaved && { color: "#000" }]}>{ratingsSaved ? t("Salvato ✓","Saved ✓") : t("Salva","Save")}</Text>}
+            </TouchableOpacity>
+          </View>
+          {match.convocations.map(cv => {
+            const player = allPlayers.find(p => p.id === cv.playerId);
+            if (!player) return null;
+            const val = ratings[cv.playerId] ?? "";
+            const numVal = val !== "" ? parseFloat(val) : null;
+            const ratingColor = numVal == null ? c.textDim
+              : numVal >= 7 ? "#2ecc71"
+              : numVal >= 5 ? "#f1c40f"
+              : c.danger;
+            return (
+              <View key={cv.playerId} style={{ flexDirection: "row", alignItems: "center", paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: c.border }}>
+                <View style={[s2.playerDot, { backgroundColor: ROLE_COLORS[player.role] || c.primary }]} />
+                <Text style={[s2.playerName, { flex: 1 }]}>{player.name}</Text>
+                {player.number != null && <Text style={[s2.playerNum, { marginRight: 8 }]}>#{player.number}</Text>}
+                {/* – button */}
+                <TouchableOpacity
+                  onPress={() => {
+                    const cur = ratings[cv.playerId] !== "" ? parseFloat(ratings[cv.playerId]) : 5;
+                    const next = Math.max(1, Math.round(cur) - 1);
+                    setRatings(r => ({ ...r, [cv.playerId]: String(next) }));
+                  }}
+                  style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: c.surface2, alignItems: "center", justifyContent: "center", marginRight: 4 }}
+                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                >
+                  <Text style={{ color: c.text, fontSize: 18, lineHeight: 22 }}>−</Text>
+                </TouchableOpacity>
+                {/* value */}
+                <View style={{ width: 36, alignItems: "center" }}>
+                  <Text style={{ color: ratingColor, fontWeight: "700", fontSize: 16 }}>{val !== "" ? val : "—"}</Text>
+                </View>
+                {/* + button */}
+                <TouchableOpacity
+                  onPress={() => {
+                    const cur = ratings[cv.playerId] !== "" ? parseFloat(ratings[cv.playerId]) : 4;
+                    const next = Math.min(10, Math.round(cur) + 1);
+                    setRatings(r => ({ ...r, [cv.playerId]: String(next) }));
+                  }}
+                  style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: c.surface2, alignItems: "center", justifyContent: "center", marginLeft: 4 }}
+                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                >
+                  <Text style={{ color: c.text, fontSize: 18, lineHeight: 22 }}>+</Text>
+                </TouchableOpacity>
+              </View>
+            );
+          })}
+        </View>
+      )}
 
       {/* Modal aggiunta gol */}
       <Modal visible={showAddGoal} transparent animationType="slide" onRequestClose={() => setShowAddGoal(false)}>

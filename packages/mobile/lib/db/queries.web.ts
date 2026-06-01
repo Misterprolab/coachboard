@@ -104,6 +104,9 @@ export async function updateMatchSubstitutions(matchId: string, substitutions: a
 export async function updateMatchCards(matchId: string, cards: any[]) {
   await apiPut(`/matches/${matchId}/cards`, { cards });
 }
+export async function updateMatchRatings(matchId: string, ratings: { playerId: string; rating: number | null }[]) {
+  await apiPut(`/matches/${matchId}/ratings`, { ratings });
+}
 export async function deleteMatch(id: string) {
   await apiDelete(`/matches/${id}`);
 }

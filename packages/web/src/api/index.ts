@@ -1579,6 +1579,12 @@ const app = new Hono()
     // Sort history by date desc
     matchHistory.sort((a, b) => b.date.localeCompare(a.date));
 
+    // avgRating: media delle valutazioni non-null per questo giocatore
+    const ratingsWithValue = convocationEntries.filter(cv => cv.rating != null);
+    const avgRating = ratingsWithValue.length > 0
+      ? ratingsWithValue.reduce((sum, cv) => sum + (cv.rating as number), 0) / ratingsWithValue.length
+      : null;
+
     return c.json({
       convocazioni,
       titolare,
@@ -1591,6 +1597,7 @@ const app = new Hono()
       wins,
       draws,
       losses,
+      avgRating,
       matchHistory,
     }, 200);
   })
@@ -1870,6 +1877,22 @@ const app = new Hono()
     await db.update(matches).set({
       cards: JSON.stringify(body.cards ?? []),
     }).where(eq(matches.id, matchId));
+    return c.json({ success: true }, 200);
+  })
+
+  // Ratings
+  .put('/matches/:id/ratings', authMiddleware, async (c) => {
+    const matchId = c.req.param('id');
+    const body = await c.req.json(); // { ratings: [{playerId, rating}] }
+    const ratings: { playerId: string; rating: number | null }[] = body.ratings ?? [];
+    for (const r of ratings) {
+      await db.update(matchConvocations)
+        .set({ rating: r.rating })
+        .where(and(
+          eq(matchConvocations.matchId, matchId),
+          eq(matchConvocations.playerId, r.playerId),
+        ));
+    }
     return c.json({ success: true }, 200);
   });
 
