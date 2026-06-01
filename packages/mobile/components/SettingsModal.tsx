@@ -96,6 +96,7 @@ export default function SettingsModal({ visible, onClose }: Props) {
   const [editExpiryInput, setEditExpiryInput] = useState(''); // YYYY-MM-DD
   const [editStatusInput, setEditStatusInput] = useState('active');
   const [savingLicense, setSavingLicense] = useState(false);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 
   const loadUsers = async () => {
     setUsersLoading(true);
@@ -123,6 +124,38 @@ export default function SettingsModal({ visible, onClose }: Props) {
       }
     } catch { Alert.alert('Errore', 'Errore di rete'); }
     finally { setSavingLicense(false); }
+  };
+
+  const confirmDeleteUser = (u: any) => {
+    Alert.alert(
+      t('Elimina utente', 'Delete user'),
+      t(
+        `Vuoi eliminare "${u.name || u.email}"?\n\nTutti i suoi dati (giocatori, partite, sedute) verranno cancellati definitivamente.`,
+        `Delete "${u.name || u.email}"?\n\nAll their data (players, matches, sessions) will be permanently deleted.`
+      ),
+      [
+        { text: t('Annulla', 'Cancel'), style: 'cancel' },
+        {
+          text: t('Elimina', 'Delete'), style: 'destructive',
+          onPress: async () => {
+            setDeletingUserId(u.id);
+            try {
+              const res = await fetch(`/api/admin/users/${u.id}`, {
+                method: 'DELETE',
+                headers: authHeaders(),
+              });
+              if (res.ok) {
+                loadUsers();
+              } else {
+                const err = await res.json().catch(() => ({}));
+                Alert.alert('Errore', err.error || 'Eliminazione fallita');
+              }
+            } catch { Alert.alert('Errore', 'Errore di rete'); }
+            finally { setDeletingUserId(null); }
+          },
+        },
+      ]
+    );
   };
 
   const generateInviteCode = async () => {
@@ -593,28 +626,36 @@ export default function SettingsModal({ visible, onClose }: Props) {
                   </Text>
                 </View>
               </View>
-              <TouchableOpacity
-                onPress={() => {
-                  if (isEditing) { setEditingUserId(null); return; }
-                  setEditingUserId(u.id);
-                  setEditStatusInput(u.subscriptionStatus ?? 'active');
-                  // Converti timestamp → YYYY-MM-DD per l'input
-                  if (u.subscriptionExpiry) {
-                    const d = new Date(u.subscriptionExpiry);
-                    const yyyy = d.getFullYear();
-                    const mm = String(d.getMonth() + 1).padStart(2, '0');
-                    const dd = String(d.getDate()).padStart(2, '0');
-                    setEditExpiryInput(`${yyyy}-${mm}-${dd}`);
-                  } else {
-                    setEditExpiryInput('');
-                  }
-                }}
-                style={{ backgroundColor: isEditing ? c.border : c.primary + '22', borderRadius: 8, padding: 8 }}
-              >
-                <Text style={{ color: isEditing ? c.textMuted : c.primary, fontSize: 12, fontWeight: '700' }}>
-                  {isEditing ? t('Annulla', 'Cancel') : t('Modifica', 'Edit')}
-                </Text>
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', gap: 6 }}>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (isEditing) { setEditingUserId(null); return; }
+                    setEditingUserId(u.id);
+                    setEditStatusInput(u.subscriptionStatus ?? 'active');
+                    if (u.subscriptionExpiry) {
+                      const d = new Date(u.subscriptionExpiry);
+                      const yyyy = d.getFullYear();
+                      const mm = String(d.getMonth() + 1).padStart(2, '0');
+                      const dd = String(d.getDate()).padStart(2, '0');
+                      setEditExpiryInput(`${yyyy}-${mm}-${dd}`);
+                    } else {
+                      setEditExpiryInput('');
+                    }
+                  }}
+                  style={{ backgroundColor: isEditing ? c.border : c.primary + '22', borderRadius: 8, padding: 8 }}
+                >
+                  <Text style={{ color: isEditing ? c.textMuted : c.primary, fontSize: 12, fontWeight: '700' }}>
+                    {isEditing ? t('Annulla', 'Cancel') : t('Modifica', 'Edit')}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => confirmDeleteUser(u)}
+                  disabled={deletingUserId === u.id}
+                  style={{ backgroundColor: '#e74c3c18', borderRadius: 8, padding: 8, opacity: deletingUserId === u.id ? 0.5 : 1 }}
+                >
+                  <Trash color="#e74c3c" size={16} weight="bold" />
+                </TouchableOpacity>
+              </View>
             </View>
 
             {isEditing && (
