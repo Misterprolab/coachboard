@@ -1,8 +1,28 @@
 import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 
+// ─── USERS ────────────────────────────────────────────────────────────────────
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  role: text("role").notNull().default("coach"), // coach | admin
+  createdAt: integer("created_at").notNull(),
+});
+
+// ─── INVITE CODES ─────────────────────────────────────────────────────────────
+export const inviteCodes = sqliteTable("invite_codes", {
+  id: text("id").primaryKey(),
+  code: text("code").notNull().unique(),
+  createdBy: text("created_by").notNull(),
+  usedBy: text("used_by").references(() => users.id),
+  usedAt: integer("used_at"),
+  createdAt: integer("created_at").notNull(),
+});
+
 // Players / Rosa
 export const players = sqliteTable("players", {
   id: text("id").primaryKey(),
+  userId: text("user_id").notNull().default("system-admin"),
   name: text("name").notNull(),
   number: integer("number"),
   role: text("role").notNull(), // portiere, difensore, centrocampista, attaccante
@@ -19,6 +39,7 @@ export const players = sqliteTable("players", {
 // Exercises / Esercizi
 export const exercises = sqliteTable("exercises", {
   id: text("id").primaryKey(),
+  userId: text("user_id").notNull().default("system-admin"),
   name: text("name").notNull(),
   nameEn: text("name_en"),
   category: text("category").notNull(),
@@ -37,6 +58,7 @@ export const exercises = sqliteTable("exercises", {
 // Sessions / Sedute
 export const sessions = sqliteTable("sessions", {
   id: text("id").primaryKey(),
+  userId: text("user_id").notNull().default("system-admin"),
   title: text("title").notNull(),
   date: text("date").notNull(),
   duration: integer("duration"),
@@ -58,6 +80,7 @@ export const sessionExercises = sqliteTable("session_exercises", {
 
 export const matches = sqliteTable("matches", {
   id: text("id").primaryKey(),
+  userId: text("user_id").notNull().default("system-admin"),
   opponent: text("opponent").notNull(),          // nome avversario
   date: text("date").notNull(),                  // YYYY-MM-DD
   time: text("time"),                            // HH:MM

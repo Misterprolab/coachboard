@@ -1,14 +1,15 @@
-import { Slot } from "expo-router";
+import { Slot, useRouter, useSegments } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { OneDollarStatsProvider } from "../lib/analytics";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { initLang } from "../lib/i18n";
 import { useTheme } from "../lib/themeStore";
 import { useDbInit } from "../lib/useDbInit";
 import { View, Text, ActivityIndicator, Platform } from "react-native";
 import { isDbStub } from "../lib/db/client";
+import { isLoggedIn } from "../lib/authStore";
 import appJson from "../app.json";
 
 // Hide web splash screen once React mounts
@@ -19,6 +20,27 @@ if (Platform.OS === "web" && typeof window !== "undefined") {
 const queryClient = new QueryClient();
 const applicationId = appJson.expo.extra.applicationId ?? "";
 const hostname = applicationId ? `${applicationId}-mobile` : "localhost";
+
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const segments = useSegments();
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    if (Platform.OS !== "web") { setChecked(true); return; }
+    const loggedIn = isLoggedIn();
+    const inLoginPage = segments[0] === "login";
+    if (!loggedIn && !inLoginPage) {
+      router.replace("/login");
+    } else if (loggedIn && inLoginPage) {
+      router.replace("/");
+    }
+    setChecked(true);
+  }, [segments]);
+
+  if (!checked) return null;
+  return <>{children}</>;
+}
 
 function AppWithDb() {
   const dbReady = useDbInit();
@@ -38,21 +60,23 @@ function AppWithDb() {
   }
 
   return (
-    <View style={{ flex: 1 }}>
-      {isDbStub() && (
-        <View style={{
-          backgroundColor: "#e67e22",
-          paddingVertical: 8,
-          paddingHorizontal: 16,
-          alignItems: "center",
-        }}>
-          <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700", textAlign: "center" }}>
-            ⚠️ Expo Go non supporta SQLite — usa un Development Build per il DB locale
-          </Text>
-        </View>
-      )}
-      <Slot />
-    </View>
+    <AuthGate>
+      <View style={{ flex: 1 }}>
+        {isDbStub() && Platform.OS !== "web" && (
+          <View style={{
+            backgroundColor: "#e67e22",
+            paddingVertical: 8,
+            paddingHorizontal: 16,
+            alignItems: "center",
+          }}>
+            <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700", textAlign: "center" }}>
+              ⚠️ Expo Go non supporta SQLite — usa un Development Build per il DB locale
+            </Text>
+          </View>
+        )}
+        <Slot />
+      </View>
+    </AuthGate>
   );
 }
 

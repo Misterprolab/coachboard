@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import { cors } from "hono/cors";
 import { db } from './database';
-import { exercises, players, sessions, sessionExercises, matches, matchConvocations, matchLineup, matchGoals } from './database/schema';
-import { eq, inArray } from 'drizzle-orm';
+import { exercises, players, sessions, sessionExercises, matches, matchConvocations, matchLineup, matchGoals, users, inviteCodes } from './database/schema';
+import { eq, inArray, and } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { SignJWT, jwtVerify } from 'jose';
 
@@ -11,20 +11,45 @@ const getJwtSecret = () => new TextEncoder().encode(
   process.env.JWT_SECRET ?? 'coachboard_fallback_secret_change_me'
 );
 
-async function makeToken(): Promise<string> {
-  return new SignJWT({ role: 'admin' })
+type JwtPayload = { userId: string; email: string; role: string };
+
+async function makeToken(payload: JwtPayload): Promise<string> {
+  return new SignJWT(payload as any)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('365d')
     .sign(getJwtSecret());
 }
 
-async function verifyToken(token: string): Promise<boolean> {
+async function verifyToken(token: string): Promise<JwtPayload | null> {
   try {
-    await jwtVerify(token, getJwtSecret());
-    return true;
-  } catch { return false; }
+    const { payload } = await jwtVerify(token, getJwtSecret());
+    return payload as unknown as JwtPayload;
+  } catch { return null; }
 }
+
+function extractToken(authHeader: string | undefined): string | null {
+  if (!authHeader?.startsWith('Bearer ')) return null;
+  return authHeader.slice(7);
+}
+
+// ─── Middleware types ─────────────────────────────────────────────────────────
+type AuthEnv = { Variables: { userId: string; userRole: string } };
+
+const authMiddleware = async (c: any, next: any) => {
+  const token = extractToken(c.req.header('Authorization'));
+  if (!token) return c.json({ error: 'Non autenticato' }, 401);
+  const payload = await verifyToken(token);
+  if (!payload) return c.json({ error: 'Token non valido' }, 401);
+  c.set('userId', payload.userId);
+  c.set('userRole', payload.role);
+  await next();
+};
+
+const adminMiddleware = async (c: any, next: any) => {
+  if (c.get('userRole') !== 'admin') return c.json({ error: 'Accesso negato' }, 403);
+  await next();
+};
 
 const app = new Hono()
   .basePath('api')
@@ -35,22 +60,74 @@ const app = new Hono()
   // ─── AUTH ──────────────────────────────────────────────────────────────────
   .post('/auth/login', async (c) => {
     const { email, password } = await c.req.json();
-    const adminEmail = process.env.ADMIN_EMAIL ?? 'coach@coachboard.app';
-    const adminPassword = process.env.ADMIN_PASSWORD ?? 'Coach2024!';
-    if (email?.toLowerCase().trim() !== adminEmail.toLowerCase() || password !== adminPassword) {
-      return c.json({ error: 'Credenziali non valide' }, 401);
-    }
-    const token = await makeToken();
-    return c.json({ token }, 200);
+    if (!email || !password) return c.json({ error: 'Email e password richiesti' }, 400);
+    const [user] = await db.select().from(users).where(eq(users.email, email.toLowerCase().trim()));
+    if (!user) return c.json({ error: 'Credenziali non valide' }, 401);
+    const valid = await Bun.password.verify(password, user.passwordHash);
+    if (!valid) return c.json({ error: 'Credenziali non valide' }, 401);
+    const token = await makeToken({ userId: user.id, email: user.email, role: user.role });
+    return c.json({ token, role: user.role }, 200);
+  })
+  .post('/auth/register', async (c) => {
+    const { email, password, inviteCode } = await c.req.json();
+    if (!email || !password || !inviteCode) return c.json({ error: 'Tutti i campi sono obbligatori' }, 400);
+    if (password.length < 8) return c.json({ error: 'Password minimo 8 caratteri' }, 400);
+    // Check invite code
+    const [invite] = await db.select().from(inviteCodes).where(eq(inviteCodes.code, inviteCode.trim()));
+    if (!invite || invite.usedBy != null) return c.json({ error: 'Codice invito non valido o già usato' }, 400);
+    // Check email not taken
+    const existing = await db.select({ id: users.id }).from(users).where(eq(users.email, email.toLowerCase().trim()));
+    if (existing.length > 0) return c.json({ error: 'Email già registrata' }, 409);
+    const adminEmail = (process.env.ADMIN_EMAIL ?? '').toLowerCase();
+    const isAdmin = email.toLowerCase().trim() === adminEmail;
+    // Use 'system-admin' as id for the first admin so they see existing data
+    const userId = isAdmin ? 'system-admin' : randomUUID();
+    const hash = await Bun.password.hash(password);
+    const now = Date.now();
+    const user = { id: userId, email: email.toLowerCase().trim(), passwordHash: hash, role: isAdmin ? 'admin' : 'coach', createdAt: now };
+    await db.insert(users).values(user);
+    // Mark invite as used
+    await db.update(inviteCodes).set({ usedBy: userId, usedAt: now }).where(eq(inviteCodes.code, inviteCode.trim()));
+    const token = await makeToken({ userId: user.id, email: user.email, role: user.role });
+    return c.json({ token, role: user.role }, 201);
+  })
+  .get('/auth/me', authMiddleware, async (c) => {
+    const userId = c.get('userId');
+    const [user] = await db.select({ id: users.id, email: users.email, role: users.role }).from(users).where(eq(users.id, userId));
+    if (!user) return c.json({ error: 'Utente non trovato' }, 404);
+    return c.json(user, 200);
   })
   .post('/auth/verify', async (c) => {
     const { token } = await c.req.json();
-    const valid = await verifyToken(token ?? '');
-    return c.json({ valid }, valid ? 200 : 401);
+    const payload = await verifyToken(token ?? '');
+    return c.json({ valid: !!payload }, payload ? 200 : 401);
+  })
+
+  // ─── BOOTSTRAP: generate first invite code (only works when no users exist) ─
+  .post('/auth/bootstrap', async (c) => {
+    const existing = await db.select({ id: users.id }).from(users).limit(1);
+    if (existing.length > 0) return c.json({ error: 'Bootstrap non disponibile: utenti già esistenti' }, 403);
+    const code = randomUUID().split('-')[0].toUpperCase();
+    const invite = { id: randomUUID(), code, createdBy: 'bootstrap', usedBy: null, usedAt: null, createdAt: Date.now() };
+    await db.insert(inviteCodes).values(invite);
+    return c.json({ code }, 201);
+  })
+
+  // ─── ADMIN: INVITE CODES ───────────────────────────────────────────────────
+  .post('/admin/invite-codes', authMiddleware, adminMiddleware, async (c) => {
+    const userId = c.get('userId');
+    const code = randomUUID().split('-')[0].toUpperCase(); // e.g. A3F2B8C1
+    const invite = { id: randomUUID(), code, createdBy: userId, usedBy: null, usedAt: null, createdAt: Date.now() };
+    await db.insert(inviteCodes).values(invite);
+    return c.json({ code }, 201);
+  })
+  .get('/admin/invite-codes', authMiddleware, adminMiddleware, async (c) => {
+    const all = await db.select().from(inviteCodes).where(eq(inviteCodes.createdBy, c.get('userId')));
+    return c.json(all, 200);
   })
 
   // ─── SEED default exercises ───────────────────────────────────────────────
-  .post('/seed', async (c) => {
+  .post('/seed', authMiddleware, async (c) => {
     // Find all non-custom exercise IDs, remove any sessionExercises references, then delete
     const nonCustom = await db.select({ id: exercises.id }).from(exercises).where(eq(exercises.isCustom, false));
     if (nonCustom.length > 0) {
@@ -1141,20 +1218,28 @@ const app = new Hono()
   })
 
   // ─── EXERCISES ─────────────────────────────────────────────────────────────
-  .get('/exercises', async (c) => {
+  .get('/exercises', authMiddleware, async (c) => {
     const category = c.req.query('category');
+    const userId = c.get('userId');
+    // Return default exercises (userId='system-admin' or isCustom=false) + user's own custom exercises
     let all;
     if (category && category !== 'tutti') {
-      all = await db.select().from(exercises).where(eq(exercises.category, category));
+      all = await db.select().from(exercises).where(
+        and(eq(exercises.category, category))
+      );
     } else {
       all = await db.select().from(exercises);
     }
+    // Filter: show non-custom (global) + custom belonging to this user
+    all = all.filter(e => !e.isCustom || e.userId === userId || e.userId === 'system-admin');
     return c.json(all, 200);
   })
-  .post('/exercises', async (c) => {
+  .post('/exercises', authMiddleware, async (c) => {
     const body = await c.req.json();
+    const userId = c.get('userId');
     const ex = {
       id: randomUUID(),
+      userId,
       name: body.name,
       nameEn: body.nameEn ?? null,
       category: body.category,
@@ -1164,27 +1249,39 @@ const app = new Hono()
       players: body.players ?? null,
       intensity: body.intensity,
       materials: body.materials ?? null,
+      primaryObjective: body.primaryObjective ?? null,
+      secondaryObjectives: body.secondaryObjectives ?? null,
       isCustom: true,
       createdAt: Date.now(),
     };
     await db.insert(exercises).values(ex);
     return c.json(ex, 201);
   })
-  .delete('/exercises/:id', async (c) => {
+  .delete('/exercises/:id', authMiddleware, async (c) => {
     const id = c.req.param('id');
+    const userId = c.get('userId');
+    // Only allow deleting own custom exercises (or admin can delete any)
+    const [ex] = await db.select().from(exercises).where(eq(exercises.id, id));
+    if (!ex) return c.json({ error: 'not found' }, 404);
+    if (ex.isCustom && ex.userId !== userId && c.get('userRole') !== 'admin') {
+      return c.json({ error: 'Non autorizzato' }, 403);
+    }
     await db.delete(exercises).where(eq(exercises.id, id));
     return c.json({ success: true }, 200);
   })
 
   // ─── PLAYERS ───────────────────────────────────────────────────────────────
-  .get('/players', async (c) => {
-    const all = await db.select().from(players);
+  .get('/players', authMiddleware, async (c) => {
+    const userId = c.get('userId');
+    const all = await db.select().from(players).where(eq(players.userId, userId));
     return c.json(all, 200);
   })
-  .post('/players', async (c) => {
+  .post('/players', authMiddleware, async (c) => {
     const body = await c.req.json();
+    const userId = c.get('userId');
     const player = {
       id: randomUUID(),
+      userId,
       name: body.name,
       number: body.number ?? null,
       role: body.role,
@@ -1200,7 +1297,7 @@ const app = new Hono()
     await db.insert(players).values(player);
     return c.json(player, 201);
   })
-  .put('/players/:id', async (c) => {
+  .put('/players/:id', authMiddleware, async (c) => {
     const id = c.req.param('id');
     const body = await c.req.json();
     await db.update(players).set({
@@ -1217,10 +1314,11 @@ const app = new Hono()
     }).where(eq(players.id, id));
     return c.json({ success: true }, 200);
   })
-  .get('/players/:id/stats', async (c) => {
+  .get('/players/:id/stats', authMiddleware, async (c) => {
     const playerId = c.req.param('id');
-    // Fetch all matches
-    const allMatches = await db.select().from(matches);
+    const userId = c.get('userId');
+    // Fetch all matches for this user
+    const allMatches = await db.select().from(matches).where(eq(matches.userId, userId));
     // Fetch convocations for this player
     const convocationEntries = await db.select().from(matchConvocations).where(eq(matchConvocations.playerId, playerId));
     // Fetch lineup entries for this player
@@ -1337,18 +1435,19 @@ const app = new Hono()
       matchHistory,
     }, 200);
   })
-  .delete('/players/:id', async (c) => {
+  .delete('/players/:id', authMiddleware, async (c) => {
     const id = c.req.param('id');
     await db.delete(players).where(eq(players.id, id));
     return c.json({ success: true }, 200);
   })
 
   // ─── SESSIONS ──────────────────────────────────────────────────────────────
-  .get('/sessions', async (c) => {
-    const all = await db.select().from(sessions);
+  .get('/sessions', authMiddleware, async (c) => {
+    const userId = c.get('userId');
+    const all = await db.select().from(sessions).where(eq(sessions.userId, userId));
     return c.json(all, 200);
   })
-  .get('/sessions/:id', async (c) => {
+  .get('/sessions/:id', authMiddleware, async (c) => {
     const id = c.req.param('id');
     const [session] = await db.select().from(sessions).where(eq(sessions.id, id));
     if (!session) return c.json({ error: 'not found' }, 404);
@@ -1367,10 +1466,12 @@ const app = new Hono()
     }));
     return c.json({ ...session, exercises: items }, 200);
   })
-  .post('/sessions', async (c) => {
+  .post('/sessions', authMiddleware, async (c) => {
     const body = await c.req.json();
+    const userId = c.get('userId');
     const session = {
       id: randomUUID(),
+      userId,
       title: body.title,
       date: body.date,
       duration: body.duration ?? null,
@@ -1391,19 +1492,20 @@ const app = new Hono()
     }
     return c.json(session, 201);
   })
-  .delete('/sessions/:id', async (c) => {
+  .delete('/sessions/:id', authMiddleware, async (c) => {
     const id = c.req.param('id');
     await db.delete(sessions).where(eq(sessions.id, id));
     return c.json({ success: true }, 200);
   })
 
   // ─── MATCHES ───────────────────────────────────────────────────────────────
-  .get('/matches', async (c) => {
-    const all = await db.select().from(matches);
+  .get('/matches', authMiddleware, async (c) => {
+    const userId = c.get('userId');
+    const all = await db.select().from(matches).where(eq(matches.userId, userId));
     all.sort((a, b) => (a.date < b.date ? 1 : -1));
     return c.json(all, 200);
   })
-  .get('/matches/:id', async (c) => {
+  .get('/matches/:id', authMiddleware, async (c) => {
     const id = c.req.param('id');
     const [match] = await db.select().from(matches).where(eq(matches.id, id));
     if (!match) return c.json({ error: 'not found' }, 404);
@@ -1441,10 +1543,12 @@ const app = new Hono()
       })),
     }, 200);
   })
-  .post('/matches', async (c) => {
+  .post('/matches', authMiddleware, async (c) => {
     const body = await c.req.json();
+    const userId = c.get('userId');
     const match = {
       id: randomUUID(),
+      userId,
       opponent: body.opponent,
       date: body.date,
       time: body.time ?? null,
@@ -1460,7 +1564,7 @@ const app = new Hono()
     await db.insert(matches).values(match);
     return c.json(match, 201);
   })
-  .put('/matches/:id', async (c) => {
+  .put('/matches/:id', authMiddleware, async (c) => {
     const id = c.req.param('id');
     const body = await c.req.json();
     await db.update(matches).set({
@@ -1478,14 +1582,14 @@ const app = new Hono()
     }).where(eq(matches.id, id));
     return c.json({ success: true }, 200);
   })
-  .delete('/matches/:id', async (c) => {
+  .delete('/matches/:id', authMiddleware, async (c) => {
     const id = c.req.param('id');
     await db.delete(matches).where(eq(matches.id, id));
     return c.json({ success: true }, 200);
   })
 
   // Convocations
-  .put('/matches/:id/convocations', async (c) => {
+  .put('/matches/:id/convocations', authMiddleware, async (c) => {
     const matchId = c.req.param('id');
     const body = await c.req.json(); // { playerIds: string[], jerseyNumbers?: Record<string,string> }
     const jerseyNumbers: Record<string, string> = body.jerseyNumbers ?? {};
@@ -1504,7 +1608,7 @@ const app = new Hono()
   })
 
   // Lineup
-  .put('/matches/:id/lineup', async (c) => {
+  .put('/matches/:id/lineup', authMiddleware, async (c) => {
     const matchId = c.req.param('id');
     const body = await c.req.json(); // { players: LineupPlayer[] }
     await db.delete(matchLineup).where(eq(matchLineup.matchId, matchId));
@@ -1532,7 +1636,7 @@ const app = new Hono()
   })
 
   // Goals
-  .put('/matches/:id/goals', async (c) => {
+  .put('/matches/:id/goals', authMiddleware, async (c) => {
     const matchId = c.req.param('id');
     const body = await c.req.json(); // { goals: Goal[] }
     await db.delete(matchGoals).where(eq(matchGoals.matchId, matchId));
@@ -1562,7 +1666,7 @@ const app = new Hono()
   })
 
   // Substitutions
-  .put('/matches/:id/substitutions', async (c) => {
+  .put('/matches/:id/substitutions', authMiddleware, async (c) => {
     const matchId = c.req.param('id');
     const body = await c.req.json(); // { substitutions: [{playerOutId,playerInId,minute}] }
     await db.update(matches).set({
@@ -1571,7 +1675,7 @@ const app = new Hono()
     return c.json({ success: true }, 200);
   })
   // Cards / Injuries
-  .put('/matches/:id/cards', async (c) => {
+  .put('/matches/:id/cards', authMiddleware, async (c) => {
     const matchId = c.req.param('id');
     const body = await c.req.json(); // { cards: [{playerId,type,minute,notes}] }
     await db.update(matches).set({

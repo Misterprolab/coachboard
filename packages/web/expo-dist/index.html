@@ -4,71 +4,34 @@
     <meta charset="utf-8" />
     <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <title>CoachBoard</title>
+    <title>Misterprolab</title>
+    <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
     <style id="expo-reset">
-      html, body { height: 100%; margin: 0; padding: 0; }
-      body { overflow: hidden; background: #0d1f13; }
-      #root { display: flex; height: 100%; flex: 1; }
-      #splash {
-        position: fixed; inset: 0; background: #0d1f13;
-        display: flex; flex-direction: column;
-        align-items: center; justify-content: center;
-        z-index: 9999; transition: opacity 0.4s ease;
+      /* These styles make the body full-height */
+      html,
+      body {
+        height: 100%;
       }
-      #splash.hide { opacity: 0; pointer-events: none; }
-      #splash svg { width: 64px; height: 64px; margin-bottom: 20px; }
-      #splash span {
-        color: #2ecc71; font-family: -apple-system, sans-serif;
-        font-size: 22px; font-weight: 700; letter-spacing: 1px;
+      /* These styles disable body scrolling if you are using <ScrollView> */
+      body {
+        overflow: hidden;
       }
-      #splash small {
-        color: #4a7a5a; font-family: -apple-system, sans-serif;
-        font-size: 13px; margin-top: 8px;
+      /* These styles make the root element full-height */
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
       }
-      @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-      #splash small { animation: pulse 1.5s infinite; }
     </style>
-    <link rel="icon" href="/favicon.ico" />
-    <!-- PWA -->
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="CoachBoard" />
-    <meta name="theme-color" content="#0d1f13" />
-    <link rel="apple-touch-icon" href="/icon-180.png" />
-    <link rel="apple-touch-icon" sizes="167x167" href="/icon-167.png" />
-    <link rel="apple-touch-icon" sizes="152x152" href="/icon-152.png" />
-  </head>
+  <link rel="icon" href="/favicon.ico" /></head>
+
   <body>
-    <div id="splash">
-      <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="32" cy="32" r="30" stroke="#2ecc71" stroke-width="3"/>
-        <line x1="32" y1="10" x2="32" y2="54" stroke="#2ecc71" stroke-width="2.5"/>
-        <line x1="10" y1="32" x2="54" y2="32" stroke="#2ecc71" stroke-width="2.5"/>
-        <circle cx="32" cy="32" r="8" fill="#2ecc71" fill-opacity="0.25" stroke="#2ecc71" stroke-width="2"/>
-        <circle cx="32" cy="16" r="3" fill="#2ecc71"/>
-        <circle cx="32" cy="48" r="3" fill="#2ecc71"/>
-        <circle cx="16" cy="32" r="3" fill="#2ecc71"/>
-        <circle cx="48" cy="32" r="3" fill="#2ecc71"/>
-      </svg>
-      <span>CoachBoard</span>
-      <small>Caricamento...</small>
-    </div>
-    <noscript>Devi abilitare JavaScript per usare questa app.</noscript>
+    <!-- Use static rendering with Expo Router to support running without JavaScript. -->
+    <noscript>
+      You need to enable JavaScript to run this app.
+    </noscript>
+    <!-- The root element for your Expo app. -->
     <div id="root"></div>
-    <script>
-      window.__splashHide = function() {
-        var s = document.getElementById('splash');
-        if (s) { s.classList.add('hide'); setTimeout(function(){ s.remove(); }, 500); }
-      };
-      setTimeout(window.__splashHide, 15000);
-    </script>
-    <script src="/_expo/static/js/web/entry-f3d04192cd9e76ee93cec4aea7edc5db.js" defer></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
-      }
-    </script>
-  </body>
+  <script src="/_expo/static/js/web/entry-c77b6d54f1329d1b5ffe942358f8bceb.js" defer></script>
+</body>
 </html>

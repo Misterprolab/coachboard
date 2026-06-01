@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Modal, View, Text, TextInput, TouchableOpacity,
-  ScrollView, StyleSheet, Image, Alert, Platform, Linking,
+  ScrollView, StyleSheet, Image, Alert, Platform, Linking, Clipboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { X, User, UsersThree, Translate, PencilSimple, Trash, Plus, Check, CaretRight, Palette, Info } from 'phosphor-react-native';
+import { X, User, UsersThree, Translate, PencilSimple, Trash, Plus, Check, CaretRight, Palette, Info, SignOut, Key } from 'phosphor-react-native';
 import { useTheme, PRESET_GREEN, PRESET_DARK, PRESET_LIGHT } from '../lib/themeStore';
 import type { ThemeColors, ThemeId } from '../lib/themeStore';
 import { useI18n } from '../lib/i18n';
 import { useProfile, TeamProfile } from '../lib/profile';
+import { clearAuth, getEmail, getRole, authHeaders } from '../lib/authStore';
+import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
-type Section = 'menu' | 'profile' | 'team' | 'language' | 'team-edit' | 'theme' | 'info';
+type Section = 'menu' | 'profile' | 'team' | 'language' | 'team-edit' | 'theme' | 'info' | 'invite';
 
 interface Props {
   visible: boolean;
@@ -28,6 +30,18 @@ export default function SettingsModal({ visible, onClose }: Props) {
 
   const { t, lang, setLang } = useI18n();
   const { coach, teams, activeTeamId, setCoach, addTeam, updateTeam, removeTeam, setActiveTeam } = useProfile();
+  const router = useRouter();
+
+  // Auth state (web only)
+  const userEmail = Platform.OS === 'web' ? getEmail() : null;
+  const userRole = Platform.OS === 'web' ? getRole() : null;
+  const isAdmin = userRole === 'admin';
+
+  const handleLogout = () => {
+    clearAuth();
+    onClose();
+    router.replace('/login');
+  };
 
   const [section, setSection] = useState<Section>('menu');
 
@@ -45,6 +59,36 @@ export default function SettingsModal({ visible, onClose }: Props) {
   // Theme custom color pickers
   const [customPrimaryInput, setCustomPrimaryInput] = useState(customPrimary);
   const [customAccentInput, setCustomAccentInput] = useState(customAccent);
+
+  // Invite codes state
+  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+  const [generatingCode, setGeneratingCode] = useState(false);
+  const [existingCodes, setExistingCodes] = useState<any[]>([]);
+
+  const generateInviteCode = async () => {
+    setGeneratingCode(true);
+    try {
+      const res = await fetch('/api/admin/invite-codes', {
+        method: 'POST',
+        headers: authHeaders(),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setGeneratedCode(data.code);
+        loadInviteCodes();
+      } else {
+        Alert.alert('Errore', data.error ?? 'Impossibile generare il codice');
+      }
+    } catch { Alert.alert('Errore', 'Errore di rete'); }
+    finally { setGeneratingCode(false); }
+  };
+
+  const loadInviteCodes = async () => {
+    try {
+      const res = await fetch('/api/admin/invite-codes', { headers: authHeaders() });
+      if (res.ok) setExistingCodes(await res.json());
+    } catch {}
+  };
 
   useEffect(() => {
     if (visible) {
@@ -151,6 +195,27 @@ export default function SettingsModal({ visible, onClose }: Props) {
         </View>
         <CaretRight color={c.textDim} size={16} />
       </TouchableOpacity>
+
+      {Platform.OS === 'web' && isAdmin && (
+        <TouchableOpacity style={s.menuItem} onPress={() => { setGeneratedCode(null); loadInviteCodes(); setSection('invite'); }}>
+          <View style={s.menuIcon}><Key color="#f39c12" size={20} weight="fill" /></View>
+          <View style={s.menuText}>
+            <Text style={s.menuTitle}>{t('Codici Invito', 'Invite Codes')}</Text>
+            <Text style={s.menuSub}>{t('Genera codici per nuovi utenti', 'Generate codes for new users')}</Text>
+          </View>
+          <CaretRight color={c.textDim} size={16} />
+        </TouchableOpacity>
+      )}
+
+      {Platform.OS === 'web' && userEmail && (
+        <TouchableOpacity style={[s.menuItem, { marginTop: 8, borderTopWidth: 1, borderTopColor: c.border }]} onPress={handleLogout}>
+          <View style={s.menuIcon}><SignOut color="#e74c3c" size={20} weight="fill" /></View>
+          <View style={s.menuText}>
+            <Text style={[s.menuTitle, { color: '#e74c3c' }]}>{t('Esci', 'Log out')}</Text>
+            <Text style={s.menuSub}>{userEmail}</Text>
+          </View>
+        </TouchableOpacity>
+      )}
 
     </View>
   );
@@ -388,6 +453,36 @@ export default function SettingsModal({ visible, onClose }: Props) {
     </ScrollView>
   );
 
+  const renderInvite = () => (
+    <ScrollView style={s.form}>
+      <Text style={s.hint}>{t('Genera codici monouso per invitare nuovi utenti. Ogni codice può essere usato una sola volta.', 'Generate one-time codes to invite new users. Each code can be used once.')}</Text>
+      <TouchableOpacity style={[s.saveBtn, { marginTop: 16 }]} onPress={generateInviteCode} disabled={generatingCode}>
+        <Key color={c.bg} size={18} weight="bold" />
+        <Text style={s.saveBtnText}>{generatingCode ? t('Generando...', 'Generating...') : t('Genera Codice', 'Generate Code')}</Text>
+      </TouchableOpacity>
+      {generatedCode && (
+        <View style={{ backgroundColor: c.card, borderRadius: 10, padding: 16, marginTop: 16, alignItems: 'center' }}>
+          <Text style={{ color: c.textDim, fontSize: 12, marginBottom: 6 }}>{t('Nuovo codice generato:', 'New code generated:')}</Text>
+          <Text style={{ color: c.primary, fontSize: 24, fontWeight: '800', letterSpacing: 3 }}>{generatedCode}</Text>
+          <TouchableOpacity onPress={() => { try { (Clipboard as any).setString(generatedCode); } catch {} }} style={{ marginTop: 8 }}>
+            <Text style={{ color: c.textDim, fontSize: 12 }}>{t('Tocca per copiare', 'Tap to copy')}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      {existingCodes.length > 0 && (
+        <View style={{ marginTop: 20 }}>
+          <Text style={s.sectionLabel}>{t('Codici generati', 'Generated codes')}</Text>
+          {existingCodes.map((code: any) => (
+            <View key={code.id} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: c.border }}>
+              <Text style={{ color: code.usedBy ? c.textDim : c.text, fontWeight: '700', fontFamily: 'monospace' }}>{code.code}</Text>
+              <Text style={{ color: code.usedBy ? '#e74c3c' : c.primary, fontSize: 12 }}>{code.usedBy ? t('Usato', 'Used') : t('Disponibile', 'Available')}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </ScrollView>
+  );
+
   const sectionTitle = () => {
     switch (section) {
       case 'profile':   return t('Profilo', 'Profile');
@@ -396,6 +491,7 @@ export default function SettingsModal({ visible, onClose }: Props) {
       case 'language':  return t('Lingua', 'Language');
       case 'theme':     return t('Tema', 'Theme');
       case 'info':      return t('Informazioni', 'About');
+      case 'invite':    return t('Codici Invito', 'Invite Codes');
       default:          return t('Impostazioni', 'Settings');
     }
   };
@@ -426,6 +522,7 @@ export default function SettingsModal({ visible, onClose }: Props) {
           {section === 'language'  && renderLanguage()}
           {section === 'theme'     && renderTheme()}
           {section === 'info'      && renderInfo()}
+          {section === 'invite'    && renderInvite()}
         </View>
       </SafeAreaView>
     </Modal>
