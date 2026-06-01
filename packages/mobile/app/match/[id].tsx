@@ -1037,8 +1037,8 @@ function RisultatoSection({ match, allPlayers, id, qc, c }: { match: Match; allP
       );
       // Update subs + cards
       await dbUpdateMatch(id, {
-        substitutions: JSON.stringify(subsList),
-        cards: JSON.stringify(cardsList),
+        substitutions: subsList,
+        cards: cardsList,
       });
     },
     onSuccess: () => {

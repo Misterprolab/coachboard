@@ -28,6 +28,7 @@ interface State {
 
 export class ErrorBoundary extends Component<Props, State> {
   state: State = { errors: [], expanded: false, expandedIndex: null, copied: false };
+  private mountTime = Date.now();
 
   private onError = (e: ErrorEvent) => {
     this.addError({
@@ -63,15 +64,15 @@ export class ErrorBoundary extends Component<Props, State> {
 
   private addError(entry: ErrorEntry) {
     if (this.isIgnoredError(entry.message)) return;
+    // If error occurs within 3s of mount, silently retry — don't show crash screen
+    if (Date.now() - this.mountTime < 3000) {
+      setTimeout(() => this.retry(), 800);
+      return;
+    }
     this.setState((prev) => {
       // Dedupe by message
       if (prev.errors.some((e) => e.message === entry.message)) return null;
-      const newErrors = [...prev.errors, entry];
-      // Auto-retry after 1.5s for the first error (handles transient init errors)
-      if (prev.errors.length === 0) {
-        setTimeout(() => this.retry(), 1500);
-      }
-      return { errors: newErrors };
+      return { errors: [...prev.errors, entry] };
     });
   }
 
@@ -89,22 +90,26 @@ export class ErrorBoundary extends Component<Props, State> {
     }
   }
 
-  static getDerivedStateFromError(error: Error) {
-    return {
-      errors: [{ message: error.message, stack: error.stack }],
-      expanded: false,
-      expandedIndex: null,
-    };
+  static getDerivedStateFromError(_error: Error) {
+    // Don't show crash screen here — componentDidCatch will handle it with timing check
+    return null;
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // Silently retry if within 3s of mount
+    if (Date.now() - this.mountTime < 3000) {
+      setTimeout(() => this.retry(), 800);
+      return;
+    }
     this.setState((prev) => {
-      const updated = prev.errors.map((e) =>
-        e.message === error.message
-          ? { ...e, componentStack: errorInfo.componentStack ?? undefined }
-          : e
-      );
-      return { errors: updated };
+      if (prev.errors.some((e) => e.message === error.message)) return null;
+      return {
+        errors: [...prev.errors, {
+          message: error.message,
+          stack: error.stack,
+          componentStack: errorInfo.componentStack ?? undefined,
+        }],
+      };
     });
   }
 

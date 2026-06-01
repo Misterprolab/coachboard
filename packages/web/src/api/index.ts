@@ -6,6 +6,19 @@ import { eq, inArray, and } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { SignJWT, jwtVerify } from 'jose';
 
+// ─── Safe JSON parse (handles null, double-encoded strings) ───────────────────
+function safeParseJSON(val: any, fallback: any = []): any {
+  if (val == null) return fallback;
+  try {
+    const parsed = JSON.parse(val);
+    // Handle double-encoded: if result is still a string, parse again
+    if (typeof parsed === 'string') {
+      try { return JSON.parse(parsed); } catch { return fallback; }
+    }
+    return parsed;
+  } catch { return fallback; }
+}
+
 // ─── Auth helpers ─────────────────────────────────────────────────────────────
 const getJwtSecret = () => new TextEncoder().encode(
   process.env.JWT_SECRET ?? 'coachboard_fallback_secret_change_me'
@@ -1347,8 +1360,8 @@ const app = new Hono()
     for (const match of allMatches) {
       const inLineup = lineupByMatch.has(match.id);
       const inConvocation = convocatedMatchIds.has(match.id);
-      const substitutions: any[] = match.substitutions ? JSON.parse(match.substitutions) : [];
-      const cards: any[] = match.cards ? JSON.parse(match.cards) : [];
+      const substitutions: any[] = safeParseJSON(match.substitutions);
+      const cards: any[] = safeParseJSON(match.cards);
 
       const subOut = substitutions.find((s: any) => s.playerOutId === playerId);
       const subIn = substitutions.find((s: any) => s.playerInId === playerId);
@@ -1541,8 +1554,8 @@ const app = new Hono()
 
     return c.json({
       ...match,
-      substitutions: match.substitutions ? JSON.parse(match.substitutions) : [],
-      cards: match.cards ? JSON.parse(match.cards) : [],
+      substitutions: safeParseJSON(match.substitutions),
+      cards: safeParseJSON(match.cards),
       convocations: convocations.map(cv => ({
         ...cv,
         player: playerDetails.find(p => p.id === cv.playerId),
