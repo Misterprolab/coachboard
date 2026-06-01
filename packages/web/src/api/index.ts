@@ -245,28 +245,31 @@ const app = new Hono()
   })
   .delete('/admin/users/:id', authMiddleware, adminMiddleware, async (c) => {
     const id = c.req.param('id');
-    // Prevent self-deletion
     const requesterId = c.get('userId');
     if (id === requesterId) return c.json({ error: 'Non puoi eliminare te stesso' }, 400);
-    // Cascade: delete user's data then the user
-    const userPlayers = await db.select({ id: players.id }).from(players).where(eq(players.userId, id));
-    if (userPlayers.length > 0) {
-      const pids = userPlayers.map(p => p.id);
-      await db.delete(matchConvocations).where(inArray(matchConvocations.playerId, pids));
-      await db.delete(matchLineup).where(inArray(matchLineup.playerId, pids));
-      await db.delete(matchGoals).where(inArray(matchGoals.scorerId, pids));
-      await db.delete(players).where(eq(players.userId, id));
-    }
+
+    // 1. Matches → cascade elimina automaticamente convocations, lineup, goals
+    await db.delete(matches).where(eq(matches.userId, id));
+
+    // 2. Players (dopo matches per evitare FK su playerId)
+    await db.delete(players).where(eq(players.userId, id));
+
+    // 3. Sessions + sessionExercises (cascade su sessionId)
     const userSessions = await db.select({ id: sessions.id }).from(sessions).where(eq(sessions.userId, id));
     if (userSessions.length > 0) {
-      const sids = userSessions.map(s => s.id);
-      await db.delete(sessionExercises).where(inArray(sessionExercises.sessionId, sids));
-      await db.delete(sessions).where(eq(sessions.userId, id));
+      await db.delete(sessionExercises).where(inArray(sessionExercises.sessionId, userSessions.map(s => s.id)));
     }
-    await db.delete(matches).where(eq(matches.userId, id));
+    await db.delete(sessions).where(eq(sessions.userId, id));
+
+    // 4. Custom exercises
     await db.delete(exercises).where(and(eq(exercises.userId, id), eq(exercises.isCustom, true)));
+
+    // 5. Invite codes
     await db.delete(inviteCodes).where(eq(inviteCodes.createdBy, id));
+
+    // 6. User
     await db.delete(users).where(eq(users.id, id));
+
     return c.json({ success: true }, 200);
   })
 
