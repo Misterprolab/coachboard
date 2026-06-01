@@ -45,30 +45,23 @@ export default function SettingsModal({ visible, onClose }: Props) {
   };
 
   const [resetLoading, setResetLoading] = useState(false);
-  const handleResetSeason = () => {
-    Alert.alert(
-      'Nuova stagione',
-      'Questa operazione eliminerà definitivamente tutte le partite, i giocatori e le sedute. Vuoi continuare?',
-      [
-        { text: 'Annulla', style: 'cancel' },
-        {
-          text: 'Reimposta',
-          style: 'destructive',
-          onPress: async () => {
-            setResetLoading(true);
-            try {
-              await resetSeason();
-              Alert.alert('Fatto', 'Stagione reimpostata. Puoi ricominciare da capo.');
-              onClose();
-            } catch (e) {
-              Alert.alert('Errore', 'Impossibile reimpostare la stagione.');
-            } finally {
-              setResetLoading(false);
-            }
-          },
-        },
-      ]
-    );
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
+
+  const handleResetSeason = () => setShowResetConfirm(true);
+
+  const doResetSeason = async () => {
+    setResetLoading(true);
+    try {
+      await resetSeason();
+      setShowResetConfirm(false);
+      setResetDone(true);
+    } catch (e) {
+      setShowResetConfirm(false);
+      Alert.alert('Errore', 'Impossibile reimpostare la stagione.');
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   const [section, setSection] = useState<Section>('menu');
@@ -567,6 +560,62 @@ export default function SettingsModal({ visible, onClose }: Props) {
           {section === 'invite'    && renderInvite()}
         </View>
       </SafeAreaView>
+
+      {/* Reset Season confirm overlay */}
+      {showResetConfirm && (
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
+          <View style={{ backgroundColor: c.bgCard, borderRadius: 16, padding: 24, margin: 24, maxWidth: 360, width: '90%' }}>
+            <Text style={{ color: c.text, fontSize: 18, fontWeight: '700', marginBottom: 10 }}>
+              {t('Nuova stagione', 'New season')}
+            </Text>
+            <Text style={{ color: c.textDim, fontSize: 14, lineHeight: 20, marginBottom: 24 }}>
+              {t(
+                'Questa operazione eliminerà definitivamente tutte le partite, i giocatori e le sedute. Le esercitazioni di default rimarranno. Continuare?',
+                'This will permanently delete all matches, players and sessions. Default exercises will remain. Continue?'
+              )}
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <TouchableOpacity
+                style={{ flex: 1, paddingVertical: 12, borderRadius: 8, backgroundColor: c.bgInput, alignItems: 'center' }}
+                onPress={() => setShowResetConfirm(false)}
+                disabled={resetLoading}
+              >
+                <Text style={{ color: c.text, fontWeight: '600' }}>{t('Annulla', 'Cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ flex: 1, paddingVertical: 12, borderRadius: 8, backgroundColor: '#e74c3c', alignItems: 'center', opacity: resetLoading ? 0.6 : 1 }}
+                onPress={doResetSeason}
+                disabled={resetLoading}
+              >
+                <Text style={{ color: '#fff', fontWeight: '700' }}>
+                  {resetLoading ? t('Attendi...', 'Wait...') : t('Reimposta', 'Reset')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Reset done overlay */}
+      {resetDone && (
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
+          <View style={{ backgroundColor: c.bgCard, borderRadius: 16, padding: 24, margin: 24, maxWidth: 360, width: '90%', alignItems: 'center' }}>
+            <Text style={{ fontSize: 40, marginBottom: 12 }}>✅</Text>
+            <Text style={{ color: c.text, fontSize: 18, fontWeight: '700', marginBottom: 8, textAlign: 'center' }}>
+              {t('Stagione reimpostata', 'Season reset')}
+            </Text>
+            <Text style={{ color: c.textDim, fontSize: 14, textAlign: 'center', marginBottom: 24 }}>
+              {t('Puoi ricominciare da capo con una nuova stagione.', 'You can start fresh with a new season.')}
+            </Text>
+            <TouchableOpacity
+              style={{ paddingVertical: 12, paddingHorizontal: 32, borderRadius: 8, backgroundColor: c.primary }}
+              onPress={() => { setResetDone(false); onClose(); }}
+            >
+              <Text style={{ color: '#fff', fontWeight: '700' }}>{t('Ok', 'Ok')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </Modal>
   );
 }

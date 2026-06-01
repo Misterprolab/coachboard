@@ -5,14 +5,14 @@ import { Platform } from 'react-native';
 export interface TeamProfile {
   id: string;
   name: string;
-  season: string;      // es. "2024/25"
+  season: string;
   logoUri: string | null;
 }
 
 export interface CoachProfile {
   firstName: string;
   lastName: string;
-  nickname: string;    // soprannome — se presente sovrascrive nome+cognome nella home
+  nickname: string;
 }
 
 interface ProfileStore {
@@ -26,61 +26,64 @@ interface ProfileStore {
   removeTeam: (id: string) => void;
   setActiveTeam: (id: string | null) => void;
 
-  // computed
   displayName: () => string;
   activeTeam: () => TeamProfile | null;
 
-  // persistence
   load: () => Promise<void>;
   save: () => Promise<void>;
 }
 
-const STORAGE_KEY = 'misterprolab_profile_v1';
+const BASE_KEY = 'misterprolab_profile_v2';
 
-// ─── Web-only: serialize coach+teams into name/teamName for the API ───────────
+function storageKey(): string {
+  // Per-user key — uses email stored by authStore
+  try {
+    const email = localStorage.getItem('cb_auth_email') ?? 'default';
+    return `${BASE_KEY}_${email}`;
+  } catch { return BASE_KEY; }
+}
+
 function toApiProfile(coach: CoachProfile, teams: TeamProfile[], activeTeamId: string | null) {
   const name = coach.nickname?.trim() || [coach.firstName, coach.lastName].filter(Boolean).join(' ');
   const activeTeam = teams.find(t => t.id === activeTeamId);
   const teamName = activeTeam?.name ?? (teams[0]?.name ?? '');
-  // Store full state as JSON inside logoUrl field is not ideal — use a special key
-  // We store teams/activeTeamId as JSON in a dedicated way via a separate localStorage key
-  // but sync name/teamName/logoUrl to the server
   return { name, teamName, logoUrl: activeTeam?.logoUri ?? null };
 }
 
 async function webLoad() {
   try {
     const { apiGet } = await import('./authStore');
-    const data = await apiGet('/profile');
-    if (!data) return null;
-    // Also load full local state from localStorage (teams list etc.)
-    const localRaw = localStorage.getItem(STORAGE_KEY);
+    // Load from server first (source of truth for name/teamName)
+    const serverData = await apiGet('/profile');
+
+    // Load local structure (teams list) from per-user key
+    const key = storageKey();
+    const localRaw = localStorage.getItem(key);
     const local = localRaw ? JSON.parse(localRaw) : null;
-    // Merge: server wins for name/teamName, local wins for teams structure
+
     let coach: CoachProfile = local?.coach ?? { firstName: '', lastName: '', nickname: '' };
     let teams: TeamProfile[] = local?.teams ?? [];
     let activeTeamId: string | null = local?.activeTeamId ?? null;
-    // If server has a name and we have no local coach data, populate from server
-    if (data.name && !coach.firstName && !coach.nickname) {
-      coach = { ...coach, nickname: data.name };
+
+    // If server has data AND no local data → populate from server
+    if (serverData?.name && !local) {
+      coach = { firstName: '', lastName: '', nickname: serverData.name };
     }
-    // If server has teamName and no local teams, create one
-    if (data.teamName && teams.length === 0) {
-      const t: TeamProfile = { id: 'default', name: data.teamName, season: '', logoUri: data.logoUrl ?? null };
+    if (serverData?.teamName && teams.length === 0 && serverData.teamName !== '') {
+      const t: TeamProfile = { id: 'default', name: serverData.teamName, season: '', logoUri: serverData.logoUrl ?? null };
       teams = [t];
       activeTeamId = 'default';
-    } else if (data.teamName && activeTeamId) {
-      // Sync active team name from server
-      teams = teams.map(t => t.id === activeTeamId ? { ...t, name: data.teamName, logoUri: data.logoUrl ?? t.logoUri } : t);
     }
+
     return { coach, teams, activeTeamId };
   } catch { return null; }
 }
 
 async function webSave(coach: CoachProfile, teams: TeamProfile[], activeTeamId: string | null) {
-  // Save full state locally
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ coach, teams, activeTeamId }));
-  // Sync name/teamName/logoUrl to server
+  try {
+    const key = storageKey();
+    localStorage.setItem(key, JSON.stringify({ coach, teams, activeTeamId }));
+  } catch {}
   try {
     const { apiPut } = await import('./authStore');
     await apiPut('/profile', toApiProfile(coach, teams, activeTeamId));
@@ -92,46 +95,22 @@ export const useProfile = create<ProfileStore>((set, get) => ({
   teams: [],
   activeTeamId: null,
 
-  setCoach: (c) => {
-    set((s) => ({ coach: { ...s.coach, ...c } }));
-    get().save();
-  },
-
-  addTeam: (t) => {
-    set((s) => ({
-      teams: [...s.teams, t],
-      activeTeamId: s.activeTeamId ?? t.id,
-    }));
-    get().save();
-  },
-
-  updateTeam: (id, t) => {
-    set((s) => ({
-      teams: s.teams.map((tm) => (tm.id === id ? { ...tm, ...t } : tm)),
-    }));
-    get().save();
-  },
-
+  setCoach: (c) => { set((s) => ({ coach: { ...s.coach, ...c } })); get().save(); },
+  addTeam: (t) => { set((s) => ({ teams: [...s.teams, t], activeTeamId: s.activeTeamId ?? t.id })); get().save(); },
+  updateTeam: (id, t) => { set((s) => ({ teams: s.teams.map((tm) => (tm.id === id ? { ...tm, ...t } : tm)) })); get().save(); },
   removeTeam: (id) => {
     set((s) => {
       const teams = s.teams.filter((t) => t.id !== id);
-      const activeTeamId =
-        s.activeTeamId === id ? (teams[0]?.id ?? null) : s.activeTeamId;
-      return { teams, activeTeamId };
+      return { teams, activeTeamId: s.activeTeamId === id ? (teams[0]?.id ?? null) : s.activeTeamId };
     });
     get().save();
   },
-
-  setActiveTeam: (id) => {
-    set({ activeTeamId: id });
-    get().save();
-  },
+  setActiveTeam: (id) => { set({ activeTeamId: id }); get().save(); },
 
   displayName: () => {
     const { coach } = get();
     if (coach.nickname?.trim()) return coach.nickname.trim();
-    const full = [coach.firstName, coach.lastName].filter(Boolean).join(' ');
-    return full || '';
+    return [coach.firstName, coach.lastName].filter(Boolean).join(' ') || '';
   },
 
   activeTeam: () => {
@@ -145,7 +124,7 @@ export const useProfile = create<ProfileStore>((set, get) => ({
         const data = await webLoad();
         if (data) set(data);
       } else {
-        const raw = await AsyncStorage.getItem(STORAGE_KEY);
+        const raw = await AsyncStorage.getItem(BASE_KEY);
         if (raw) {
           const data = JSON.parse(raw);
           set({
@@ -165,7 +144,7 @@ export const useProfile = create<ProfileStore>((set, get) => ({
         await webSave(coach, teams, activeTeamId);
       } else {
         const { coach, teams, activeTeamId } = get();
-        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ coach, teams, activeTeamId }));
+        await AsyncStorage.setItem(BASE_KEY, JSON.stringify({ coach, teams, activeTeamId }));
       }
     } catch (_) {}
   },
