@@ -4,22 +4,19 @@
  */
 import { apiGet, apiPost, apiPut, apiDelete } from "../authStore";
 
-// ─── PROFILE (local only on web — not synced to server) ─────────────────────
+// ─── PROFILE (synced to server per-user) ─────────────────────────────────────
 type Profile = { id: number; name: string; teamName: string; logoUrl?: string | null; createdAt: number };
 
-function loadProfile(): Profile | null {
-  try { const r = localStorage.getItem("cb_profile"); return r ? JSON.parse(r) : null; } catch { return null; }
+export async function getProfile(): Promise<Profile | null> {
+  try {
+    const data = await apiGet("/profile");
+    if (!data) return null;
+    return { id: 1, name: data.name ?? "", teamName: data.teamName ?? "", logoUrl: data.logoUrl ?? null, createdAt: 0 };
+  } catch { return null; }
 }
-function saveProfile(p: Profile) {
-  try { localStorage.setItem("cb_profile", JSON.stringify(p)); } catch {}
-}
-
-export async function getProfile() { return loadProfile(); }
 export async function upsertProfile(data: { name: string; teamName: string; logoUrl?: string | null }) {
-  const existing = loadProfile();
-  const p: Profile = { id: 1, ...data, createdAt: existing?.createdAt ?? Date.now() };
-  saveProfile(p);
-  return p;
+  await apiPut("/profile", data);
+  return { id: 1, ...data, createdAt: 0 };
 }
 
 // ─── PLAYERS ─────────────────────────────────────────────────────────────────
@@ -181,4 +178,9 @@ export async function replaceGoals(
 // ─── PLAYER STATS ─────────────────────────────────────────────────────────────
 export async function computePlayerStats(playerId: string) {
   return apiGet(`/players/${playerId}/stats`);
+}
+
+// ─── SEASON RESET ─────────────────────────────────────────────────────────────
+export async function resetSeason() {
+  return apiDelete("/season");
 }

@@ -6,6 +6,9 @@ export const users = sqliteTable("users", {
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   role: text("role").notNull().default("coach"), // coach | admin
+  name: text("name"),
+  teamName: text("team_name"),
+  logoUrl: text("logo_url"),
   createdAt: integer("created_at").notNull(),
 });
 

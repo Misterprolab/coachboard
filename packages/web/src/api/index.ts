@@ -126,6 +126,51 @@ const app = new Hono()
     return c.json({ code }, 201);
   })
 
+  // ─── PROFILE ──────────────────────────────────────────────────────────────
+  .get('/profile', authMiddleware, async (c) => {
+    const userId = c.get('userId');
+    const [user] = await db.select({
+      id: users.id, email: users.email, role: users.role,
+      name: users.name, teamName: users.teamName, logoUrl: users.logoUrl,
+    }).from(users).where(eq(users.id, userId));
+    if (!user) return c.json({ error: 'not found' }, 404);
+    return c.json({ name: user.name ?? '', teamName: user.teamName ?? '', logoUrl: user.logoUrl ?? null }, 200);
+  })
+  .put('/profile', authMiddleware, async (c) => {
+    const userId = c.get('userId');
+    const body = await c.req.json();
+    await db.update(users).set({
+      name: body.name ?? null,
+      teamName: body.teamName ?? null,
+      logoUrl: body.logoUrl ?? null,
+    }).where(eq(users.id, userId));
+    return c.json({ success: true }, 200);
+  })
+
+  // ─── SEASON RESET ─────────────────────────────────────────────────────────
+  .delete('/season', authMiddleware, async (c) => {
+    const userId = c.get('userId');
+    // Delete all matches (cascades: convocations, lineup, goals)
+    const userMatches = await db.select({ id: matches.id }).from(matches).where(eq(matches.userId, userId));
+    for (const m of userMatches) {
+      await db.delete(matchGoals).where(eq(matchGoals.matchId, m.id));
+      await db.delete(matchLineup).where(eq(matchLineup.matchId, m.id));
+      await db.delete(matchConvocations).where(eq(matchConvocations.matchId, m.id));
+    }
+    await db.delete(matches).where(eq(matches.userId, userId));
+    // Delete all players
+    await db.delete(players).where(eq(players.userId, userId));
+    // Delete all sessions (cascades: sessionExercises)
+    const userSessions = await db.select({ id: sessions.id }).from(sessions).where(eq(sessions.userId, userId));
+    for (const s of userSessions) {
+      await db.delete(sessionExercises).where(eq(sessionExercises.sessionId, s.id));
+    }
+    await db.delete(sessions).where(eq(sessions.userId, userId));
+    // Delete custom exercises
+    await db.delete(exercises).where(and(eq(exercises.userId, userId), eq(exercises.isCustom, true)));
+    return c.json({ success: true }, 200);
+  })
+
   // ─── ADMIN: INVITE CODES ───────────────────────────────────────────────────
   .post('/admin/invite-codes', authMiddleware, adminMiddleware, async (c) => {
     const userId = c.get('userId');

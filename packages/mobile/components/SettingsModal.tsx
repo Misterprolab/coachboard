@@ -10,6 +10,7 @@ import type { ThemeColors, ThemeId } from '../lib/themeStore';
 import { useI18n } from '../lib/i18n';
 import { useProfile, TeamProfile } from '../lib/profile';
 import { clearAuth, getEmail, getRole, authHeaders } from '../lib/authStore';
+import { resetSeason } from '../lib/db/queries.web';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
 type Section = 'menu' | 'profile' | 'team' | 'language' | 'team-edit' | 'theme' | 'info' | 'invite';
@@ -41,6 +42,33 @@ export default function SettingsModal({ visible, onClose }: Props) {
     clearAuth();
     onClose();
     router.replace('/login');
+  };
+
+  const [resetLoading, setResetLoading] = useState(false);
+  const handleResetSeason = () => {
+    Alert.alert(
+      'Nuova stagione',
+      'Questa operazione eliminerà definitivamente tutte le partite, i giocatori e le sedute. Vuoi continuare?',
+      [
+        { text: 'Annulla', style: 'cancel' },
+        {
+          text: 'Reimposta',
+          style: 'destructive',
+          onPress: async () => {
+            setResetLoading(true);
+            try {
+              await resetSeason();
+              Alert.alert('Fatto', 'Stagione reimpostata. Puoi ricominciare da capo.');
+              onClose();
+            } catch (e) {
+              Alert.alert('Errore', 'Impossibile reimpostare la stagione.');
+            } finally {
+              setResetLoading(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const [section, setSection] = useState<Section>('menu');
@@ -208,7 +236,21 @@ export default function SettingsModal({ visible, onClose }: Props) {
       )}
 
       {Platform.OS === 'web' && userEmail && (
-        <TouchableOpacity style={[s.menuItem, { marginTop: 8, borderTopWidth: 1, borderTopColor: c.border }]} onPress={handleLogout}>
+        <TouchableOpacity
+          style={[s.menuItem, { marginTop: 8, borderTopWidth: 1, borderTopColor: c.border, opacity: resetLoading ? 0.5 : 1 }]}
+          onPress={handleResetSeason}
+          disabled={resetLoading}
+        >
+          <View style={s.menuIcon}><Trash color="#e67e22" size={20} weight="fill" /></View>
+          <View style={s.menuText}>
+            <Text style={[s.menuTitle, { color: '#e67e22' }]}>{t('Nuova stagione', 'New season')}</Text>
+            <Text style={s.menuSub}>{t('Azzera partite, rosa e sedute', 'Reset matches, squad & sessions')}</Text>
+          </View>
+        </TouchableOpacity>
+      )}
+
+      {Platform.OS === 'web' && userEmail && (
+        <TouchableOpacity style={[s.menuItem, { borderTopWidth: 1, borderTopColor: c.border }]} onPress={handleLogout}>
           <View style={s.menuIcon}><SignOut color="#e74c3c" size={20} weight="fill" /></View>
           <View style={s.menuText}>
             <Text style={[s.menuTitle, { color: '#e74c3c' }]}>{t('Esci', 'Log out')}</Text>
