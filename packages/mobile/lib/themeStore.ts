@@ -174,7 +174,12 @@ interface ThemeStore {
   _persist: () => Promise<void>;
 }
 
-const STORAGE_KEY = 'misterprolab_theme_v1';
+function themeStorageKey(): string {
+  try {
+    const email = localStorage.getItem('cb_auth_email') ?? 'default';
+    return `misterprolab_theme_v1_${email}`;
+  } catch { return 'misterprolab_theme_v1'; }
+}
 
 function resolveColors(id: ThemeId, customPrimary: string, customAccent: string): ThemeColors {
   switch (id) {
@@ -204,21 +209,26 @@ export const useTheme = create<ThemeStore>((set, get) => ({
 
   load: async () => {
     try {
-      const raw = await AsyncStorage.getItem(STORAGE_KEY);
+      const key = themeStorageKey();
+      const raw = await AsyncStorage.getItem(key);
       if (raw) {
         const data = JSON.parse(raw);
         const id: ThemeId = data.themeId ?? 'green';
         const cp = data.customPrimary ?? '#e63946';
         const ca = data.customAccent ?? '#f1c40f';
         set({ themeId: id, customPrimary: cp, customAccent: ca, colors: resolveColors(id, cp, ca) });
+      } else {
+        // Nessun tema salvato per questo utente → reset al default
+        set({ themeId: 'green', customPrimary: '#e63946', customAccent: '#f1c40f', colors: PRESET_GREEN });
       }
     } catch (_) {}
   },
 
   _persist: async () => {
     try {
+      const key = themeStorageKey();
       const { themeId, customPrimary, customAccent } = get();
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ themeId, customPrimary, customAccent }));
+      await AsyncStorage.setItem(key, JSON.stringify({ themeId, customPrimary, customAccent }));
     } catch (_) {}
   },
 }));

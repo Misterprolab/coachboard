@@ -7,12 +7,14 @@ import {
 import { useRouter } from "expo-router";
 import { setAuth } from "../lib/authStore";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTheme } from "../lib/themeStore";
 
 type Mode = "login" | "register";
 
 export default function LoginScreen() {
   const router = useRouter();
   const qc = useQueryClient();
+  const loadTheme = useTheme((s) => s.load);
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -52,6 +54,7 @@ export default function LoginScreen() {
 
       setAuth(data.token, data.role, email.trim().toLowerCase());
       qc.clear();
+      await loadTheme();
       router.replace("/");
     } catch (e: any) {
       setError("Errore di rete. Riprova.");

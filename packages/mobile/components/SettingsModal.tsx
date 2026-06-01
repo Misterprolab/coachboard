@@ -12,6 +12,7 @@ import { useProfile, TeamProfile } from '../lib/profile';
 import { clearAuth, getEmail, getRole, authHeaders } from '../lib/authStore';
 import { resetSeason } from '../lib/db/queries.web';
 import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import Constants from 'expo-constants';
 type Section = 'menu' | 'profile' | 'team' | 'language' | 'team-edit' | 'theme' | 'info' | 'invite';
 
@@ -32,6 +33,7 @@ export default function SettingsModal({ visible, onClose }: Props) {
   const { t, lang, setLang } = useI18n();
   const { coach, teams, activeTeamId, setCoach, addTeam, updateTeam, removeTeam, setActiveTeam } = useProfile();
   const router = useRouter();
+  const qc = useQueryClient();
 
   // Auth state (web only)
   const userEmail = Platform.OS === 'web' ? getEmail() : null;
@@ -54,6 +56,7 @@ export default function SettingsModal({ visible, onClose }: Props) {
     setResetLoading(true);
     try {
       await resetSeason();
+      qc.clear();
       setShowResetConfirm(false);
       setResetDone(true);
     } catch (e) {
@@ -609,7 +612,7 @@ export default function SettingsModal({ visible, onClose }: Props) {
             </Text>
             <TouchableOpacity
               style={{ paddingVertical: 12, paddingHorizontal: 32, borderRadius: 8, backgroundColor: c.primary }}
-              onPress={() => { setResetDone(false); onClose(); }}
+              onPress={() => { setResetDone(false); onClose(); router.replace('/'); }}
             >
               <Text style={{ color: '#fff', fontWeight: '700' }}>{t('Ok', 'Ok')}</Text>
             </TouchableOpacity>
