@@ -81,8 +81,12 @@ export async function deleteSession(id: string) {
   await apiDelete(`/sessions/${id}`);
 }
 export async function addExerciseToSession(sessionId: string, exerciseId: string, order: number, opts?: { customDuration?: number | null; notes?: string | null }) {
-  // This is handled at session creation via POST /sessions with exercises array
-  // For adding after creation, we'd need a separate endpoint — skip for now
+  return apiPost(`/sessions/${sessionId}/exercises`, {
+    exerciseId,
+    order,
+    customDuration: opts?.customDuration ?? null,
+    notes: opts?.notes ?? null,
+  });
 }
 export async function removeExerciseFromSession(id: string) {
   // No direct endpoint — handled at session level
@@ -156,8 +160,7 @@ export async function addGoal(matchId: string, data: any) {
   return newGoal.id;
 }
 export async function removeGoal(goalId: string) {
-  // Need matchId to remove — this pattern doesn't work well with the API
-  // Store locally as a workaround
+  return apiDelete(`/goals/${goalId}`);
 }
 
 // ─── PLAYER STATS ─────────────────────────────────────────────────────────────

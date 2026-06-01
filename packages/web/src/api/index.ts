@@ -1492,6 +1492,20 @@ const app = new Hono()
     }
     return c.json(session, 201);
   })
+  .post('/sessions/:id/exercises', authMiddleware, async (c) => {
+    const sessionId = c.req.param('id');
+    const body = await c.req.json(); // { exerciseId, order, customDuration?, notes? }
+    const item = {
+      id: randomUUID(),
+      sessionId,
+      exerciseId: body.exerciseId,
+      order: body.order ?? 0,
+      customDuration: body.customDuration ?? null,
+      notes: body.notes ?? null,
+    };
+    await db.insert(sessionExercises).values(item);
+    return c.json(item, 201);
+  })
   .delete('/sessions/:id', authMiddleware, async (c) => {
     const id = c.req.param('id');
     await db.delete(sessions).where(eq(sessions.id, id));
@@ -1662,6 +1676,19 @@ const app = new Hono()
       goalsFor: finalGoalsFor,
       goalsAgainst: finalGoalsAgainst,
     }).where(eq(matches.id, matchId));
+    return c.json({ success: true }, 200);
+  })
+
+  .delete('/matches/:matchId/goals/:goalId', authMiddleware, async (c) => {
+    const { matchId, goalId } = c.req.param();
+    await db.delete(matchGoals).where(
+      and(eq(matchGoals.id, goalId), eq(matchGoals.matchId, matchId))
+    );
+    return c.json({ success: true }, 200);
+  })
+  .delete('/goals/:goalId', authMiddleware, async (c) => {
+    const goalId = c.req.param('goalId');
+    await db.delete(matchGoals).where(eq(matchGoals.id, goalId));
     return c.json({ success: true }, 200);
   })
 
