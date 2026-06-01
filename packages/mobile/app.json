@@ -23,8 +23,8 @@
       "backgroundColor": "#1a472a"
     },
     "owner": "Misterprolab",
-    "name": "Misterprolab",
-    "slug": "misterprolab",
+    "name": "CoachBoard",
+    "slug": "coachboard",
     "version": "1.0.0",
     "scheme": "misterprolab",
     "orientation": "portrait",
@@ -32,7 +32,19 @@
     "newArchEnabled": true,
     "web": {
       "favicon": "./assets/favicon.png",
-      "bundler": "metro"
+      "bundler": "metro",
+      "name": "CoachBoard",
+      "shortName": "CoachBoard",
+      "description": "Gestione squadra di calcio",
+      "themeColor": "#1a472a",
+      "backgroundColor": "#1a472a",
+      "display": "standalone",
+      "orientation": "portrait",
+      "icon": "./assets/pwa-icons/icon-512.png",
+      "splash": {
+        "image": "./assets/splash-icon.png",
+        "backgroundColor": "#1a472a"
+      }
     },
     "plugins": [
       "expo-router",
