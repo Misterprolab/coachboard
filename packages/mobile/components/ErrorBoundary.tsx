@@ -44,11 +44,34 @@ export class ErrorBoundary extends Component<Props, State> {
     });
   };
 
+  // Errors that are non-fatal / transient and should not show the crash screen
+  private isIgnoredError(message: string): boolean {
+    const ignored = [
+      "expo-sqlite",
+      "NativeModule",
+      "ExpoSQLite",
+      "Network request failed",
+      "The string did not match",
+      "Cannot read properties of null",
+      "ResizeObserver loop",
+      "undefined is not an object",
+      "null is not an object",
+      "Script error",
+    ];
+    return ignored.some((s) => message.includes(s));
+  }
+
   private addError(entry: ErrorEntry) {
+    if (this.isIgnoredError(entry.message)) return;
     this.setState((prev) => {
       // Dedupe by message
       if (prev.errors.some((e) => e.message === entry.message)) return null;
-      return { errors: [...prev.errors, entry] };
+      const newErrors = [...prev.errors, entry];
+      // Auto-retry after 1.5s for the first error (handles transient init errors)
+      if (prev.errors.length === 0) {
+        setTimeout(() => this.retry(), 1500);
+      }
+      return { errors: newErrors };
     });
   }
 

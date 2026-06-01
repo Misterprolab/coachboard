@@ -158,6 +158,20 @@ export async function removeGoal(goalId: string) {
   return apiDelete(`/goals/${goalId}`);
 }
 
+// ─── REPLACE ALL GOALS (atomic) ──────────────────────────────────────────────
+export async function replaceGoals(
+  matchId: string,
+  goals: { playerId: string | null; minute: number | null; type: string; notes: string | null }[],
+  goalsFor: number | null,
+  goalsAgainst: number | null
+) {
+  return apiPut(`/matches/${matchId}/goals`, {
+    goals,
+    goalsFor,
+    goalsAgainst,
+  });
+}
+
 // ─── PLAYER STATS ─────────────────────────────────────────────────────────────
 export async function computePlayerStats(playerId: string) {
   return apiGet(`/players/${playerId}/stats`);

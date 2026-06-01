@@ -16,7 +16,7 @@ import {
 
 import {
   getMatch, getPlayers, updateMatch as dbUpdateMatch, deleteMatch as dbDeleteMatch,
-  setConvocations, setLineup as dbSetLineup, addGoal as dbAddGoal, removeGoal,
+  setConvocations, setLineup as dbSetLineup, replaceGoals as dbReplaceGoals,
 } from "../../lib/db/queries";
 
 type Player = { id: string; name: string; number?: number; role: string };
@@ -1019,26 +1019,27 @@ function RisultatoSection({ match, allPlayers, id, qc, c }: { match: Match; allP
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      // 1. Update score + subs + cards on the match row
+      const gf = goalsFor !== "" ? parseInt(goalsFor) : null;
+      const ga = goalsAgainst !== "" ? parseInt(goalsAgainst) : null;
       const subsList = subs.map(s => ({ playerOutId: s.playerOutId, playerInId: s.playerInId, minute: s.minute ? parseInt(s.minute) : null }));
       const cardsList = cards.map(cd => ({ playerId: cd.playerId, type: cd.type, minute: cd.minute ? parseInt(cd.minute) : null, notes: cd.notes || null }));
-      await dbUpdateMatch(id, {
-        goalsFor: goalsFor !== "" ? parseInt(goalsFor) : null,
-        goalsAgainst: goalsAgainst !== "" ? parseInt(goalsAgainst) : null,
-        substitutions: JSON.stringify(subsList),
-        cards: JSON.stringify(cardsList),
-      });
-      // 2. Sync goals: delete all then re-insert
-      const existingGoals = match.goals ?? [];
-      for (const g of existingGoals) { if (g.id) await removeGoal(g.id); }
-      for (const g of goals) {
-        await dbAddGoal(id, {
+      // Atomic: replace all goals + update score in one call
+      await dbReplaceGoals(
+        id,
+        goals.map(g => ({
           playerId: g.playerId || null,
           minute: g.minute ? parseInt(g.minute) : null,
           type: g.type,
           notes: g.notes || null,
-        });
-      }
+        })),
+        gf,
+        ga
+      );
+      // Update subs + cards
+      await dbUpdateMatch(id, {
+        substitutions: JSON.stringify(subsList),
+        cards: JSON.stringify(cardsList),
+      });
     },
     onSuccess: () => {
       setLastSaved({ gf: goalsFor !== "" ? parseInt(goalsFor) : null, ga: goalsAgainst !== "" ? parseInt(goalsAgainst) : null });
