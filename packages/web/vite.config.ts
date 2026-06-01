@@ -18,6 +18,9 @@ export default defineConfig(({ mode }) => {
 				"@": path.resolve(__dirname, "./src/web"),
 			},
 		},
+		build: {
+			outDir: "dist-web",
+		},
 		server: {
 			allowedHosts: true,
 			hmr: { overlay: false, },
