@@ -4,7 +4,7 @@ import {
   ScrollView, StyleSheet, Image, Alert, Platform, Linking, Clipboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { X, User, UsersThree, Translate, PencilSimple, Trash, Plus, Check, CaretRight, Palette, Info, SignOut, Key } from 'phosphor-react-native';
+import { X, User, UsersThree, Translate, PencilSimple, Trash, Plus, Check, CaretRight, Palette, Info, SignOut, Key, Crown } from 'phosphor-react-native';
 import { useTheme, PRESET_GREEN, PRESET_DARK, PRESET_LIGHT } from '../lib/themeStore';
 import type { ThemeColors, ThemeId } from '../lib/themeStore';
 import { useI18n } from '../lib/i18n';
@@ -14,7 +14,7 @@ import { resetSeason } from '../lib/db/queries.web';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import Constants from 'expo-constants';
-type Section = 'menu' | 'profile' | 'team' | 'language' | 'team-edit' | 'theme' | 'info' | 'invite';
+type Section = 'menu' | 'profile' | 'team' | 'language' | 'team-edit' | 'theme' | 'info' | 'invite' | 'users';
 
 interface Props {
   visible: boolean;
@@ -88,6 +88,42 @@ export default function SettingsModal({ visible, onClose }: Props) {
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [generatingCode, setGeneratingCode] = useState(false);
   const [existingCodes, setExistingCodes] = useState<any[]>([]);
+
+  // Users/licenze state (admin)
+  const [usersList, setUsersList] = useState<any[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editExpiryInput, setEditExpiryInput] = useState(''); // YYYY-MM-DD
+  const [editStatusInput, setEditStatusInput] = useState('active');
+  const [savingLicense, setSavingLicense] = useState(false);
+
+  const loadUsers = async () => {
+    setUsersLoading(true);
+    try {
+      const res = await fetch('/api/admin/users', { headers: authHeaders() });
+      if (res.ok) setUsersList(await res.json());
+    } catch {} finally { setUsersLoading(false); }
+  };
+
+  const saveLicense = async (userId: string) => {
+    setSavingLicense(true);
+    try {
+      // Converti YYYY-MM-DD → ISO string per la API
+      const expiryIso = editExpiryInput ? `${editExpiryInput}T23:59:59.000Z` : null;
+      const res = await fetch(`/api/admin/users/${userId}/subscription`, {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify({ status: editStatusInput, expiry: expiryIso }),
+      });
+      if (res.ok) {
+        setEditingUserId(null);
+        loadUsers();
+      } else {
+        Alert.alert('Errore', 'Salvataggio fallito');
+      }
+    } catch { Alert.alert('Errore', 'Errore di rete'); }
+    finally { setSavingLicense(false); }
+  };
 
   const generateInviteCode = async () => {
     setGeneratingCode(true);
@@ -226,6 +262,17 @@ export default function SettingsModal({ visible, onClose }: Props) {
           <View style={s.menuText}>
             <Text style={s.menuTitle}>{t('Codici Invito', 'Invite Codes')}</Text>
             <Text style={s.menuSub}>{t('Genera codici per nuovi utenti', 'Generate codes for new users')}</Text>
+          </View>
+          <CaretRight color={c.textDim} size={16} />
+        </TouchableOpacity>
+      )}
+
+      {Platform.OS === 'web' && isAdmin && (
+        <TouchableOpacity style={s.menuItem} onPress={() => { loadUsers(); setEditingUserId(null); setSection('users'); }}>
+          <View style={s.menuIcon}><Crown color="#9b59b6" size={20} weight="fill" /></View>
+          <View style={s.menuText}>
+            <Text style={s.menuTitle}>{t('Utenti & Licenze', 'Users & Licenses')}</Text>
+            <Text style={s.menuSub}>{t('Gestisci scadenze licenze', 'Manage license expiry')}</Text>
           </View>
           <CaretRight color={c.textDim} size={16} />
         </TouchableOpacity>
@@ -521,6 +568,101 @@ export default function SettingsModal({ visible, onClose }: Props) {
     </ScrollView>
   );
 
+  const renderUsers = () => (
+    <ScrollView style={s.form}>
+      <Text style={s.hint}>{t('Gestisci lo stato della licenza di ogni utente. Imposta data di scadenza e stato.', 'Manage each user\'s license. Set expiry date and status.')}</Text>
+      {usersLoading && <Text style={{ color: c.textDim, textAlign: 'center', marginTop: 20 }}>{t('Caricamento...', 'Loading...')}</Text>}
+      {usersList.filter(u => u.role !== 'admin').map((u: any) => {
+        const isEditing = editingUserId === u.id;
+        const expired = u.subscriptionExpired;
+        const expiryDate = u.subscriptionExpiry ? new Date(u.subscriptionExpiry).toLocaleDateString('it-IT') : '—';
+        const statusColor = u.subscriptionStatus === 'active' ? c.primary : u.subscriptionStatus === 'trial' ? '#f39c12' : '#e74c3c';
+        return (
+          <View key={u.id} style={{ backgroundColor: c.bgCard, borderRadius: 12, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: expired ? '#e74c3c44' : c.border }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: c.text, fontWeight: '700', fontSize: 14 }}>{u.name || u.email}</Text>
+                {u.name && <Text style={{ color: c.textDim, fontSize: 11, marginTop: 1 }}>{u.email}</Text>}
+                {u.teamName && <Text style={{ color: c.textDim, fontSize: 11 }}>{u.teamName}</Text>}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                  <View style={{ backgroundColor: statusColor + '22', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
+                    <Text style={{ color: statusColor, fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>{u.subscriptionStatus}</Text>
+                  </View>
+                  <Text style={{ color: expired ? '#e74c3c' : c.textDim, fontSize: 11 }}>
+                    {expired ? '⚠ ' : ''}{t('Scade', 'Expires')}: {expiryDate}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  if (isEditing) { setEditingUserId(null); return; }
+                  setEditingUserId(u.id);
+                  setEditStatusInput(u.subscriptionStatus ?? 'active');
+                  // Converti timestamp → YYYY-MM-DD per l'input
+                  if (u.subscriptionExpiry) {
+                    const d = new Date(u.subscriptionExpiry);
+                    const yyyy = d.getFullYear();
+                    const mm = String(d.getMonth() + 1).padStart(2, '0');
+                    const dd = String(d.getDate()).padStart(2, '0');
+                    setEditExpiryInput(`${yyyy}-${mm}-${dd}`);
+                  } else {
+                    setEditExpiryInput('');
+                  }
+                }}
+                style={{ backgroundColor: isEditing ? c.border : c.primary + '22', borderRadius: 8, padding: 8 }}
+              >
+                <Text style={{ color: isEditing ? c.textMuted : c.primary, fontSize: 12, fontWeight: '700' }}>
+                  {isEditing ? t('Annulla', 'Cancel') : t('Modifica', 'Edit')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {isEditing && (
+              <View style={{ marginTop: 12, borderTopWidth: 1, borderTopColor: c.border, paddingTop: 12 }}>
+                <Text style={s.sectionLabel}>{t('Stato licenza', 'License status')}</Text>
+                <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+                  {(['trial', 'active', 'expired'] as const).map(st => (
+                    <TouchableOpacity
+                      key={st}
+                      onPress={() => setEditStatusInput(st)}
+                      style={{
+                        flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center',
+                        backgroundColor: editStatusInput === st ? (st === 'active' ? c.primary : st === 'trial' ? '#f39c12' : '#e74c3c') : c.bgCard,
+                        borderWidth: 1, borderColor: editStatusInput === st ? 'transparent' : c.border,
+                      }}
+                    >
+                      <Text style={{ color: editStatusInput === st ? '#000' : c.textDim, fontSize: 12, fontWeight: '700', textTransform: 'uppercase' }}>{st}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <Text style={s.sectionLabel}>{t('Scadenza (YYYY-MM-DD)', 'Expiry (YYYY-MM-DD)')}</Text>
+                <TextInput
+                  style={[s.input, { marginBottom: 12 }]}
+                  value={editExpiryInput}
+                  onChangeText={setEditExpiryInput}
+                  placeholder="2026-08-31"
+                  placeholderTextColor={c.textDim}
+                  keyboardType="numbers-and-punctuation"
+                />
+                <TouchableOpacity
+                  style={[s.saveBtn, { opacity: savingLicense ? 0.6 : 1 }]}
+                  onPress={() => saveLicense(u.id)}
+                  disabled={savingLicense}
+                >
+                  <Check color={c.bg} size={16} weight="bold" />
+                  <Text style={s.saveBtnText}>{savingLicense ? t('Salvataggio...', 'Saving...') : t('Salva licenza', 'Save license')}</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        );
+      })}
+      {!usersLoading && usersList.filter(u => u.role !== 'admin').length === 0 && (
+        <Text style={{ color: c.textDim, textAlign: 'center', marginTop: 32 }}>{t('Nessun utente registrato', 'No users registered')}</Text>
+      )}
+    </ScrollView>
+  );
+
   const sectionTitle = () => {
     switch (section) {
       case 'profile':   return t('Profilo', 'Profile');
@@ -530,6 +672,7 @@ export default function SettingsModal({ visible, onClose }: Props) {
       case 'theme':     return t('Tema', 'Theme');
       case 'info':      return t('Informazioni', 'About');
       case 'invite':    return t('Codici Invito', 'Invite Codes');
+      case 'users':     return t('Utenti & Licenze', 'Users & Licenses');
       default:          return t('Impostazioni', 'Settings');
     }
   };
@@ -561,6 +704,7 @@ export default function SettingsModal({ visible, onClose }: Props) {
           {section === 'theme'     && renderTheme()}
           {section === 'info'      && renderInfo()}
           {section === 'invite'    && renderInvite()}
+          {section === 'users'     && renderUsers()}
         </View>
       </SafeAreaView>
 

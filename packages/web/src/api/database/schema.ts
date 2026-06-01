@@ -10,6 +10,9 @@ export const users = sqliteTable("users", {
   teamName: text("team_name"),
   logoUrl: text("logo_url"),
   createdAt: integer("created_at").notNull(),
+  // Licenza
+  subscriptionStatus: text("subscription_status").notNull().default("trial"), // trial | active | expired
+  subscriptionExpiry: integer("subscription_expiry"), // Unix ms timestamp
 });
 
 // ─── INVITE CODES ─────────────────────────────────────────────────────────────

@@ -78,8 +78,28 @@ const app = new Hono()
     if (!user) return c.json({ error: 'Credenziali non valide' }, 401);
     const valid = await Bun.password.verify(password, user.passwordHash);
     if (!valid) return c.json({ error: 'Credenziali non valide' }, 401);
+    // Verifica scadenza licenza (admin è sempre attivo)
+    const now = Date.now();
+    let subStatus = user.subscriptionStatus ?? 'trial';
+    let subExpiry = user.subscriptionExpiry ?? null;
+    if (user.role !== 'admin') {
+      if (subExpiry && now > subExpiry) {
+        // Auto-aggiorna status a expired se non già
+        if (subStatus !== 'expired') {
+          await db.update(users).set({ subscriptionStatus: 'expired' }).where(eq(users.id, user.id));
+          subStatus = 'expired';
+        }
+      }
+    }
     const token = await makeToken({ userId: user.id, email: user.email, role: user.role });
-    return c.json({ token, role: user.role }, 200);
+    const subscriptionExpired = user.role !== 'admin' && !!subExpiry && now > subExpiry;
+    return c.json({
+      token,
+      role: user.role,
+      subscriptionStatus: subStatus,
+      subscriptionExpiry: subExpiry,
+      subscriptionExpired,
+    }, 200);
   })
   .post('/auth/register', async (c) => {
     const { email, password, inviteCode } = await c.req.json();
@@ -97,7 +117,17 @@ const app = new Hono()
     const userId = isAdmin ? 'system-admin' : randomUUID();
     const hash = await Bun.password.hash(password);
     const now = Date.now();
-    const user = { id: userId, email: email.toLowerCase().trim(), passwordHash: hash, role: isAdmin ? 'admin' : 'coach', createdAt: now };
+    // Trial di 15 giorni per i nuovi utenti coach; admin non ha scadenza
+    const trialExpiry = isAdmin ? null : now + 15 * 24 * 60 * 60 * 1000;
+    const user = {
+      id: userId,
+      email: email.toLowerCase().trim(),
+      passwordHash: hash,
+      role: isAdmin ? 'admin' : 'coach',
+      createdAt: now,
+      subscriptionStatus: isAdmin ? 'active' : 'trial',
+      subscriptionExpiry: trialExpiry,
+    };
     await db.insert(users).values(user);
     // Mark invite as used
     await db.update(inviteCodes).set({ usedBy: userId, usedAt: now }).where(eq(inviteCodes.code, inviteCode.trim()));
@@ -182,6 +212,36 @@ const app = new Hono()
   .get('/admin/invite-codes', authMiddleware, adminMiddleware, async (c) => {
     const all = await db.select().from(inviteCodes).where(eq(inviteCodes.createdBy, c.get('userId')));
     return c.json(all, 200);
+  })
+
+  // ─── ADMIN: USERS (licenze) ────────────────────────────────────────────────
+  .get('/admin/users', authMiddleware, adminMiddleware, async (c) => {
+    const all = await db.select({
+      id: users.id, email: users.email, role: users.role,
+      name: users.name, teamName: users.teamName,
+      createdAt: users.createdAt,
+      subscriptionStatus: users.subscriptionStatus,
+      subscriptionExpiry: users.subscriptionExpiry,
+    }).from(users);
+    // Auto-calcola expired runtime
+    const now = Date.now();
+    const result = all.map(u => ({
+      ...u,
+      subscriptionExpired: u.role !== 'admin' && !!u.subscriptionExpiry && now > u.subscriptionExpiry,
+    }));
+    return c.json(result, 200);
+  })
+  .put('/admin/users/:id/subscription', authMiddleware, adminMiddleware, async (c) => {
+    const id = c.req.param('id');
+    const body = await c.req.json(); // { status: 'active'|'trial'|'expired', expiry: ISO string | null }
+    const patch: Record<string, any> = {};
+    if ('status' in body) patch.subscriptionStatus = body.status;
+    if ('expiry' in body) {
+      patch.subscriptionExpiry = body.expiry ? new Date(body.expiry).getTime() : null;
+    }
+    if (Object.keys(patch).length === 0) return c.json({ error: 'Nessun dato' }, 400);
+    await db.update(users).set(patch).where(eq(users.id, id));
+    return c.json({ success: true }, 200);
   })
 
   // ─── SEED default exercises ───────────────────────────────────────────────

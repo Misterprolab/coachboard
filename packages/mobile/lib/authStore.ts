@@ -7,6 +7,9 @@ import { Platform } from "react-native";
 const TOKEN_KEY = "cb_auth_token";
 const ROLE_KEY = "cb_auth_role";
 const EMAIL_KEY = "cb_auth_email";
+const SUB_EXPIRED_KEY = "cb_sub_expired";
+const SUB_EXPIRY_KEY = "cb_sub_expiry";
+const SUB_STATUS_KEY = "cb_sub_status";
 
 export function getToken(): string | null {
   if (Platform.OS !== "web") return null;
@@ -23,13 +26,43 @@ export function getEmail(): string | null {
   try { return localStorage.getItem(EMAIL_KEY); } catch { return null; }
 }
 
-export function setAuth(token: string, role: string, email: string) {
+export function setAuth(
+  token: string,
+  role: string,
+  email: string,
+  opts?: { subscriptionExpired?: boolean; subscriptionExpiry?: number | null; subscriptionStatus?: string }
+) {
   if (Platform.OS !== "web") return;
   try {
     localStorage.setItem(TOKEN_KEY, token);
     localStorage.setItem(ROLE_KEY, role);
     localStorage.setItem(EMAIL_KEY, email);
+    localStorage.setItem(SUB_EXPIRED_KEY, opts?.subscriptionExpired ? "1" : "0");
+    localStorage.setItem(SUB_STATUS_KEY, opts?.subscriptionStatus ?? "trial");
+    if (opts?.subscriptionExpiry != null) {
+      localStorage.setItem(SUB_EXPIRY_KEY, String(opts.subscriptionExpiry));
+    } else {
+      localStorage.removeItem(SUB_EXPIRY_KEY);
+    }
   } catch {}
+}
+
+export function isSubscriptionExpired(): boolean {
+  if (Platform.OS !== "web") return false;
+  try { return localStorage.getItem(SUB_EXPIRED_KEY) === "1"; } catch { return false; }
+}
+
+export function getSubscriptionExpiry(): number | null {
+  if (Platform.OS !== "web") return null;
+  try {
+    const v = localStorage.getItem(SUB_EXPIRY_KEY);
+    return v ? Number(v) : null;
+  } catch { return null; }
+}
+
+export function getSubscriptionStatus(): string {
+  if (Platform.OS !== "web") return "active";
+  try { return localStorage.getItem(SUB_STATUS_KEY) ?? "trial"; } catch { return "trial"; }
 }
 
 export function clearAuth() {
@@ -38,6 +71,9 @@ export function clearAuth() {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(ROLE_KEY);
     localStorage.removeItem(EMAIL_KEY);
+    localStorage.removeItem(SUB_EXPIRED_KEY);
+    localStorage.removeItem(SUB_EXPIRY_KEY);
+    localStorage.removeItem(SUB_STATUS_KEY);
   } catch {}
 }
 

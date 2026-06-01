@@ -52,7 +52,11 @@ export default function LoginScreen() {
         return;
       }
 
-      setAuth(data.token, data.role, email.trim().toLowerCase());
+      setAuth(data.token, data.role, email.trim().toLowerCase(), {
+        subscriptionExpired: data.subscriptionExpired ?? false,
+        subscriptionExpiry: data.subscriptionExpiry ?? null,
+        subscriptionStatus: data.subscriptionStatus ?? "trial",
+      });
       qc.clear();
       await loadTheme();
       router.replace("/");

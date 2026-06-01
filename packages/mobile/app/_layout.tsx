@@ -9,7 +9,8 @@ import { useTheme } from "../lib/themeStore";
 import { useDbInit } from "../lib/useDbInit";
 import { View, Text, ActivityIndicator, Platform } from "react-native";
 import { isDbStub } from "../lib/db/client";
-import { isLoggedIn } from "../lib/authStore";
+import { isLoggedIn, isSubscriptionExpired, getRole } from "../lib/authStore";
+import SubscriptionExpiredScreen from "../components/SubscriptionExpiredScreen";
 import appJson from "../app.json";
 
 // Hide web splash screen once React mounts
@@ -25,6 +26,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const segments = useSegments();
   const [checked, setChecked] = useState(false);
+  const [subExpired, setSubExpired] = useState(false);
 
   useEffect(() => {
     if (Platform.OS !== "web") { setChecked(true); return; }
@@ -32,13 +34,23 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     const inLoginPage = segments[0] === "login";
     if (!loggedIn && !inLoginPage) {
       router.replace("/login");
+      setChecked(true);
+      return;
     } else if (loggedIn && inLoginPage) {
       router.replace("/");
+      setChecked(true);
+      return;
+    }
+    // Admin bypassa sempre il controllo licenza
+    const role = getRole();
+    if (role !== 'admin' && isSubscriptionExpired()) {
+      setSubExpired(true);
     }
     setChecked(true);
   }, [segments]);
 
   if (!checked) return null;
+  if (subExpired) return <SubscriptionExpiredScreen />;
   return <>{children}</>;
 }
 
