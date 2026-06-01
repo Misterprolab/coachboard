@@ -71,11 +71,7 @@ export async function createSession(data: any) {
   return apiPost("/sessions", data);
 }
 export async function updateSession(id: string, data: any) {
-  // No PUT /sessions/:id endpoint — use POST with full data (or skip)
-  // For now, delete and recreate isn't ideal; we'll handle this via a patch approach
-  // The API doesn't have PUT /sessions/:id, so we store locally as fallback
-  try { localStorage.setItem("cb_session_patch_" + id, JSON.stringify(data)); } catch {}
-  return { id, ...data };
+  return apiPut(`/sessions/${id}`, data);
 }
 export async function deleteSession(id: string) {
   await apiDelete(`/sessions/${id}`);
@@ -88,8 +84,8 @@ export async function addExerciseToSession(sessionId: string, exerciseId: string
     notes: opts?.notes ?? null,
   });
 }
-export async function removeExerciseFromSession(id: string) {
-  // No direct endpoint — handled at session level
+export async function removeExerciseFromSession(sessionId: string, exerciseId: string) {
+  await apiDelete(`/sessions/${sessionId}/exercises/${exerciseId}`);
 }
 
 // ─── MATCHES ─────────────────────────────────────────────────────────────────
@@ -137,8 +133,7 @@ export async function setLineup(matchId: string, entries: any[]) {
   await apiPut(`/matches/${matchId}/lineup`, { players: entries });
 }
 export async function updateLineupPlayer(lineupId: string, data: any) {
-  // No direct endpoint for single lineup player update
-  // Would need to fetch full lineup and resubmit — skipped for now
+  return apiPut(`/lineup/${lineupId}`, data);
 }
 
 // ─── GOALS ───────────────────────────────────────────────────────────────────
