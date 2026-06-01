@@ -101,6 +101,12 @@ export async function createMatch(data: any) {
 export async function updateMatch(id: string, data: any) {
   await apiPut(`/matches/${id}`, data);
 }
+export async function updateMatchSubstitutions(matchId: string, substitutions: any[]) {
+  await apiPut(`/matches/${matchId}/substitutions`, { substitutions });
+}
+export async function updateMatchCards(matchId: string, cards: any[]) {
+  await apiPut(`/matches/${matchId}/cards`, { cards });
+}
 export async function deleteMatch(id: string) {
   await apiDelete(`/matches/${id}`);
 }

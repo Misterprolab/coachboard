@@ -16,6 +16,7 @@ import {
 
 import {
   getMatch, getPlayers, updateMatch as dbUpdateMatch, deleteMatch as dbDeleteMatch,
+  updateMatchSubstitutions as dbUpdateMatchSubstitutions, updateMatchCards as dbUpdateMatchCards,
   setConvocations, setLineup as dbSetLineup, replaceGoals as dbReplaceGoals,
 } from "../../lib/db/queries";
 
@@ -1035,11 +1036,9 @@ function RisultatoSection({ match, allPlayers, id, qc, c }: { match: Match; allP
         gf,
         ga
       );
-      // Update subs + cards
-      await dbUpdateMatch(id, {
-        substitutions: subsList,
-        cards: cardsList,
-      });
+      // Update subs + cards via dedicated endpoints
+      await dbUpdateMatchSubstitutions(id, subsList);
+      await dbUpdateMatchCards(id, cardsList);
     },
     onSuccess: () => {
       setLastSaved({ gf: goalsFor !== "" ? parseInt(goalsFor) : null, ga: goalsAgainst !== "" ? parseInt(goalsAgainst) : null });
