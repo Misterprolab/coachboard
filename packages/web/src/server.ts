@@ -3,7 +3,7 @@ import app from "./api";
 const portArgIdx = process.argv.indexOf("--port");
 const portFromArg = portArgIdx !== -1 ? process.argv[portArgIdx + 1] : undefined;
 const port = Number(portFromArg ?? process.env.PORT ?? 3000);
-const distDir = `${import.meta.dir}/../dist`;
+const distDir = `${import.meta.dir}/../expo-dist`;
 const indexPath = `${distDir}/index.html`;
 
 const server = Bun.serve({
