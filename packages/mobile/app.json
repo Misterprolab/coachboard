@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "icon": "./assets/icon.png",
+    "android": {
+      "package": "com.misterprolab.coachboard",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#1a472a"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "extra": {
+      "apiUrl": "https://xvezp9h337yyqdb5pvpko-preview-4200.runable.site/",
+      "applicationId": "xvezp9h337yyqdb5pvpko"
+    },
+    "ios": {
+      "bundleIdentifier": "com.misterprolab.coachboard",
+      "supportsTablet": true
+    },
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#1a472a"
+    },
+    "owner": "Misterprolab",
+    "name": "Misterprolab",
+    "slug": "misterprolab",
+    "version": "1.0.0",
+    "scheme": "misterprolab",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      ["expo-image-picker", {
+        "photosPermission": "Serve per aggiungere foto agli atleti"
+      }]
+    ]
+  }
+}

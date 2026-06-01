@@ -1,0 +1,540 @@
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import {
+  Modal, View, Text, TextInput, TouchableOpacity,
+  ScrollView, StyleSheet, Image, Alert, Platform, Linking,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { X, User, UsersThree, Translate, PencilSimple, Trash, Plus, Check, CaretRight, Palette, Info } from 'phosphor-react-native';
+import { useTheme, PRESET_GREEN, PRESET_DARK, PRESET_LIGHT } from '../lib/themeStore';
+import type { ThemeColors, ThemeId } from '../lib/themeStore';
+import { useI18n } from '../lib/i18n';
+import { useProfile, TeamProfile } from '../lib/profile';
+import Constants from 'expo-constants';
+type Section = 'menu' | 'profile' | 'team' | 'language' | 'team-edit' | 'theme' | 'info';
+
+interface Props {
+  visible: boolean;
+  onClose: () => void;
+}
+
+export default function SettingsModal({ visible, onClose }: Props) {
+  const c = useTheme((s) => s.colors);
+  const s = useMemo(() => mkStyles(c), [c]);
+  const themeId = useTheme((s) => s.themeId);
+  const customPrimary = useTheme((s) => s.customPrimary);
+  const customAccent = useTheme((s) => s.customAccent);
+  const setTheme = useTheme((s) => s.setTheme);
+  const setCustomColors = useTheme((s) => s.setCustomColors);
+
+  const { t, lang, setLang } = useI18n();
+  const { coach, teams, activeTeamId, setCoach, addTeam, updateTeam, removeTeam, setActiveTeam } = useProfile();
+
+  const [section, setSection] = useState<Section>('menu');
+
+  // Profile form
+  const [firstName, setFirstName] = useState(coach.firstName);
+  const [lastName, setLastName] = useState(coach.lastName);
+  const [nickname, setNickname] = useState(coach.nickname);
+
+  // Team edit form
+  const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
+  const [teamName, setTeamName] = useState('');
+  const [teamSeason, setTeamSeason] = useState('');
+  const [teamLogoUri, setTeamLogoUri] = useState<string | null>(null);
+
+  // Theme custom color pickers
+  const [customPrimaryInput, setCustomPrimaryInput] = useState(customPrimary);
+  const [customAccentInput, setCustomAccentInput] = useState(customAccent);
+
+  useEffect(() => {
+    if (visible) {
+      setSection('menu');
+      setFirstName(coach.firstName);
+      setLastName(coach.lastName);
+      setNickname(coach.nickname);
+      setCustomPrimaryInput(customPrimary);
+      setCustomAccentInput(customAccent);
+    }
+  }, [visible]);
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+
+  const openNewTeam = () => { setEditingTeamId(null); setTeamName(''); setTeamSeason(''); setTeamLogoUri(null); setSection('team-edit'); };
+  const openEditTeam = (team: TeamProfile) => { setEditingTeamId(team.id); setTeamName(team.name); setTeamSeason(team.season); setTeamLogoUri(team.logoUri); setSection('team-edit'); };
+  const fileInputRef = useRef<any>(null);
+
+  const pickLogo = async () => {
+    if (Platform.OS === 'web') { fileInputRef.current?.click(); return; }
+    try {
+      const IP = await import('expo-image-picker');
+      const result = await IP.launchImageLibraryAsync({ mediaTypes: IP.MediaTypeOptions.Images, allowsEditing: true, aspect: [1, 1], quality: 0.8 });
+      if (!result.canceled && result.assets[0]) setTeamLogoUri(result.assets[0].uri);
+    } catch (_) {}
+  };
+
+  const onWebFileChange = (e: any) => {
+    const file = e.target?.files?.[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setTeamLogoUri(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const saveProfile = () => { setCoach({ firstName: firstName.trim(), lastName: lastName.trim(), nickname: nickname.trim() }); setSection('menu'); };
+  const saveTeam = () => {
+    if (!teamName.trim()) return;
+    if (editingTeamId) { updateTeam(editingTeamId, { name: teamName.trim(), season: teamSeason.trim(), logoUri: teamLogoUri }); }
+    else { const id = Date.now().toString(); addTeam({ id, name: teamName.trim(), season: teamSeason.trim(), logoUri: teamLogoUri }); }
+    setSection('team');
+  };
+  const confirmDeleteTeam = (id: string) => {
+    Alert.alert(t('Elimina squadra', 'Delete team'), t('Sei sicuro?', 'Are you sure?'), [
+      { text: t('Annulla', 'Cancel'), style: 'cancel' },
+      { text: t('Elimina', 'Delete'), style: 'destructive', onPress: () => removeTeam(id) },
+    ]);
+  };
+
+  const themeLabel = () => {
+    switch (themeId) {
+      case 'green': return t('Verde scuro', 'Dark green');
+      case 'dark': return t('Nero', 'Black');
+      case 'light': return t('Bianco', 'White');
+      case 'custom': return t('Personalizzato', 'Custom');
+      default: return '';
+    }
+  };
+
+  // ── Render ───────────────────────────────────────────────────────────────────
+
+  const renderMenu = () => (
+    <View style={s.menuList}>
+      <TouchableOpacity style={s.menuItem} onPress={() => setSection('profile')}>
+        <View style={s.menuIcon}><User color={c.primary} size={20} weight="fill" /></View>
+        <View style={s.menuText}>
+          <Text style={s.menuTitle}>{t('Profilo', 'Profile')}</Text>
+          <Text style={s.menuSub}>{t('Nome e dati allenatore', 'Coach info')}</Text>
+        </View>
+        <CaretRight color={c.textDim} size={16} />
+      </TouchableOpacity>
+
+      <TouchableOpacity style={s.menuItem} onPress={() => setSection('team')}>
+        <View style={s.menuIcon}><UsersThree color={c.accent} size={20} weight="fill" /></View>
+        <View style={s.menuText}>
+          <Text style={s.menuTitle}>{t('Squadra', 'Team')}</Text>
+          <Text style={s.menuSub}>{t('Logo, nome e stagione', 'Logo, name & season')}</Text>
+        </View>
+        <CaretRight color={c.textDim} size={16} />
+      </TouchableOpacity>
+
+      <TouchableOpacity style={s.menuItem} onPress={() => setSection('language')}>
+        <View style={s.menuIcon}><Translate color="#3498db" size={20} weight="bold" /></View>
+        <View style={s.menuText}>
+          <Text style={s.menuTitle}>{t('Lingua', 'Language')}</Text>
+          <Text style={s.menuSub}>{lang === 'it' ? 'Italiano' : 'English'}</Text>
+        </View>
+        <CaretRight color={c.textDim} size={16} />
+      </TouchableOpacity>
+
+      <TouchableOpacity style={s.menuItem} onPress={() => setSection('theme')}>
+        <View style={s.menuIcon}><Palette color="#9b59b6" size={20} weight="fill" /></View>
+        <View style={s.menuText}>
+          <Text style={s.menuTitle}>{t('Tema', 'Theme')}</Text>
+          <Text style={s.menuSub}>{themeLabel()}</Text>
+        </View>
+        <CaretRight color={c.textDim} size={16} />
+      </TouchableOpacity>
+
+      <TouchableOpacity style={s.menuItem} onPress={() => setSection('info')}>
+        <View style={s.menuIcon}><Info color="#3498db" size={20} weight="fill" /></View>
+        <View style={s.menuText}>
+          <Text style={s.menuTitle}>{t('Informazioni', 'About')}</Text>
+          <Text style={s.menuSub}>{t('Versione, privacy, contatti', 'Version, privacy, contact')}</Text>
+        </View>
+        <CaretRight color={c.textDim} size={16} />
+      </TouchableOpacity>
+
+    </View>
+  );
+
+  const renderProfile = () => (
+    <ScrollView style={s.form} keyboardShouldPersistTaps="handled">
+      <Text style={s.fieldLabel}>{t('Nome', 'First name')}</Text>
+      <TextInput style={s.input} value={firstName} onChangeText={setFirstName} placeholder={t('Mario', 'Mario')} placeholderTextColor={c.textDim} />
+      <Text style={s.fieldLabel}>{t('Cognome', 'Last name')}</Text>
+      <TextInput style={s.input} value={lastName} onChangeText={setLastName} placeholder={t('Rossi', 'Rossi')} placeholderTextColor={c.textDim} />
+      <Text style={s.fieldLabel}>{t('Soprannome (facoltativo)', 'Nickname (optional)')}</Text>
+      <TextInput style={s.input} value={nickname} onChangeText={setNickname} placeholder={t('Il Mister', 'The Coach')} placeholderTextColor={c.textDim} />
+      <Text style={s.hint}>{t('Se inserito, il soprannome viene mostrato al posto di nome e cognome.', 'If set, nickname is shown instead of full name.')}</Text>
+      <TouchableOpacity style={s.saveBtn} onPress={saveProfile}>
+        <Check color={c.bg} size={18} weight="bold" />
+        <Text style={s.saveBtnText}>{t('Salva', 'Save')}</Text>
+      </TouchableOpacity>
+    </ScrollView>
+  );
+
+  const renderTeams = () => (
+    <ScrollView style={s.form}>
+      {teams.length === 0 && <Text style={s.emptyText}>{t('Nessuna squadra aggiunta', 'No teams added yet')}</Text>}
+      {teams.map((team) => (
+        <View key={team.id} style={s.teamRow}>
+          {team.logoUri ? (
+            <Image source={{ uri: team.logoUri }} style={s.teamLogo} />
+          ) : (
+            <View style={[s.teamLogo, s.teamLogoEmpty]}>
+              <UsersThree color={c.textDim} size={18} />
+            </View>
+          )}
+          <View style={s.teamInfo}>
+            <Text style={s.teamName}>{team.name}</Text>
+            <Text style={s.teamSeason}>{team.season || '—'}</Text>
+          </View>
+          <View style={s.teamActions}>
+            {activeTeamId !== team.id && (
+              <TouchableOpacity style={s.teamActionBtn} onPress={() => setActiveTeam(team.id)}>
+                <Check color={c.primary} size={16} />
+              </TouchableOpacity>
+            )}
+            {activeTeamId === team.id && (
+              <View style={s.activeIndicator}><Text style={s.activeText}>{t('Attiva', 'Active')}</Text></View>
+            )}
+            <TouchableOpacity style={s.teamActionBtn} onPress={() => openEditTeam(team)}>
+              <PencilSimple color={c.textMuted} size={16} />
+            </TouchableOpacity>
+            <TouchableOpacity style={s.teamActionBtn} onPress={() => confirmDeleteTeam(team.id)}>
+              <Trash color={c.danger} size={16} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      ))}
+      <TouchableOpacity style={s.addBtn} onPress={openNewTeam}>
+        <Plus color={c.bg} size={18} weight="bold" />
+        <Text style={s.addBtnText}>{t('Aggiungi squadra', 'Add team')}</Text>
+      </TouchableOpacity>
+    </ScrollView>
+  );
+
+  const renderTeamEdit = () => (
+    <ScrollView style={s.form} keyboardShouldPersistTaps="handled">
+      <Text style={s.fieldLabel}>{t('Nome squadra', 'Team name')}</Text>
+      <TextInput style={s.input} value={teamName} onChangeText={setTeamName} placeholder="FC Juventus" placeholderTextColor={c.textDim} />
+      <Text style={s.fieldLabel}>{t('Stagione', 'Season')}</Text>
+      <TextInput style={s.input} value={teamSeason} onChangeText={setTeamSeason} placeholder="2024/25" placeholderTextColor={c.textDim} />
+      <Text style={s.fieldLabel}>{t('Logo squadra (facoltativo)', 'Team logo (optional)')}</Text>
+      {Platform.OS === 'web' && <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={onWebFileChange} />}
+      <TouchableOpacity style={s.logoPicker} onPress={pickLogo}>
+        {teamLogoUri ? (
+          <Image source={{ uri: teamLogoUri }} style={s.logoPreview} />
+        ) : (
+          <View style={s.logoEmpty}><Plus color={c.textDim} size={24} /><Text style={s.logoEmptyText}>{t('Carica logo', 'Upload logo')}</Text></View>
+        )}
+      </TouchableOpacity>
+      {teamLogoUri && <TouchableOpacity onPress={() => setTeamLogoUri(null)} style={s.removeLogoBtn}><Text style={s.removeLogoText}>{t('Rimuovi logo', 'Remove logo')}</Text></TouchableOpacity>}
+      <TouchableOpacity style={[s.saveBtn, !teamName.trim() && s.saveBtnDisabled]} onPress={saveTeam} disabled={!teamName.trim()}>
+        <Check color={c.bg} size={18} weight="bold" />
+        <Text style={s.saveBtnText}>{t('Salva squadra', 'Save team')}</Text>
+      </TouchableOpacity>
+    </ScrollView>
+  );
+
+  const renderLanguage = () => (
+    <View style={s.langList}>
+      <TouchableOpacity style={[s.langOption, lang === 'it' && s.langActive]} onPress={() => setLang('it')}>
+        <Text style={s.langFlag}>🇮🇹</Text>
+        <Text style={[s.langLabel, lang === 'it' && s.langLabelActive]}>Italiano</Text>
+        {lang === 'it' && <Check color={c.primary} size={18} weight="bold" />}
+      </TouchableOpacity>
+      <TouchableOpacity style={[s.langOption, lang === 'en' && s.langActive]} onPress={() => setLang('en')}>
+        <Text style={s.langFlag}>🇬🇧</Text>
+        <Text style={[s.langLabel, lang === 'en' && s.langLabelActive]}>English</Text>
+        {lang === 'en' && <Check color={c.primary} size={18} weight="bold" />}
+      </TouchableOpacity>
+    </View>
+  );
+
+  // Preset theme definitions with real colors
+  const PRESETS: { id: ThemeId; labelIt: string; labelEn: string; bg: string; primary: string; accent: string }[] = [
+    { id: 'green',  labelIt: 'Verde scuro', labelEn: 'Dark green', bg: PRESET_GREEN.bg,   primary: PRESET_GREEN.primary,   accent: PRESET_GREEN.accent },
+    { id: 'dark',   labelIt: 'Nero',        labelEn: 'Black',      bg: PRESET_DARK.bg,    primary: PRESET_DARK.primary,    accent: PRESET_DARK.accent },
+    { id: 'light',  labelIt: 'Bianco',      labelEn: 'White',      bg: PRESET_LIGHT.bg,   primary: PRESET_LIGHT.primary,   accent: PRESET_LIGHT.accent },
+    { id: 'custom', labelIt: 'Personalizzato', labelEn: 'Custom',  bg: '#1a1a2e',         primary: customPrimaryInput,     accent: customAccentInput },
+  ];
+
+  // Palette for custom color picking
+  const PRIMARY_PALETTE = [
+    '#e63946', '#e74c3c', '#e67e22', '#f39c12',
+    '#f1c40f', '#2ecc71', '#1abc9c', '#3498db',
+    '#2980b9', '#9b59b6', '#8e44ad', '#e91e63',
+    '#ff5722', '#00bcd4', '#4caf50', '#ffffff',
+  ];
+  const ACCENT_PALETTE = [
+    '#f1c40f', '#ffd700', '#ff9800', '#ff5722',
+    '#e91e63', '#9c27b0', '#3f51b5', '#2196f3',
+    '#00bcd4', '#4caf50', '#8bc34a', '#cddc39',
+    '#ff6b6b', '#a29bfe', '#fd79a8', '#ffffff',
+  ];
+
+  const renderTheme = () => (
+    <ScrollView style={s.form} keyboardShouldPersistTaps="handled">
+      <Text style={s.sectionLabel}>{t('Tema colore', 'Color theme')}</Text>
+
+      <View style={s.themeGrid}>
+        {PRESETS.map(preset => {
+          const active = themeId === preset.id;
+          return (
+            <TouchableOpacity
+              key={preset.id}
+              style={[s.themeCard, active && s.themeCardActive]}
+              onPress={() => {
+                setTheme(preset.id);
+                if (preset.id === 'custom') {
+                  setCustomPrimaryInput(customPrimary);
+                  setCustomAccentInput(customAccent);
+                }
+              }}
+              activeOpacity={0.8}
+            >
+              {/* Mini preview: bg + two color dots */}
+              <View style={[s.themePreviewBox, { backgroundColor: preset.bg }]}>
+                <View style={[s.themePreviewDot, { backgroundColor: preset.primary }]} />
+                <View style={[s.themePreviewDot, { backgroundColor: preset.accent }]} />
+              </View>
+              <Text style={[s.themeCardLabel, active && { color: c.text, fontWeight: '700' }]}>
+                {lang === 'it' ? preset.labelIt : preset.labelEn}
+              </Text>
+              {active && <Check color={c.primary} size={16} weight="bold" />}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {themeId === 'custom' && (
+        <View style={s.customSection}>
+          <Text style={s.sectionLabel}>{t('Colore primario', 'Primary color')}</Text>
+          <View style={s.paletteGrid}>
+            {PRIMARY_PALETTE.map(color => (
+              <TouchableOpacity
+                key={color}
+                style={[s.paletteCell, { backgroundColor: color }, customPrimaryInput === color && s.paletteCellActive]}
+                onPress={() => { setCustomPrimaryInput(color); setCustomColors(color, customAccentInput); }}
+                activeOpacity={0.75}
+              >
+                {customPrimaryInput === color && <Check color={color === '#ffffff' ? '#000' : '#fff'} size={14} weight="bold" />}
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Text style={[s.sectionLabel, { marginTop: 20 }]}>{t('Colore accento', 'Accent color')}</Text>
+          <View style={s.paletteGrid}>
+            {ACCENT_PALETTE.map(color => (
+              <TouchableOpacity
+                key={color}
+                style={[s.paletteCell, { backgroundColor: color }, customAccentInput === color && s.paletteCellActive]}
+                onPress={() => { setCustomAccentInput(color); setCustomColors(customPrimaryInput, color); }}
+                activeOpacity={0.75}
+              >
+                {customAccentInput === color && <Check color={color === '#ffffff' ? '#000' : '#fff'} size={14} weight="bold" />}
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Live preview strip */}
+          <View style={[s.previewStrip, { backgroundColor: customPrimaryInput }]}>
+            <View style={[s.previewStripAccent, { backgroundColor: customAccentInput }]} />
+            <Text style={[s.previewStripText, { color: '#fff' }]}>{t('Anteprima', 'Preview')}</Text>
+          </View>
+        </View>
+      )}
+    </ScrollView>
+  );
+
+  const appVersion = Constants.expoConfig?.version ?? '1.0.0';
+
+  const renderInfo = () => (
+    <ScrollView style={s.form}>
+      {/* App info */}
+      <View style={s.infoBlock}>
+        <Text style={s.infoLabel}>{t('Applicazione', 'Application')}</Text>
+        <View style={s.infoRow}>
+          <Text style={s.infoKey}>{t('Nome', 'Name')}</Text>
+          <Text style={s.infoValue}>CoachBoard</Text>
+        </View>
+        <View style={s.infoRow}>
+          <Text style={s.infoKey}>{t('Versione', 'Version')}</Text>
+          <Text style={s.infoValue}>{appVersion}</Text>
+        </View>
+        <View style={s.infoRow}>
+          <Text style={s.infoKey}>{t('Sviluppatore', 'Developer')}</Text>
+          <Text style={s.infoValue}>MisterProLab</Text>
+        </View>
+      </View>
+
+      {/* Contact */}
+      <View style={s.infoBlock}>
+        <Text style={s.infoLabel}>{t('Contatti', 'Contact')}</Text>
+        <TouchableOpacity style={s.infoLinkRow} onPress={() => Linking.openURL('mailto:misterprolab@outlook.com')}>
+          <Text style={s.infoLink}>misterprolab@outlook.com</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Legal */}
+      <View style={s.infoBlock}>
+        <Text style={s.infoLabel}>{t('Legale', 'Legal')}</Text>
+        <TouchableOpacity style={s.infoLinkRow} onPress={() => Linking.openURL('https://misterprolab.github.io/legal/')}>
+          <Text style={s.infoLink}>{t('Privacy Policy', 'Privacy Policy')}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={s.infoLinkRow} onPress={() => Linking.openURL('https://misterprolab.github.io/legal/#terms')}>
+          <Text style={s.infoLink}>{t('Termini di servizio', 'Terms of Service')}</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  );
+
+  const sectionTitle = () => {
+    switch (section) {
+      case 'profile':   return t('Profilo', 'Profile');
+      case 'team':      return t('Squadra', 'Team');
+      case 'team-edit': return editingTeamId ? t('Modifica squadra', 'Edit team') : t('Nuova squadra', 'New team');
+      case 'language':  return t('Lingua', 'Language');
+      case 'theme':     return t('Tema', 'Theme');
+      case 'info':      return t('Informazioni', 'About');
+      default:          return t('Impostazioni', 'Settings');
+    }
+  };
+
+  const canGoBack = section !== 'menu';
+  const goBack = () => { if (section === 'team-edit') setSection('team'); else setSection('menu'); };
+
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <SafeAreaView style={s.safe} edges={['top', 'left', 'right']}>
+        <View style={s.header}>
+          {canGoBack ? (
+            <TouchableOpacity style={s.backBtn} onPress={goBack}>
+              <Text style={s.backText}>← {t('Indietro', 'Back')}</Text>
+            </TouchableOpacity>
+          ) : <View style={{ width: 80 }} />}
+          <Text style={s.title}>{sectionTitle()}</Text>
+          <TouchableOpacity style={s.closeBtn} onPress={onClose}>
+            <X color={c.textMuted} size={20} weight="bold" />
+          </TouchableOpacity>
+        </View>
+
+        <View style={s.body}>
+          {section === 'menu'      && renderMenu()}
+          {section === 'profile'   && renderProfile()}
+          {section === 'team'      && renderTeams()}
+          {section === 'team-edit' && renderTeamEdit()}
+          {section === 'language'  && renderLanguage()}
+          {section === 'theme'     && renderTheme()}
+          {section === 'info'      && renderInfo()}
+        </View>
+      </SafeAreaView>
+    </Modal>
+  );
+}
+
+function mkStyles(c: ThemeColors) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: c.bg },
+    header: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingHorizontal: 20, paddingVertical: 14,
+      borderBottomWidth: 1, borderBottomColor: c.border,
+    },
+    title: { fontSize: 17, fontWeight: '700', color: c.text },
+    backBtn: { minWidth: 80 },
+    backText: { color: c.primary, fontSize: 14, fontWeight: '600' },
+    closeBtn: { minWidth: 80, alignItems: 'flex-end' },
+    body: { flex: 1 },
+
+    menuList: { paddingTop: 8 },
+    menuItem: {
+      flexDirection: 'row', alignItems: 'center',
+      paddingHorizontal: 20, paddingVertical: 18,
+      borderBottomWidth: 1, borderBottomColor: c.border,
+    },
+    menuIcon: { width: 38, height: 38, borderRadius: 10, backgroundColor: c.bgCard, alignItems: 'center', justifyContent: 'center', marginRight: 14 },
+    menuText: { flex: 1 },
+    menuTitle: { fontSize: 15, fontWeight: '600', color: c.text },
+    menuSub: { fontSize: 12, color: c.textMuted, marginTop: 2 },
+
+    form: { flex: 1, padding: 20 },
+    sectionLabel: { fontSize: 11, fontWeight: '800', color: c.textDim, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12, marginTop: 4 },
+    fieldLabel: { fontSize: 12, fontWeight: '600', color: c.textMuted, marginBottom: 6, marginTop: 16, textTransform: 'uppercase', letterSpacing: 0.5 },
+    input: { backgroundColor: c.bgCard, borderWidth: 1, borderColor: c.border, borderRadius: 12, padding: 14, color: c.text, fontSize: 16 },
+    hint: { fontSize: 12, color: c.textDim, marginTop: 8, lineHeight: 17 },
+    saveBtn: { marginTop: 28, backgroundColor: c.primary, borderRadius: 14, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+    saveBtnDisabled: { opacity: 0.4 },
+    saveBtnText: { color: c.bg, fontWeight: '700', fontSize: 16 },
+    emptyText: { color: c.textMuted, textAlign: 'center', marginTop: 30, fontSize: 14 },
+
+    teamRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.bgCard, borderRadius: 14, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: c.border },
+    teamLogo: { width: 44, height: 44, borderRadius: 10, marginRight: 12 },
+    teamLogoEmpty: { backgroundColor: c.bgCardAlt, alignItems: 'center', justifyContent: 'center' },
+    teamInfo: { flex: 1 },
+    teamName: { fontSize: 14, fontWeight: '700', color: c.text },
+    teamSeason: { fontSize: 12, color: c.textMuted, marginTop: 2 },
+    teamActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    teamActionBtn: { padding: 6 },
+    activeIndicator: { backgroundColor: c.primary + '20', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+    activeText: { color: c.primary, fontSize: 11, fontWeight: '700' },
+    addBtn: { marginTop: 4, backgroundColor: c.primaryDark, borderRadius: 14, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+    addBtnText: { color: c.bg, fontWeight: '700', fontSize: 16 },
+
+    logoPicker: { marginTop: 4, height: 100, backgroundColor: c.bgCard, borderRadius: 14, borderWidth: 1, borderColor: c.border, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
+    logoPreview: { width: 80, height: 80, borderRadius: 10 },
+    logoEmpty: { alignItems: 'center', gap: 6 },
+    logoEmptyText: { color: c.textDim, fontSize: 13 },
+    removeLogoBtn: { marginTop: 8, alignSelf: 'center' },
+    removeLogoText: { color: c.danger, fontSize: 13 },
+
+    langList: { padding: 20, gap: 10 },
+    langOption: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: c.bgCard, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: c.border },
+    langActive: { borderColor: c.primary },
+    langFlag: { fontSize: 24 },
+    langLabel: { flex: 1, fontSize: 15, fontWeight: '600', color: c.textMuted },
+    langLabelActive: { color: c.text },
+
+    // Theme section
+    themeGrid: { gap: 10 },
+    themeCard: {
+      flexDirection: 'row', alignItems: 'center', gap: 14,
+      backgroundColor: c.bgCard, borderRadius: 14, padding: 14,
+      borderWidth: 1.5, borderColor: c.border,
+    },
+    themeCardActive: { borderColor: c.primary, backgroundColor: c.primary + '18' },
+    themePreviewBox: {
+      width: 44, height: 28, borderRadius: 8,
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+      gap: 4, paddingHorizontal: 6,
+      borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
+    },
+    themePreviewDot: { width: 10, height: 10, borderRadius: 5, borderWidth: 1, borderColor: 'rgba(0,0,0,0.2)' },
+    themeCardLabel: { flex: 1, fontSize: 15, fontWeight: '600', color: c.textMuted },
+    customSection: { marginTop: 24 },
+    paletteGrid: {
+      flexDirection: 'row', flexWrap: 'wrap', gap: 10,
+    },
+    paletteCell: {
+      width: 38, height: 38, borderRadius: 10,
+      alignItems: 'center', justifyContent: 'center',
+      borderWidth: 2, borderColor: 'transparent',
+    },
+    paletteCellActive: { borderColor: c.text, transform: [{ scale: 1.15 }] },
+    previewStrip: {
+      marginTop: 20, borderRadius: 12, height: 48,
+      flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 12,
+      overflow: 'hidden',
+    },
+    previewStripAccent: { width: 20, height: 20, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(0,0,0,0.2)' },
+    previewStripText: { fontSize: 14, fontWeight: '700' },
+
+    // Info section
+    infoBlock: { marginBottom: 24 },
+    infoLabel: { fontSize: 11, fontWeight: '800', color: c.textDim, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10 },
+    infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: c.border },
+    infoKey: { fontSize: 14, color: c.textMuted },
+    infoValue: { fontSize: 14, fontWeight: '600', color: c.text },
+    infoLinkRow: { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: c.border },
+    infoLink: { fontSize: 14, color: '#3498db', fontWeight: '600' },
+  });
+}
