@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { cors } from "hono/cors";
 import { db } from './database';
 import { exercises, players, sessions, sessionExercises, matches, matchConvocations, matchLineup, matchGoals, users, inviteCodes } from './database/schema';
-import { eq, inArray, and } from 'drizzle-orm';
+import { eq, inArray, and, isNull, or } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { SignJWT, jwtVerify } from 'jose';
 
@@ -248,29 +248,41 @@ const app = new Hono()
     const requesterId = c.get('userId');
     if (id === requesterId) return c.json({ error: 'Non puoi eliminare te stesso' }, 400);
 
-    // 1. Matches → cascade elimina automaticamente convocations, lineup, goals
-    await db.delete(matches).where(eq(matches.userId, id));
+    try {
+      // 1. Nullifica invite_codes.used_by (FK senza cascade)
+      await db.update(inviteCodes).set({ usedBy: null }).where(eq(inviteCodes.usedBy, id));
 
-    // 2. Players (dopo matches per evitare FK su playerId)
-    await db.delete(players).where(eq(players.userId, id));
+      // 2. Matches → cascade DB elimina convocations, lineup, goals
+      await db.delete(matches).where(eq(matches.userId, id));
 
-    // 3. Sessions + sessionExercises (cascade su sessionId)
-    const userSessions = await db.select({ id: sessions.id }).from(sessions).where(eq(sessions.userId, id));
-    if (userSessions.length > 0) {
-      await db.delete(sessionExercises).where(inArray(sessionExercises.sessionId, userSessions.map(s => s.id)));
+      // 3. Players (dopo matches — playerId nei match già eliminati)
+      await db.delete(players).where(eq(players.userId, id));
+
+      // 4. sessionExercises delle sessioni utente (FK senza cascade sull'exerciseId)
+      const userSessions = await db.select({ id: sessions.id }).from(sessions).where(eq(sessions.userId, id));
+      if (userSessions.length > 0) {
+        await db.delete(sessionExercises).where(inArray(sessionExercises.sessionId, userSessions.map(s => s.id)));
+      }
+      await db.delete(sessions).where(eq(sessions.userId, id));
+
+      // 5. Esercizi custom dell'utente
+      const userExercises = await db.select({ id: exercises.id }).from(exercises).where(and(eq(exercises.userId, id), eq(exercises.isCustom, true)));
+      if (userExercises.length > 0) {
+        await db.delete(sessionExercises).where(inArray(sessionExercises.exerciseId, userExercises.map(e => e.id)));
+        await db.delete(exercises).where(and(eq(exercises.userId, id), eq(exercises.isCustom, true)));
+      }
+
+      // 6. Invite codes creati dall'utente
+      await db.delete(inviteCodes).where(eq(inviteCodes.createdBy, id));
+
+      // 7. User
+      await db.delete(users).where(eq(users.id, id));
+
+      return c.json({ success: true }, 200);
+    } catch (err: any) {
+      console.error('[DELETE /admin/users/:id]', err);
+      return c.json({ error: err?.message ?? 'Errore interno' }, 500);
     }
-    await db.delete(sessions).where(eq(sessions.userId, id));
-
-    // 4. Custom exercises
-    await db.delete(exercises).where(and(eq(exercises.userId, id), eq(exercises.isCustom, true)));
-
-    // 5. Invite codes
-    await db.delete(inviteCodes).where(eq(inviteCodes.createdBy, id));
-
-    // 6. User
-    await db.delete(users).where(eq(users.id, id));
-
-    return c.json({ success: true }, 200);
   })
 
   // ─── SEED default exercises ───────────────────────────────────────────────
