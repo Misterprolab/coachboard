@@ -127,35 +127,38 @@ export default function SettingsModal({ visible, onClose }: Props) {
   };
 
   const confirmDeleteUser = (u: any) => {
-    Alert.alert(
-      t('Elimina utente', 'Delete user'),
-      t(
-        `Vuoi eliminare "${u.name || u.email}"?\n\nTutti i suoi dati (giocatori, partite, sedute) verranno cancellati definitivamente.`,
-        `Delete "${u.name || u.email}"?\n\nAll their data (players, matches, sessions) will be permanently deleted.`
-      ),
-      [
-        { text: t('Annulla', 'Cancel'), style: 'cancel' },
-        {
-          text: t('Elimina', 'Delete'), style: 'destructive',
-          onPress: async () => {
-            setDeletingUserId(u.id);
-            try {
-              const res = await fetch(`/api/admin/users/${u.id}`, {
-                method: 'DELETE',
-                headers: authHeaders(),
-              });
-              if (res.ok) {
-                loadUsers();
-              } else {
-                const err = await res.json().catch(() => ({}));
-                Alert.alert('Errore', err.error || 'Eliminazione fallita');
-              }
-            } catch { Alert.alert('Errore', 'Errore di rete'); }
-            finally { setDeletingUserId(null); }
-          },
-        },
-      ]
+    const name = u.name || u.email;
+    const msg = t(
+      `Vuoi eliminare "${name}"?\n\nTutti i suoi dati (giocatori, partite, sedute) verranno cancellati definitivamente.`,
+      `Delete "${name}"?\n\nAll their data (players, matches, sessions) will be permanently deleted.`
     );
+    const doDelete = async () => {
+      setDeletingUserId(u.id);
+      try {
+        const res = await fetch(`/api/admin/users/${u.id}`, {
+          method: 'DELETE',
+          headers: authHeaders(),
+        });
+        if (res.ok) {
+          loadUsers();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          const errMsg = err.error || 'Eliminazione fallita';
+          if (Platform.OS === 'web') { window.alert(errMsg); } else { Alert.alert('Errore', errMsg); }
+        }
+      } catch {
+        if (Platform.OS === 'web') { window.alert('Errore di rete'); } else { Alert.alert('Errore', 'Errore di rete'); }
+      } finally { setDeletingUserId(null); }
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(msg)) doDelete();
+    } else {
+      Alert.alert(t('Elimina utente', 'Delete user'), msg, [
+        { text: t('Annulla', 'Cancel'), style: 'cancel' },
+        { text: t('Elimina', 'Delete'), style: 'destructive', onPress: doDelete },
+      ]);
+    }
   };
 
   const generateInviteCode = async () => {

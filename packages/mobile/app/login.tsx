@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, ActivityIndicator, KeyboardAvoidingView,
-  Platform, ScrollView, Alert,
+  Platform, ScrollView, Alert, Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { setAuth } from "../lib/authStore";
@@ -75,9 +75,11 @@ export default function LoginScreen() {
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         {/* Logo/Brand */}
         <View style={styles.brand}>
-          <View style={styles.logoCircle}>
-            <Text style={styles.logoText}>⚽</Text>
-          </View>
+          <Image
+            source={require('../assets/logo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
           <Text style={styles.appName}>CoachBoard</Text>
           <Text style={styles.tagline}>La tua piattaforma di allenamento</Text>
         </View>
@@ -183,19 +185,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 36,
   },
-  logoCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: "#1a3a22",
-    justifyContent: "center",
-    alignItems: "center",
+  logoImage: {
+    width: 100,
+    height: 100,
     marginBottom: 12,
-    borderWidth: 2,
-    borderColor: "#2ecc71",
-  },
-  logoText: {
-    fontSize: 32,
   },
   appName: {
     fontSize: 28,
