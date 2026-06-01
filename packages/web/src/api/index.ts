@@ -1639,19 +1639,22 @@ const app = new Hono()
   .put('/matches/:id', authMiddleware, async (c) => {
     const id = c.req.param('id');
     const body = await c.req.json();
-    await db.update(matches).set({
-      opponent: body.opponent,
-      date: body.date,
-      time: body.time ?? null,
-      venue: body.venue ?? null,
-      homeAway: body.homeAway ?? 'home',
-      competition: body.competition ?? null,
-      formation: body.formation ?? null,
-      notes: body.notes ?? null,
-      goalsFor: body.goalsFor ?? null,
-      goalsAgainst: body.goalsAgainst ?? null,
-      substitutions: body.substitutions != null ? JSON.stringify(body.substitutions) : null,
-    }).where(eq(matches.id, id));
+    // Only update fields explicitly provided in body (PATCH semantics)
+    const patch: Record<string, any> = {};
+    if ('opponent' in body) patch.opponent = body.opponent;
+    if ('date' in body) patch.date = body.date;
+    if ('time' in body) patch.time = body.time ?? null;
+    if ('venue' in body) patch.venue = body.venue ?? null;
+    if ('homeAway' in body) patch.homeAway = body.homeAway ?? 'home';
+    if ('competition' in body) patch.competition = body.competition ?? null;
+    if ('formation' in body) patch.formation = body.formation ?? null;
+    if ('notes' in body) patch.notes = body.notes ?? null;
+    if ('goalsFor' in body) patch.goalsFor = body.goalsFor ?? null;
+    if ('goalsAgainst' in body) patch.goalsAgainst = body.goalsAgainst ?? null;
+    if ('substitutions' in body) patch.substitutions = body.substitutions != null ? JSON.stringify(body.substitutions) : null;
+    if (Object.keys(patch).length > 0) {
+      await db.update(matches).set(patch).where(eq(matches.id, id));
+    }
     return c.json({ success: true }, 200);
   })
   .delete('/matches/:id', authMiddleware, async (c) => {
