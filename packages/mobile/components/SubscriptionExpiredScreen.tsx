@@ -78,8 +78,8 @@ export default function SubscriptionExpiredScreen() {
         <Text style={s.subtitle}>
           {isTrial
             ? t(
-                "Il tuo periodo di prova è terminato. Contatta l'amministratore per attivare la licenza.",
-                "Your trial period has ended. Contact the administrator to activate your license."
+                "Il tuo periodo di prova è terminato. I tuoi dati sono al sicuro e li ritroverai al rinnovo. Contatta l'amministratore per attivare la licenza.",
+                "Your trial period has ended. Your data is safe and will be restored upon renewal. Contact the administrator to activate your license."
               )
             : t(
                 "La tua licenza annuale è scaduta. I tuoi dati sono al sicuro. Contatta l'amministratore per rinnovare.",
