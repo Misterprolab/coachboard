@@ -59,7 +59,12 @@ export default function LoginScreen() {
       });
       qc.clear();
       await loadTheme();
-      router.replace("/");
+      if (Platform.OS === "web") {
+        window.scrollTo(0, 0);
+        window.location.href = "/";
+      } else {
+        router.replace("/");
+      }
     } catch (e: any) {
       setError("Errore di rete. Riprova.");
     } finally {
