@@ -64,6 +64,14 @@ const adminMiddleware = async (c: any, next: any) => {
   await next();
 };
 
+// ─── MIGRATIONS ───────────────────────────────────────────────────────────────
+async function runMigrations() {
+  try {
+    await db.$client.execute(`ALTER TABLE users ADD COLUMN plain_password TEXT`);
+  } catch (_) { /* column already exists */ }
+}
+runMigrations();
+
 const app = new Hono()
   .basePath('api')
   .use(cors({ origin: (origin) => origin ?? "*", credentials: true, exposeHeaders: ["set-auth-token"] }))
