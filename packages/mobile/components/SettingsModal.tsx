@@ -43,7 +43,11 @@ export default function SettingsModal({ visible, onClose }: Props) {
   const handleLogout = () => {
     clearAuth();
     onClose();
-    router.replace('/login');
+    if (Platform.OS === 'web') {
+      window.location.href = '/login';
+    } else {
+      router.replace('/login');
+    }
   };
 
   const [resetLoading, setResetLoading] = useState(false);

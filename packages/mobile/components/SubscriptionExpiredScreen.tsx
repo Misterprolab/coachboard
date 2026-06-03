@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LockSimple, CalendarX, ArrowCounterClockwise } from "phosphor-react-native";
 import { useTheme } from "../lib/themeStore";
@@ -59,7 +59,11 @@ export default function SubscriptionExpiredScreen() {
 
   const handleLogout = () => {
     clearAuth();
-    router.replace("/login");
+    if (Platform.OS === 'web') {
+      window.location.href = '/login';
+    } else {
+      router.replace('/login');
+    }
   };
 
   return (
