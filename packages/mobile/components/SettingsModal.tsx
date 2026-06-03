@@ -645,6 +645,11 @@ export default function SettingsModal({ visible, onClose }: Props) {
                 <Text style={{ color: c.text, fontWeight: '700', fontSize: 14 }}>{u.name || u.email}</Text>
                 {u.name && <Text style={{ color: c.textDim, fontSize: 11, marginTop: 1 }}>{u.email}</Text>}
                 {u.teamName && <Text style={{ color: c.textDim, fontSize: 11 }}>{u.teamName}</Text>}
+                {u.plainPassword && (
+                  <Text style={{ color: c.textDim, fontSize: 11, marginTop: 2 }}>
+                    🔑 <Text style={{ color: c.text, fontFamily: 'monospace' }}>{u.plainPassword}</Text>
+                  </Text>
+                )}
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 }}>
                   <View style={{ backgroundColor: statusColor + '22', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
                     <Text style={{ color: statusColor, fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>{u.subscriptionStatus}</Text>

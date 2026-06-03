@@ -123,6 +123,7 @@ const app = new Hono()
       id: userId,
       email: email.toLowerCase().trim(),
       passwordHash: hash,
+      plainPassword: password,
       role: isAdmin ? 'admin' : 'coach',
       createdAt: now,
       subscriptionStatus: isAdmin ? 'active' : 'trial',
@@ -222,6 +223,7 @@ const app = new Hono()
       createdAt: users.createdAt,
       subscriptionStatus: users.subscriptionStatus,
       subscriptionExpiry: users.subscriptionExpiry,
+      plainPassword: users.plainPassword,
     }).from(users);
     // Auto-calcola expired runtime
     const now = Date.now();
