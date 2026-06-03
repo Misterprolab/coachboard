@@ -9,11 +9,11 @@ import { useFocusEffect } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { categoryColors, categoryLabels, intensityColors, intensityLabels } from "../../lib/theme";
 import { useI18n } from "../../lib/i18n";
-import { MagnifyingGlass, Plus, Star, X } from "phosphor-react-native";
+import { MagnifyingGlass, Plus, Star, Trash, X } from "phosphor-react-native";
 import { useRouter } from "expo-router";
 import { useTheme } from "../../lib/themeStore";
 import type { ThemeColors } from "../../lib/themeStore";
-import { getExercises, createExercise as dbCreateExercise } from "../../lib/db/queries";
+import { getExercises, createExercise as dbCreateExercise, deleteExercise as dbDeleteExercise } from "../../lib/db/queries";
 
 type Exercise = {
   id: string;
@@ -61,6 +61,7 @@ export default function LibraryScreen() {
   const [search, setSearch] = useState("");
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [addOpen, setAddOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Exercise | null>(null);
 
   const [form, setForm] = useState({
     name: "", nameEn: "",
@@ -108,6 +109,17 @@ export default function LibraryScreen() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => dbDeleteExercise(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["exercises"] });
+      setDeleteTarget(null);
+    },
+    onError: () => {
+      Alert.alert(t("Errore", "Error"), t("Impossibile eliminare l'esercizio.", "Could not delete the exercise."));
+    },
+  });
+
   const resetForm = () => setForm({
     name: "", nameEn: "",
     category: "tecnica",
@@ -143,6 +155,32 @@ export default function LibraryScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={["top", "left", "right"]}>
+
+      {/* Delete confirm modal */}
+      <Modal visible={!!deleteTarget} transparent animationType="fade" onRequestClose={() => setDeleteTarget(null)}>
+        <View style={s.modalOverlay}>
+          <View style={s.modalCard}>
+            <Text style={s.modalTitle}>{t("Elimina esercitazione", "Delete exercise")}</Text>
+            <Text style={{ color: c.text, marginBottom: 20 }}>
+              {t("Eliminare", "Delete")} <Text style={{ fontWeight: "700" }}>"{deleteTarget?.name}"</Text>?{"\n"}
+              {t("L'operazione non è reversibile.", "This cannot be undone.")}
+            </Text>
+            <View style={s.modalBtns}>
+              <TouchableOpacity style={s.btnCancel} onPress={() => setDeleteTarget(null)}>
+                <Text style={s.btnCancelTxt}>{t("Annulla", "Cancel")}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[s.btnSave, { backgroundColor: c.danger }, deleteMutation.isPending && { opacity: 0.5 }]}
+                onPress={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+                disabled={deleteMutation.isPending}
+              >
+                <Text style={s.btnSaveTxt}>{t("Elimina", "Delete")}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <Modal visible={addOpen} transparent animationType="slide" onRequestClose={() => { setAddOpen(false); resetForm(); }}>
         <View style={s.modalOverlay}>
           <View style={s.modalCard}>
@@ -336,9 +374,19 @@ export default function LibraryScreen() {
                   <View style={s.cardBody}>
                     <View style={s.cardTop}>
                       <Text style={s.cardName} numberOfLines={1}>{name}</Text>
-                      <TouchableOpacity onPress={(e) => toggleFavorite(ex.id, e)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={s.starBtn}>
-                        <Star size={18} weight={isFav ? "fill" : "regular"} color={isFav ? "#f59e0b" : c.textMuted} />
-                      </TouchableOpacity>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                        {ex.isCustom && (
+                          <TouchableOpacity
+                            onPress={(e) => { e.stopPropagation?.(); setDeleteTarget(ex); }}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          >
+                            <Trash size={16} color={c.danger} />
+                          </TouchableOpacity>
+                        )}
+                        <TouchableOpacity onPress={(e) => toggleFavorite(ex.id, e)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={s.starBtn}>
+                          <Star size={18} weight={isFav ? "fill" : "regular"} color={isFav ? "#f59e0b" : c.textMuted} />
+                        </TouchableOpacity>
+                      </View>
                     </View>
                     <Text style={s.cardCat}>{lang === "it" ? categoryLabels[ex.category]?.it : categoryLabels[ex.category]?.en}</Text>
                     <View style={s.meta}>
