@@ -6,6 +6,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getEmail } from "../lib/authStore";
 import { useTheme } from "../lib/themeStore";
 import type { ThemeColors } from "../lib/themeStore";
 import { useI18n } from "../lib/i18n";
@@ -14,7 +15,11 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import Svg, { Circle, Line, Rect, Path, G } from "react-native-svg";
 
 // ─── Storage helpers ──────────────────────────────────────────────────────────
-const STORAGE_KEY = "tactical_boards_v1";
+function getTacticalStorageKey(): string {
+  const email = getEmail();
+  const userKey = email ? email.replace(/[^a-zA-Z0-9]/g, "_") : "anon";
+  return `tactical_boards_v1_${userKey}`;
+}
 
 export type TacticBoard = {
   id: string;
@@ -28,7 +33,7 @@ export type TacticBoard = {
 
 async function loadAllBoards(): Promise<TacticBoard[]> {
   try {
-    const raw = await AsyncStorage.getItem(STORAGE_KEY);
+    const raw = await AsyncStorage.getItem(getTacticalStorageKey());
     return raw ? JSON.parse(raw) : [];
   } catch { return []; }
 }
@@ -37,7 +42,7 @@ async function saveBoardToStorage(board: TacticBoard): Promise<void> {
   const all = await loadAllBoards();
   const idx = all.findIndex(b => b.id === board.id);
   if (idx >= 0) all[idx] = board; else all.unshift(board);
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+  await AsyncStorage.setItem(getTacticalStorageKey(), JSON.stringify(all));
 }
 
 // ─── Dimensions ───────────────────────────────────────────────────────────────

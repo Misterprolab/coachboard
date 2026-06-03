@@ -10,6 +10,7 @@ import { useRouter } from "expo-router";
 import { useTheme } from "../lib/themeStore";
 import type { ThemeColors } from "../lib/themeStore";
 import { useI18n } from "../lib/i18n";
+import { getEmail } from "../lib/authStore";
 import {
   ArrowLeft, Trash, PencilSimple, Plus, FolderOpen,
   Star,
@@ -34,18 +35,21 @@ interface TacticBoard {
   isCustom?: boolean;
 }
 
-const STORAGE_KEY = "tactical_boards_v1";
-const FAVORITES_KEY = "tactical_favorites_v1";
+function getStorageKey(): string {
+  const email = getEmail();
+  const userKey = email ? email.replace(/[^a-zA-Z0-9]/g, "_") : "anon";
+  return `tactical_boards_v1_${userKey}`;
+}
 
 async function loadAllBoards(): Promise<TacticBoard[]> {
   try {
-    const raw = await AsyncStorage.getItem(STORAGE_KEY);
+    const raw = await AsyncStorage.getItem(getStorageKey());
     return raw ? JSON.parse(raw) : [];
   } catch { return []; }
 }
 
 async function saveAllBoards(boards: TacticBoard[]): Promise<void> {
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(boards));
+  await AsyncStorage.setItem(getStorageKey(), JSON.stringify(boards));
 }
 
 async function deleteBoardFromStorage(id: string): Promise<void> {
