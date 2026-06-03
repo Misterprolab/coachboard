@@ -25,7 +25,7 @@ export default function LoginScreen() {
   const handleSubmit = async () => {
     setError(null);
     if (!email.trim() || !password.trim()) {
-      setError("Email e password obbligatorie");
+      setError("Username/email e password obbligatori");
       return;
     }
     if (mode === "register" && !inviteCode.trim()) {
@@ -52,7 +52,7 @@ export default function LoginScreen() {
         return;
       }
 
-      setAuth(data.token, data.role, email.trim().toLowerCase(), {
+      setAuth(data.token, data.role, (data.email ?? email.trim().toLowerCase()), {
         subscriptionExpired: data.subscriptionExpired ?? false,
         subscriptionExpiry: data.subscriptionExpiry ?? null,
         subscriptionStatus: data.subscriptionStatus ?? "trial",
@@ -109,16 +109,16 @@ export default function LoginScreen() {
 
           {/* Fields */}
           <View style={styles.fields}>
-            <Text style={styles.label}>Email</Text>
+            <Text style={styles.label}>Username o Email</Text>
             <TextInput
               style={styles.input}
               value={email}
               onChangeText={setEmail}
-              placeholder="coach@esempio.com"
+              placeholder="username o email"
               placeholderTextColor="#4a5e4f"
               autoCapitalize="none"
-              keyboardType="email-address"
-              autoComplete="email"
+              keyboardType="default"
+              autoComplete="username"
             />
 
             <Text style={styles.label}>Password</Text>

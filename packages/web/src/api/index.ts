@@ -104,6 +104,7 @@ const app = new Hono()
     return c.json({
       token,
       role: user.role,
+      email: user.email,
       subscriptionStatus: subStatus,
       subscriptionExpiry: subExpiry,
       subscriptionExpired,
