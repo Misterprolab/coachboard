@@ -1391,17 +1391,19 @@ const app = new Hono()
   .get('/exercises', authMiddleware, async (c) => {
     const category = c.req.query('category');
     const userId = c.get('userId');
-    // Return default exercises (userId='system-admin' or isCustom=false) + user's own custom exercises
+    // SQL-level filter: non-custom (global) OR owned by this user
+    const ownershipFilter = or(
+      eq(exercises.isCustom, false),
+      eq(exercises.userId, userId),
+    );
     let all;
     if (category && category !== 'tutti') {
       all = await db.select().from(exercises).where(
-        and(eq(exercises.category, category))
+        and(ownershipFilter, eq(exercises.category, category))
       );
     } else {
-      all = await db.select().from(exercises);
+      all = await db.select().from(exercises).where(ownershipFilter);
     }
-    // Filter: show non-custom (global) + custom belonging to this user
-    all = all.filter(e => !e.isCustom || e.userId === userId || e.userId === 'system-admin');
     return c.json(all, 200);
   })
   .post('/exercises', authMiddleware, async (c) => {
