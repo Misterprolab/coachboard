@@ -29,38 +29,37 @@ const ROLE_LABELS: Record<string, { it: string; en: string }> = {
 const SUB_ROLES: Record<string, { key: string; it: string; en: string }[]> = {
   portiere: [{ key: "POR", it: "Portiere", en: "Goalkeeper" }],
   difensore: [
-    { key: "DC", it: "Difensore Centrale", en: "Centre-back" },
-    { key: "DS", it: "Difensore Sinistro", en: "Left Back" },
-    { key: "DD", it: "Difensore Destro", en: "Right Back" },
-    { key: "LS", it: "Laterale Sinistro", en: "Left Wing-back" },
-    { key: "LD", it: "Laterale Destro", en: "Right Wing-back" },
-    { key: "LIB", it: "Libero", en: "Sweeper" },
+    { key: "DC",  it: "Difensore Centrale", en: "Centre-back" },
+    { key: "DS",  it: "Difensore Sinistro",  en: "Left Back" },
+    { key: "DD",  it: "Difensore Destro",    en: "Right Back" },
+    { key: "TS",  it: "Terzino Sinistro",    en: "Left Wing-back" },
+    { key: "TD",  it: "Terzino Destro",      en: "Right Wing-back" },
+    { key: "LIB", it: "Libero",              en: "Sweeper" },
   ],
   centrocampista: [
-    { key: "CDC", it: "Centrodestra/Centrosinistra", en: "Centre Mid" },
-    { key: "MCD", it: "Mediano/Davanti Difesa", en: "Defensive Mid" },
-    { key: "MCO", it: "Trequartista", en: "Attacking Mid" },
-    { key: "MEZ", it: "Mezzala", en: "Box-to-box Mid" },
-    { key: "TC", it: "Tornante", en: "Wide Mid" },
-    { key: "TT", it: "Terzino Aggiunto", en: "Auxiliary Back" },
+    { key: "CC",  it: "Centrocampista Centrale", en: "Centre Mid" },
+    { key: "MCD", it: "Mediano/Davanti Difesa",  en: "Defensive Mid" },
+    { key: "TRQ", it: "Trequartista",            en: "Attacking Mid" },
+    { key: "MEZ", it: "Mezzala",                 en: "Box-to-box Mid" },
+    { key: "ED",  it: "Esterno Destro",          en: "Right Wide Mid" },
+    { key: "ES",  it: "Esterno Sinistro",        en: "Left Wide Mid" },
   ],
   attaccante: [
-    { key: "PC", it: "Prima Punta", en: "Striker" },
-    { key: "SEC", it: "Seconda Punta", en: "Second Striker" },
-    { key: "ALA-S", it: "Ala Sinistra", en: "Left Winger" },
-    { key: "ALA-D", it: "Ala Destra", en: "Right Winger" },
-    { key: "FA", it: "Falso 9", en: "False 9" },
-    { key: "TRP", it: "Trequartista Avanzato", en: "Advanced Playmaker" },
+    { key: "PC",    it: "Prima Punta",           en: "Striker" },
+    { key: "SEC",   it: "Seconda Punta",         en: "Second Striker" },
+    { key: "ALA-S", it: "Ala Sinistra",          en: "Left Winger" },
+    { key: "ALA-D", it: "Ala Destra",            en: "Right Winger" },
+    { key: "FA",    it: "Falso 9",               en: "False 9" },
+    { key: "TRP",   it: "Trequartista Avanzato", en: "Advanced Playmaker" },
   ],
 };
 
-// Mappa display: traduce il key salvato nel DB in abbreviazione leggibile
-// I key nel DB non cambiano mai — solo questa mappa aggiorna la visualizzazione
+// Mappa display: retrocompatibilità con key vecchi salvati nel DB
+// I dati esistenti continuano a essere visualizzati correttamente
 const SUB_ROLE_DISPLAY: Record<string, string> = {
-  CDC: "CC",   // Centrocampista Centrale (era: Centrodestra/Centrosinistra)
-  MCO: "TRQ",  // Trequartista
-  TC:  "TOR",  // Tornante
-  TT:  "TA",   // Terzino Aggiunto
+  // vecchi key → nuova abbreviazione
+  CDC: "CC",   LS: "TS",   LD: "TD",
+  MCO: "TRQ",  TC: "ED",   TT: "TA",
 };
 
 type SortBy = "ruolo" | "nome" | "inserimento";

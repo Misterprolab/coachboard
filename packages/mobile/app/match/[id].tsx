@@ -41,7 +41,7 @@ type Match = {
 };
 
 const FORMATIONS = ["4-3-3","4-4-2","4-2-3-1","3-5-2","3-4-3","5-3-2","4-5-1","4-1-4-1","3-4-1-2"];
-const POSITION_ROLES = ["POR","DC","DS","DD","TT","TS","MCD","CDC","MCO","TC","ALA-D","ALA-S","PC","SEC"];
+const POSITION_ROLES = ["POR","DC","DS","DD","TS","TD","LIB","MCD","CC","TRQ","MEZ","ED","ES","ALA-D","ALA-S","PC","SEC","FA","TRP"];
 const ROLE_COLORS: Record<string,string> = {
   portiere: "#1abc9c", difensore: "#3498db", centrocampista: "#f1c40f", attaccante: "#e74c3c",
 };
@@ -73,7 +73,7 @@ function getFormationPositions(formation: string): FieldPos[] {
 
 function posRoleToLineIdx(posRole: string, _formation: string): number {
   if (["POR"].includes(posRole)) return -1;
-  if (["DC","DS","DD","TT","LD","LS","LIB"].includes(posRole)) return 0;
+  if (["DC","DS","DD","TS","TD","LD","LS","TT","LIB"].includes(posRole)) return 0;
   if (["PC","SEC","ALA-D","ALA-S","FA"].includes(posRole)) return 2;
   return 1;
 }
@@ -596,7 +596,7 @@ function FormazioneSection({ match, allPlayers, id, qc, c, scrollRef }: { match:
   const addFromBench = (p: Player) => {
     // Max 11 starters
     if (lineup.length >= 11) return;
-    setLineup(prev => [...prev, { playerId: p.id, positionRole: p.role === "portiere" ? "POR" : p.role === "difensore" ? "DC" : p.role === "centrocampista" ? "CDC" : "PC", jerseyNumber: benchNums[p.id] ?? (p.number != null ? String(p.number) : ""), isCaptain: false, isViceCaptain: false, isFreekickTaker: false, isCornerTaker: false, isPenaltyTaker: false, isWallPlayer: false }]);
+    setLineup(prev => [...prev, { playerId: p.id, positionRole: p.role === "portiere" ? "POR" : p.role === "difensore" ? "DC" : p.role === "centrocampista" ? "CC" : "PC", jerseyNumber: benchNums[p.id] ?? (p.number != null ? String(p.number) : ""), isCaptain: false, isViceCaptain: false, isFreekickTaker: false, isCornerTaker: false, isPenaltyTaker: false, isWallPlayer: false }]);
     setShowAdd(false);
     scheduleLineupAutoSave();
   };
