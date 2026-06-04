@@ -54,6 +54,15 @@ const SUB_ROLES: Record<string, { key: string; it: string; en: string }[]> = {
   ],
 };
 
+// Mappa display: traduce il key salvato nel DB in abbreviazione leggibile
+// I key nel DB non cambiano mai — solo questa mappa aggiorna la visualizzazione
+const SUB_ROLE_DISPLAY: Record<string, string> = {
+  CDC: "CC",   // Centrocampista Centrale (era: Centrodestra/Centrosinistra)
+  MCO: "TRQ",  // Trequartista
+  TC:  "TOR",  // Tornante
+  TT:  "TA",   // Terzino Aggiunto
+};
+
 type SortBy = "ruolo" | "nome" | "inserimento";
 const SORT_OPTIONS: { key: SortBy; it: string; en: string }[] = [
   { key: "ruolo", it: "Ruolo", en: "Role" },
@@ -311,14 +320,14 @@ export default function RosterScreen() {
 
   const roleLabel = (p: Player) => {
     const main = lang === "it" ? ROLE_LABELS[p.role]?.it : ROLE_LABELS[p.role]?.en;
-    if (p.subRole) return p.subRole;
+    if (p.subRole) return SUB_ROLE_DISPLAY[p.subRole] ?? p.subRole;
     return main ?? p.role;
   };
 
   const secondaryLabel = (p: Player) => {
     if (!p.secondaryRole) return null;
     const mainLbl = lang === "it" ? ROLE_LABELS[p.secondaryRole]?.it : ROLE_LABELS[p.secondaryRole]?.en;
-    return p.secondarySubRole ? p.secondarySubRole : (mainLbl ?? p.secondaryRole);
+    return p.secondarySubRole ? (SUB_ROLE_DISPLAY[p.secondarySubRole] ?? p.secondarySubRole) : (mainLbl ?? p.secondaryRole);
   };
 
   const listHeader = (
