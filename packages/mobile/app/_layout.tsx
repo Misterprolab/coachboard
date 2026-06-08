@@ -9,7 +9,7 @@ import { useTheme } from "../lib/themeStore";
 import { useDbInit } from "../lib/useDbInit";
 import { View, Text, ActivityIndicator, Platform } from "react-native";
 import { isDbStub } from "../lib/db/client";
-import { isLoggedIn, isSubscriptionExpired, getSubscriptionExpiry, getRole, clearAuth } from "../lib/authStore";
+import { isLoggedIn, getRole, clearAuth } from "../lib/authStore";
 import appJson from "../app.json";
 
 // Hide web splash screen once React mounts
@@ -21,6 +21,21 @@ const queryClient = new QueryClient();
 const applicationId = appJson.expo.extra.applicationId ?? "";
 const hostname = applicationId ? `${applicationId}-mobile` : "localhost";
 
+// Verifica server-side se la subscription è scaduta
+async function checkSubscriptionServer(): Promise<boolean> {
+  try {
+    const res = await fetch("/api/auth/me", {
+      headers: { Authorization: `Bearer ${localStorage.getItem("cb_auth_token")}`, "Content-Type": "application/json" },
+    });
+    if (res.status === 401 || res.status === 403) return true; // token non valido → tratta come expired
+    if (!res.ok) return false; // errore di rete → non fare nulla
+    const data = await res.json();
+    return data.subscriptionExpired === true;
+  } catch {
+    return false; // errore di rete → non bloccare
+  }
+}
+
 function AuthGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const segments = useSegments();
@@ -28,23 +43,22 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const routerRef = useRef(router);
   useEffect(() => { routerRef.current = router; }, [router]);
 
-  // Legge il timestamp direttamente dal localStorage ogni volta — nessuna closure stale
-  const checkExpiry = useCallback(() => {
+  // Check server-side: chiama /api/auth/me e verifica subscriptionExpired
+  const checkExpiry = useCallback(async () => {
     if (Platform.OS !== "web") return;
-    if (getRole() === "admin") return;
     if (!isLoggedIn()) return;
-    const expiry = getSubscriptionExpiry();
-    const expired = (expiry != null && Date.now() > expiry) || isSubscriptionExpired();
+    if (getRole() === "admin") return;
+    const expired = await checkSubscriptionServer();
     if (expired) {
       clearAuth();
       routerRef.current.replace("/login");
     }
   }, []);
 
-  // Timer: ogni 60s controlla se la licenza è scaduta a sessione aperta
+  // Timer: ogni 5 minuti controlla server-side
   useEffect(() => {
     if (Platform.OS !== "web") return;
-    const timer = setInterval(checkExpiry, 60_000);
+    const timer = setInterval(checkExpiry, 5 * 60_000);
     return () => clearInterval(timer);
   }, [checkExpiry]);
 
@@ -52,6 +66,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     if (Platform.OS !== "web") { setChecked(true); return; }
     const loggedIn = isLoggedIn();
     const inLoginPage = segments[0] === "login";
+
     if (!loggedIn && !inLoginPage) {
       router.replace("/login");
       setChecked(true);
@@ -61,18 +76,19 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       setChecked(true);
       return;
     }
-    // Controlla scadenza ad ogni navigazione
-    const role = getRole();
-    if (role !== "admin") {
-      const expiry = getSubscriptionExpiry();
-      const expired = (expiry != null && Date.now() > expiry) || isSubscriptionExpired();
-      if (expired) {
-        clearAuth();
-        router.replace("/login");
+
+    // Ad ogni navigazione: check server-side se loggato e non admin
+    if (loggedIn && getRole() !== "admin") {
+      checkSubscriptionServer().then((expired) => {
+        if (expired) {
+          clearAuth();
+          router.replace("/login");
+        }
         setChecked(true);
-        return;
-      }
+      });
+      return;
     }
+
     setChecked(true);
   }, [segments]);
 

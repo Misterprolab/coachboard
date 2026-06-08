@@ -146,9 +146,20 @@ const app = new Hono()
   })
   .get('/auth/me', authMiddleware, async (c) => {
     const userId = c.get('userId');
-    const [user] = await db.select({ id: users.id, email: users.email, role: users.role }).from(users).where(eq(users.id, userId));
+    const [user] = await db.select({
+      id: users.id,
+      email: users.email,
+      role: users.role,
+      subscriptionStatus: users.subscriptionStatus,
+      subscriptionExpiry: users.subscriptionExpiry,
+    }).from(users).where(eq(users.id, userId));
     if (!user) return c.json({ error: 'Utente non trovato' }, 404);
-    return c.json(user, 200);
+    const now = Date.now();
+    const subscriptionExpired = user.role !== 'admin' && !!user.subscriptionExpiry && now > user.subscriptionExpiry;
+    return c.json({
+      ...user,
+      subscriptionExpired,
+    }, 200);
   })
   .post('/auth/verify', async (c) => {
     const { token } = await c.req.json();
