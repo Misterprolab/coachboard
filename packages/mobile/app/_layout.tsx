@@ -9,7 +9,7 @@ import { useTheme } from "../lib/themeStore";
 import { useDbInit } from "../lib/useDbInit";
 import { View, Text, ActivityIndicator, Platform } from "react-native";
 import { isDbStub } from "../lib/db/client";
-import { isLoggedIn, isSubscriptionExpired, getRole } from "../lib/authStore";
+import { isLoggedIn, isSubscriptionExpired, getSubscriptionExpiry, getRole, clearAuth } from "../lib/authStore";
 import SubscriptionExpiredScreen from "../components/SubscriptionExpiredScreen";
 import appJson from "../app.json";
 
@@ -28,6 +28,33 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const [checked, setChecked] = useState(false);
   const [subExpired, setSubExpired] = useState(false);
 
+  // Controlla scadenza: usato sia al cambio navigazione sia dal timer periodico
+  const checkExpiry = (redirectIfExpired = false) => {
+    if (Platform.OS !== "web") return false;
+    const role = getRole();
+    if (role === 'admin') return false;
+    if (!isLoggedIn()) return false;
+    const expiry = getSubscriptionExpiry();
+    const expiredByTime = expiry != null && Date.now() > expiry;
+    if (expiredByTime || isSubscriptionExpired()) {
+      if (redirectIfExpired) {
+        clearAuth();
+        router.replace("/login");
+      } else {
+        setSubExpired(true);
+      }
+      return true;
+    }
+    return false;
+  };
+
+  // Timer: controlla ogni 60 secondi se la licenza è scaduta a sessione aperta
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const timer = setInterval(() => { checkExpiry(true); }, 60_000);
+    return () => clearInterval(timer);
+  }, []);
+
   useEffect(() => {
     if (Platform.OS !== "web") { setChecked(true); return; }
     const loggedIn = isLoggedIn();
@@ -41,11 +68,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       setChecked(true);
       return;
     }
-    // Admin bypassa sempre il controllo licenza
-    const role = getRole();
-    if (role !== 'admin' && isSubscriptionExpired()) {
-      setSubExpired(true);
-    }
+    checkExpiry(false);
     setChecked(true);
   }, [segments]);
 
