@@ -3,14 +3,13 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { OneDollarStatsProvider } from "../lib/analytics";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { initLang } from "../lib/i18n";
 import { useTheme } from "../lib/themeStore";
 import { useDbInit } from "../lib/useDbInit";
 import { View, Text, ActivityIndicator, Platform } from "react-native";
 import { isDbStub } from "../lib/db/client";
 import { isLoggedIn, isSubscriptionExpired, getSubscriptionExpiry, getRole, clearAuth } from "../lib/authStore";
-import SubscriptionExpiredScreen from "../components/SubscriptionExpiredScreen";
 import appJson from "../app.json";
 
 // Hide web splash screen once React mounts
@@ -26,34 +25,28 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const segments = useSegments();
   const [checked, setChecked] = useState(false);
-  const [subExpired, setSubExpired] = useState(false);
+  const routerRef = useRef(router);
+  useEffect(() => { routerRef.current = router; }, [router]);
 
-  // Controlla scadenza: usato sia al cambio navigazione sia dal timer periodico
-  const checkExpiry = (redirectIfExpired = false) => {
-    if (Platform.OS !== "web") return false;
-    const role = getRole();
-    if (role === 'admin') return false;
-    if (!isLoggedIn()) return false;
+  // Legge il timestamp direttamente dal localStorage ogni volta — nessuna closure stale
+  const checkExpiry = useCallback(() => {
+    if (Platform.OS !== "web") return;
+    if (getRole() === "admin") return;
+    if (!isLoggedIn()) return;
     const expiry = getSubscriptionExpiry();
-    const expiredByTime = expiry != null && Date.now() > expiry;
-    if (expiredByTime || isSubscriptionExpired()) {
-      if (redirectIfExpired) {
-        clearAuth();
-        router.replace("/login");
-      } else {
-        setSubExpired(true);
-      }
-      return true;
+    const expired = (expiry != null && Date.now() > expiry) || isSubscriptionExpired();
+    if (expired) {
+      clearAuth();
+      routerRef.current.replace("/login");
     }
-    return false;
-  };
+  }, []);
 
-  // Timer: controlla ogni 60 secondi se la licenza è scaduta a sessione aperta
+  // Timer: ogni 60s controlla se la licenza è scaduta a sessione aperta
   useEffect(() => {
     if (Platform.OS !== "web") return;
-    const timer = setInterval(() => { checkExpiry(true); }, 60_000);
+    const timer = setInterval(checkExpiry, 60_000);
     return () => clearInterval(timer);
-  }, []);
+  }, [checkExpiry]);
 
   useEffect(() => {
     if (Platform.OS !== "web") { setChecked(true); return; }
@@ -68,12 +61,22 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       setChecked(true);
       return;
     }
-    checkExpiry(false);
+    // Controlla scadenza ad ogni navigazione
+    const role = getRole();
+    if (role !== "admin") {
+      const expiry = getSubscriptionExpiry();
+      const expired = (expiry != null && Date.now() > expiry) || isSubscriptionExpired();
+      if (expired) {
+        clearAuth();
+        router.replace("/login");
+        setChecked(true);
+        return;
+      }
+    }
     setChecked(true);
   }, [segments]);
 
   if (!checked) return null;
-  if (subExpired) return <SubscriptionExpiredScreen />;
   return <>{children}</>;
 }
 
