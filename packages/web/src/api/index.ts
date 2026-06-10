@@ -1398,6 +1398,183 @@ const app = new Hono()
         secondaryObjectives: JSON.stringify(['Posizionamento del corpo', 'Coraggio nell\'uscita', 'Lettura della traiettoria']),
         duration: 20, players: 3, intensity: 'media', materials: 'Porta, palloni, coni', isCustom: false, createdAt: now
       },
+
+      // ══════════════════════════════════════════════════════════════════════
+      // ESERCITAZIONI AVANZATE — LIBRERIA V2
+      // ══════════════════════════════════════════════════════════════════════
+
+      // ── TATTICA AVANZATA ──────────────────────────────────────────────────
+      {
+        id: randomUUID(),
+        name: 'Costruzione in superiorità: positional play con pressing trigger',
+        nameEn: 'Build-up overload: positional play with pressing trigger',
+        category: 'tattica',
+        description: 'Campo 40x30m diviso in 5 corridoi verticali. 8 costruttori vs 5 pressatori. Regola: il pallone deve passare per tutti e 3 i corridoi prima di poter entrare nella zona finale. Pressing trigger: passaggio al terzino → pressing immediato. Se i pressatori recuperano entro 4 passaggi, vincono il round. Focus sulla circolazione veloce, larghezza e profondità simultanee (ampiezza + 9 in profondità). 4 round da 5 minuti, rotazione dei ruoli.',
+        descriptionEn: '40x30m split into 5 vertical corridors. 8 builders vs 5 pressers. Rule: ball must pass through all 3 corridors before entering the final zone. Pressing trigger: pass to fullback → immediate press. If pressers win ball in 4 passes, they win the round. Focus on fast circulation, simultaneous width and depth. 4×5 min rounds, roles rotate.',
+        primaryObjective: 'Automatizzare il gioco posizionale con circolazione su tutti i corridoi e risposta al pressing trigger',
+        secondaryObjectives: JSON.stringify(['Ampiezza e profondità simultanee', 'Reazione al pressing trigger', 'Velocità di circolazione', 'Posizionamento inter-linea', 'Comunicazione offensiva']),
+        duration: 30, players: 13, intensity: 'alta', materials: 'Campo 40x30m con coni per corridoi, 2-3 palloni', isCustom: false, createdAt: now
+      },
+      {
+        id: randomUUID(),
+        name: 'Difesa a zona orientata: scalamento a catena',
+        nameEn: 'Ball-oriented zone defense: chain pressing shifts',
+        category: 'tattica',
+        description: 'Blocco medio 4-3 (7 difensori) vs 9 attaccanti con possesso su campo 50x35m. Ogni spostamento palla attiva uno scalamento a catena: il mediano scala sul portatore, il difensore centrale copre il corridoio centrale, i difensori laterali orientano verso la fascia. Trigger di pressing: retropassaggio al portiere avversario → i 3 del blocco avanzato aggrediscono. Esercizio in blocchi 6'+90s recupero. Obiettivo: non concedere linee di passaggio centrali per più di 3 secondi.',
+        descriptionEn: '4-3 mid-block (7 defenders) vs 9 attackers on 50x35m. Every ball shift triggers a chain pressing shift: central mid steps to ball carrier, CB covers central corridor, wide defenders orient toward flank. Pressing trigger: back pass to opponent GK → 3 advanced players press immediately. 6 min blocks + 90s rest. Goal: deny central passing lanes for more than 3 seconds.',
+        primaryObjective: 'Sincronizzare il blocco difensivo a zona orientata al pallone con scalamenti a catena automatici',
+        secondaryObjectives: JSON.stringify(['Scalamento coordinato', 'Orientamento al pallone', 'Compattezza orizzontale', 'Pressing trigger sul retropassaggio', 'Comunicazione difensiva']),
+        duration: 30, players: 16, intensity: 'alta', materials: 'Campo 50x35m, coni per zone, 2-3 palloni', isCustom: false, createdAt: now
+      },
+      {
+        id: randomUUID(),
+        name: 'Trap laterale: pressing situazionale con linea del fuorigioco',
+        nameEn: 'Lateral trap: situational pressing with offside line',
+        category: 'tattica',
+        description: 'Schema difensivo avanzato: la squadra attira deliberatamente il pallone in fascia con pressing orientato, poi chiude la trappola alzando la linea difensiva per creare il fuorigioco. Esercizio: 7 difensori vs 7 attaccanti su metà campo. Trigger: il terzino attaccante riceve sulla fascia → pressing immediato del mediano + chiusura della mezzala + alzata sincrona della linea difensiva (min 3 difensori in linea). 20 situazioni ripetute con analisi dei fuorigioco creati. Variante: con jolly neutro che simula la seconda punta avversaria.',
+        descriptionEn: 'Advanced defensive pattern: team deliberately funnels ball wide with oriented pressing, then springs the trap by raising the offside line. Setup: 7 defenders vs 7 attackers on half-pitch. Trigger: attacking fullback receives wide → immediate pressing by central mid + halfback closes + synchronized offside line raise (min 3 defenders in line). 20 repetitions, count offside traps created. Variant: with neutral joker simulating opponent second striker.',
+        primaryObjective: 'Costruire automatismo del trap laterale con pressing orientato e alzata sincrona della linea per creare fuorigioco',
+        secondaryObjectives: JSON.stringify(['Sincronizzazione della linea difensiva', 'Pressing orientato sul lato palla', 'Comunicazione del fuorigioco', 'Reazione al dribbling per sfuggire la trappola', 'Lettura del movimento avversario']),
+        duration: 28, players: 14, intensity: 'alta', materials: 'Metà campo, coni per marcature, 2 palloni', isCustom: false, createdAt: now
+      },
+      {
+        id: randomUUID(),
+        name: 'Trequartista nel mezzo spazio: gioco tra le linee',
+        nameEn: 'Attacking midfielder in the half-space: between the lines',
+        category: 'tattica',
+        description: 'Esercizio specifico per il trequartista/seconda punta che opera nel mezzo spazio. 6vs4 in 25x20m con 2 zone proibite centrali per i difensori. Il trequartista parte sempre tra le linee (fuori dalla zona proibita) e deve: (1) ricevere spalle alla porta; (2) effettuare il mezzo giro o 1-2 con il centrocampista; (3) aprire verso la porta con accelerazione. Il difensore può seguirlo fuori zona dopo la ricezione. 5 serie da 4 minuti, feedback individuale dopo ogni serie.',
+        descriptionEn: 'Specific drill for the attacking mid/second striker operating in the half-space. 6v4 on 25x20m with 2 central zones forbidden for defenders. Trequartista always starts between the lines and must: (1) receive with back to goal; (2) half-turn or 1-2 with midfielder; (3) open toward goal with burst. Defender can follow after reception. 5×4 min sets, individual feedback after each.',
+        primaryObjective: 'Sviluppare la capacità del trequartista di ricevere e girare nel mezzo spazio creando superiorità numerica locale',
+        secondaryObjectives: JSON.stringify(['Ricezione spalle alla porta', 'Mezzo giro sotto pressione', 'Timing dell\'inserimento', 'Combinazione 1-2 in spazio stretto', 'Lettura del momento di aprirsi']),
+        duration: 25, players: 10, intensity: 'alta', materials: 'Campo 25x20m, coni per zone proibite, 2 porte piccole', isCustom: false, createdAt: now
+      },
+      {
+        id: randomUUID(),
+        name: 'Rotazioni di reparto in fase di non possesso: mid-block 4-3-3',
+        nameEn: 'Unit rotations out of possession: 4-3-3 mid-block',
+        category: 'tattica',
+        description: 'Applicazione del mid-block organizzato con il 4-3-3. Scenario: avversario in costruzione dal basso. La squadra in fase di non possesso mantiene il 4-3-3 (non il 4-1-4-1 statico) con rotazioni specifiche: (A) attaccante esterno scala sul terzino avversario → la mezzala sale a coprire il centrocampista → il mediano abbassa a coprire l\'ala. (B) 9 orienta la pressione verso il centro-destra → tutta la struttura ruota verso quel lato. Lavoro organizzato: 11 vs 8 costruttori, 20 minuti con stop e analisi.',
+        descriptionEn: 'Organised mid-block in 4-3-3. Scenario: opponent builds from the back. Non-possessing team maintains 4-3-3 (not static 4-1-4-1) with specific rotations: (A) wide attacker presses opposing fullback → halfback rises to cover CM → pivot drops to cover the winger. (B) striker orients pressure toward center-right → whole structure shifts that side. Organised work: 11 vs 8 builders, 20 min with stops and analysis.',
+        primaryObjective: 'Automatizzare le rotazioni di reparto nel mid-block 4-3-3 in relazione alla posizione del pallone',
+        secondaryObjectives: JSON.stringify(['Orientamento collettivo al pallone', 'Rotazione mezzala-mediano', 'Pressing orientato con il 9', 'Compattezza del blocco', 'Comunicazione nei cambi di orientamento']),
+        duration: 30, players: 19, intensity: 'media', materials: 'Campo intero, 2 porte, 3-4 palloni', isCustom: false, createdAt: now
+      },
+      {
+        id: randomUUID(),
+        name: 'Transizione offensiva: ampiezza + profondità in 3 secondi',
+        nameEn: 'Offensive transition: width + depth in 3 seconds',
+        category: 'tattica',
+        description: 'Esercizio specifico sulla transizione offensiva immediata dopo recupero palla. Partenza da blocco difensivo simulato (5 difensori + 4 centrocampisti posizionati). Al segnale (recupero palla), la squadra ha 3 secondi per aprire l\'ampiezza con gli esterni + attaccare la profondità con una punta. 8vs6 su campo 50x40m. Regola: primo tiro entro 6 secondi dal recupero o il punto non vale. 5 round da 4 minuti, conta le transizioni positive.',
+        descriptionEn: 'Specific offensive transition drill immediately after winning the ball. Start from simulated defensive block (5 defenders + 4 midfielders positioned). On signal (ball won), the team has 3 seconds to open width with wide players + attack depth with a striker. 8v6 on 50x40m. Rule: first shot within 6 seconds of winning ball or no goal. 5×4 min rounds, count positive transitions.',
+        primaryObjective: 'Costruire l\'automatismo di ampiezza e profondità simultanee nella transizione offensiva entro 3 secondi',
+        secondaryObjectives: JSON.stringify(['Reazione esplosiva al recupero palla', 'Lettura della profondità', 'Timing della punta sul lancio', 'Qualità del passaggio verticale', 'Sincronizzazione esterno-punta']),
+        duration: 28, players: 14, intensity: 'alta', materials: 'Campo 50x40m, coni per posizioni di partenza, 2 porte', isCustom: false, createdAt: now
+      },
+
+      // ── TECNICA AVANZATA ──────────────────────────────────────────────────
+      {
+        id: randomUUID(),
+        name: 'Ricezione spalle + 1-2 in spazio stretto (Xavi/Iniesta drill)',
+        nameEn: 'Back-to-goal receive + wall pass in tight space',
+        category: 'tecnica',
+        description: 'Trio: giocatore A (passante), B (ricevente spalle alla porta), C (parete). A passa a B che riceve spalle a C. B gioca la sponda a C di prima, poi si gira e riceve il filtrante di C in corsa. Distanze: A-B 8m, B-C 4m. Vincoli: B può usare solo la pianta del piede per orientare la ricezione. Max 1 tocco per la sponda. Poi accelerazione su filtrante di C con tiro in porta (porta a 12m). 4 serie da 8 ripetizioni per lato. Progressione: aggiungere un difensore passivo su B.',
+        descriptionEn: 'Trio: A (passer), B (back-to-goal receiver), C (wall). A passes to B who receives with back to C. B first-time wall-passes to C, then turns to receive C\'s through ball in stride. Distances: A-B 8m, B-C 4m. Constraints: B uses only sole of foot to orient control. Max 1 touch for wall pass. Then accelerate on C\'s through ball with shot on goal (goal 12m away). 4×8 reps per side. Progression: add passive defender on B.',
+        primaryObjective: 'Automatizzare la ricezione spalle alla porta con scarico immediato e lettura della prossima giocata in condizioni di spazio stretto',
+        secondaryObjectives: JSON.stringify(['Orientamento della ricezione col piede', 'Velocità dello smistamento', 'Lettura del filtrante', 'Accelerazione post-ricezione', 'Coordinazione nel trio']),
+        duration: 22, players: 3, intensity: 'media', materials: 'Coni, 1 palla, porta o cinesini come goal', isCustom: false, createdAt: now
+      },
+      {
+        id: randomUUID(),
+        name: 'Cambio di velocità in conduzione: accelerazione/decelerazione 1vs1',
+        nameEn: 'Speed change in dribbling: acceleration/deceleration 1v1',
+        category: 'tecnica',
+        description: 'Percorso 20m con coni ogni 5m. Il giocatore conduce palla alternando: accelerazione massimale nel primo segmento, decelerazione brusca al cono, pausa di 0.5s, poi riaccelerazione esplosiva. Al cono finale, 1vs1 diretto contro un difensore. Focus: il cambio di velocità deve essere così brusco da disorientare il difensore nel 1vs1. 5 ripetizioni per giocatore. Variante: inserire una finta (step-over o cut) al momento della decelerazione prima dell\'accelerazione finale.',
+        descriptionEn: '20m course with cones every 5m. Player dribbles alternating: max acceleration first segment, abrupt deceleration at cone, 0.5s pause, then explosive re-acceleration. At final cone, direct 1v1 against defender. Focus: speed change must be sharp enough to unbalance defender. 5 reps per player. Variant: add feint (step-over or cut) at deceleration moment before final burst.',
+        primaryObjective: 'Padroneggiare il cambio di velocità come strumento tecnico per creare vantaggio nel 1vs1',
+        secondaryObjectives: JSON.stringify(['Conduzione ad alta velocità', 'Controllo del pallone nella decelerazione', 'Accelerazione esplosiva post-pausa', 'Lettura del difensore', 'Finta combinata al cambio ritmo']),
+        duration: 20, players: 4, intensity: 'alta', materials: 'Coni ogni 5m su 20m, palloni', isCustom: false, createdAt: now
+      },
+      {
+        id: randomUUID(),
+        name: 'Switch di gioco: passaggio lungo calibrato su fascia opposta',
+        nameEn: 'Switch of play: long diagonal pass to the opposite flank',
+        category: 'tecnica',
+        description: 'Esercizio specifico per il passaggio lungo diagonale (switch). Centrocampista centrale in 3 tocchi max: riceve, si orienta, effettua il passaggio diagonale lungo (30-40m) verso l\'esterno opposto che parte in corsa. L\'esterno deve controllare orientato verso la porta senza perdere il passo. 3 sequenze: (A) campo aperto; (B) con difensore che pressiona il centrocampista dopo il primo tocco; (C) con difensore sull\'esterno. 8 ripetizioni per sequenza. Focus qualità della traiettoria (no troppo alta, no rasoterra su campo bagnato).',
+        descriptionEn: 'Specific long diagonal switch drill. Central midfielder in max 3 touches: receives, orientates, plays long diagonal (30-40m) toward the far winger running in stride. Winger must control oriented toward goal without breaking stride. 3 sequences: (A) open field; (B) with defender pressing CM after first touch; (C) with defender on the winger. 8 reps per sequence. Focus: trajectory quality (not too high, not on the ground on wet pitch).',
+        primaryObjective: 'Sviluppare la precisione e la scelta del passaggio lungo diagonale per cambiare gioco velocemente',
+        secondaryObjectives: JSON.stringify(['Orientamento prima della ricezione', 'Traiettoria calibrata del passaggio', 'Controllo orientato dell\'esterno', 'Velocità di esecuzione sotto pressione', 'Lettura del momento giusto per lo switch']),
+        duration: 25, players: 4, intensity: 'media', materials: 'Campo largo, coni per marcature, palloni', isCustom: false, createdAt: now
+      },
+      {
+        id: randomUUID(),
+        name: 'Stop di coscia orientato + accelerazione: la punta moderna',
+        nameEn: 'Oriented thigh control + burst: modern striker drill',
+        category: 'tecnica',
+        description: 'Simulazione del gesto tecnico della punta moderna su palla in arrivo dalla fascia o dal centrocampo. Serie: server lancia palla aerea a 8-10m, la punta effettua stop di coscia orientando il pallone a 45° verso il lato opposto al server (simulando controllo orientato lontano dal difensore), poi accelerazione esplosiva verso porta. 3 varianti: (A) palla da destra → controllo verso sinistra; (B) palla da sinistra → controllo verso destra; (C) palla centrale alta → controllo frontale + girata immediata. 6 ripetizioni per variante, poi tiro in porta. Progressione: aggiungere difensore che parte da 3m dopo il lancio.',
+        descriptionEn: 'Technical drill simulating the modern striker\'s oriented thigh control on aerial balls from wide or midfield. Sequence: server launches ball from 8-10m, striker stops with thigh orienting 45° away from server (simulating control away from defender), then explosive burst toward goal. 3 variants: (A) ball from right → control left; (B) ball from left → control right; (C) high central ball → frontal control + immediate turn. 6 reps per variant, then shot on goal. Progression: add defender starting 3m away on the throw.',
+        primaryObjective: 'Automatizzare lo stop di coscia orientato come strumento per creare spazio e accelerare verso la porta',
+        secondaryObjectives: JSON.stringify(['Lettura della traiettoria aerea', 'Orientamento del corpo pre-controllo', 'Tecnica dello stop di coscia', 'Accelerazione esplosiva post-controllo', 'Tiro in porta dopo controllo orientato']),
+        duration: 22, players: 3, intensity: 'alta', materials: 'Porta, palloni, coni, 1 server', isCustom: false, createdAt: now
+      },
+
+      // ── ATLETICO AVANZATO ─────────────────────────────────────────────────
+      {
+        id: randomUUID(),
+        name: 'RSA — Repeated Sprint Ability: protocollo con recupero incompleto',
+        nameEn: 'RSA — Repeated Sprint Ability: incomplete recovery protocol',
+        category: 'atletico',
+        description: 'Protocollo scientifico RSA per valutare e sviluppare la capacità di sprint ripetuto. Struttura: 6 sprint x 30m all-out con 20 secondi di recupero passivo tra gli sprint (recupero incompleto, caratteristica del calcio). Misurare: (1) tempo di ogni sprint; (2) indice di fatica (diff tra sprint migliore e peggiore / sprint migliore x 100). Soglia di qualità: indice di fatica < 3% = eccellente, < 5% = buono, > 8% = da migliorare. 2 serie totali con 5 minuti di recupero tra le serie. Prerequisito: buona base aerobica. Non usare in pre-stagione precoce.',
+        descriptionEn: 'Scientific RSA protocol to assess and develop repeated sprint capacity. Structure: 6 sprints × 30m all-out with 20 seconds passive recovery between sprints (incomplete recovery, characteristic of football). Measure: (1) each sprint time; (2) fatigue index (diff between best and worst sprint / best sprint × 100). Quality thresholds: fatigue index < 3% = excellent, < 5% = good, > 8% = needs improvement. 2 total sets with 5 min rest between. Prerequisite: solid aerobic base. Do not use in early pre-season.',
+        primaryObjective: 'Sviluppare e misurare la RSA (Repeated Sprint Ability) con protocollo scientifico e indice di fatica',
+        secondaryObjectives: JSON.stringify(['Potenza anaerobica alattacida', 'Capacità di recupero neuromuscolare', 'Monitoraggio dell\'indice di fatica', 'Resistenza alla velocità', 'Preparazione mentale alla sofferenza da sprint ripetuto']),
+        duration: 25, players: 4, intensity: 'massima', materials: 'Cronometro GPS o fotocellule, coni a 30m, campo aperto', isCustom: false, createdAt: now
+      },
+      {
+        id: randomUUID(),
+        name: 'Potenza anaerobica: protocollo 10-20-30m a intensità progressiva',
+        nameEn: 'Anaerobic power: 10-20-30m progressive sprint protocol',
+        category: 'atletico',
+        description: 'Protocollo per lo sviluppo della potenza anaerobica e dell\'accelerazione multi-fase, utilizzato nelle squadre professionistiche con supporto GPS. Struttura: blocco da 3 sprint consecutivi (10m + 20m + 30m, recupero 10s tra i segmenti) → 3 minuti di recupero → 5 ripetizioni del blocco. Nel blocco: 10m = accelerazione esplosiva; 20m = mantenimento; 30m = velocità massima. Target GPS: velocità di picco nel segmento 20-30m ≥ 95% della velocità massima individuale. Progressione mensile: aggiungere 1 blocco ogni 3 settimane fino a 8 blocchi totali.',
+        descriptionEn: 'Protocol for anaerobic power and multi-phase acceleration development, used in professional clubs with GPS support. Structure: block of 3 consecutive sprints (10m + 20m + 30m, 10s rest between segments) → 3 min rest → 5 block repetitions. Block: 10m = explosive acceleration; 20m = maintenance; 30m = max velocity. GPS target: peak speed in 20-30m segment ≥ 95% of individual max speed. Monthly progression: add 1 block every 3 weeks up to 8 total blocks.',
+        primaryObjective: 'Sviluppare la potenza anaerobica e l\'accelerazione multi-fase con target di velocità misurabili',
+        secondaryObjectives: JSON.stringify(['Accelerazione esplosiva 0-10m', 'Mantenimento della velocità 10-20m', 'Velocità massima 20-30m', 'Monitoraggio GPS della velocità di picco', 'Progressione del carico mensile']),
+        duration: 30, players: 4, intensity: 'massima', materials: 'Campo aperto, coni a 10-20-30m, cronometro/GPS', isCustom: false, createdAt: now
+      },
+
+      // ── PARTITELLA AVANZATA ────────────────────────────────────────────────
+      {
+        id: randomUUID(),
+        name: 'Juego de Posición 7vs7 con zone e corridoi',
+        nameEn: 'Juego de Posición 7v7 with zones and corridors',
+        category: 'partitella',
+        description: 'Applicazione del gioco posizionale (Guardiola-style) in formato SSG. Campo 45x35m diviso in 5 corridoi verticali + 3 zone orizzontali. Regole: (1) non si può stazionare nello stesso corridoio con un compagno; (2) gol valido solo se preceduto da almeno un passaggio in zona 3 (zona avanzata); (3) pressing trigger: retropassaggio → tutti avanzano di una zona. Team in possesso: 7 giocatori + 1 joker jolly. Team difendente: 7 giocatori. Obiettivo difensivo: recuperare palla entro 6 secondi dalla perdita. 3 periodi da 8 minuti + analisi.',
+        descriptionEn: 'Positional play (Guardiola-style) in SSG format. 45x35m split into 5 vertical corridors + 3 horizontal zones. Rules: (1) no two teammates in the same corridor; (2) goal only valid after at least one pass in zone 3 (advanced zone); (3) pressing trigger: back pass → all advance one zone. Possessing team: 7 + 1 neutral joker. Defending team: 7. Defensive goal: win ball within 6 seconds of losing it. 3×8 min periods + analysis.',
+        primaryObjective: 'Applicare i principi del gioco posizionale (occupazione corridoi, superiorità numerica locale, pressing trigger) in contesto di partitella strutturata',
+        secondaryObjectives: JSON.stringify(['Occupazione dei corridoi', 'Superiorità numerica locale', 'Pressing trigger sul retropassaggio', 'Transizione difensiva in 6 secondi', 'Gioco tra le linee in zona 3']),
+        duration: 35, players: 15, intensity: 'alta', materials: 'Campo 45x35m con coni per corridoi e zone, 2 porte, 3-4 palloni', isCustom: false, createdAt: now
+      },
+      {
+        id: randomUUID(),
+        name: 'Partitella: gol valido solo dopo cambio campo',
+        nameEn: 'Small-sided game: goal valid only after switching play',
+        category: 'partitella',
+        description: 'Partitella 6vs6 su campo 40x30m. Regola chiave: il gol è valido solo se l\'azione ha incluso almeno un cambio di campo (passaggio che attraversa il corridoio centrale verticale da una fascia all\'altra). Sviluppa la capacità di aprire il gioco, attaccare il lato debole e trovare la profondità dopo aver spostato la difesa. Nessun limite di tocchi. 2 tempi da 10 minuti. Conta i cambi campo tentati e riusciti ogni tempo.',
+        descriptionEn: '6v6 on 40x30m. Key rule: goal only counts if the move included at least one switch of play (pass crossing the vertical central corridor from one flank to the other). Develops ability to open play, attack the weak side, and find depth after shifting the defense. No touch limit. 2×10 min halves. Count attempted and successful switches each half.',
+        primaryObjective: 'Sviluppare l\'abitudine di cambiare gioco verso il lato debole come prerequisito per la finalizzazione',
+        secondaryObjectives: JSON.stringify(['Cambio di orientamento verso lato debole', 'Qualità del passaggio lungo', 'Lettura del lato debole', 'Attacco agli spazi dopo shift difensivo', 'Fluidità di circolazione']),
+        duration: 25, players: 12, intensity: 'alta', materials: 'Campo 40x30m, coni per corridoio centrale, 2 porte', isCustom: false, createdAt: now
+      },
+      {
+        id: randomUUID(),
+        name: 'Gegenpressing drill: recupero entro 5" con superiorità numerica',
+        nameEn: 'Gegenpressing drill: ball recovery within 5 seconds with overload',
+        category: 'partitella',
+        description: 'Esercitazione specifica sul gegenpressing (pressing immediato dopo perdita palla). Struttura: 8vs6 su campo 35x28m. La squadra da 8 ha un jolly extra che appare solo nella fase di pressing (entra in campo quando la sua squadra perde palla → 9vs6 per massimo 5 secondi). Se non recuperano entro 5", il jolly esce e si gioca 8vs6 regolare. Contatore: ogni recupero entro 5" vale 2 punti; ogni gol vale 1 punto. Sviluppa la reazione collettiva immediata alla perdita di possesso. 3 periodi da 6 minuti.',
+        descriptionEn: 'Gegenpressing drill (immediate press after losing the ball). Setup: 8v6 on 35x28m. The team of 8 has an extra joker who only appears during pressing phase (enters when their team loses ball → 9v6 for max 5 seconds). If no recovery in 5", joker exits and normal 8v6 resumes. Scoring: each recovery within 5" = 2 points; each goal = 1 point. Develops immediate collective reaction to possession loss. 3×6 min.',
+        primaryObjective: 'Automatizzare il gegenpressing collettivo entro 5 secondi dalla perdita palla con vantaggio numerico temporaneo',
+        secondaryObjectives: JSON.stringify(['Reazione istantanea alla perdita', 'Pressing coordinato in superiorità numerica', 'Comunicazione del trigger', 'Copertura degli spazi nel pressing', 'Resistenza ripetuta agli sprint di pressing']),
+        duration: 28, players: 15, intensity: 'massima', materials: 'Campo 35x28m, 2 porte, 3-4 palloni, cronometro', isCustom: false, createdAt: now
+      },
     ];
 
     await db.insert(exercises).values([...defaultExercises, ...extraExercises]);
