@@ -227,8 +227,8 @@ function buildPlayers(formKey: string, fh: number): PlayerToken[] {
 }
 
 // ─── Field SVG components — always green, hardcoded ──────────────────────────
-function FieldFull({ fh }: { fh: number }) {
-  const W = FW; const H = fh; const pad = 12;
+function FieldFull({ fh, fw }: { fh: number; fw: number }) {
+  const W = fw; const H = fh; const pad = 12;
   return (
     <>
       <Rect x="0" y="0" width={W} height={H} fill="#1a4a22" rx="12" />
@@ -251,8 +251,8 @@ function FieldFull({ fh }: { fh: number }) {
   );
 }
 
-function FieldHalf({ fh }: { fh: number }) {
-  const W = FW; const H = fh; const pad = 12;
+function FieldHalf({ fh, fw }: { fh: number; fw: number }) {
+  const W = fw; const H = fh; const pad = 12;
   return (
     <>
       <Rect x="0" y="0" width={W} height={H} fill="#1a4a22" rx="12" />
@@ -272,8 +272,8 @@ function FieldHalf({ fh }: { fh: number }) {
   );
 }
 
-function FieldThreeQuarter({ fh }: { fh: number }) {
-  const W = FW; const H = fh; const pad = 12;
+function FieldThreeQuarter({ fh, fw }: { fh: number; fw: number }) {
+  const W = fw; const H = fh; const pad = 12;
   const midY = H * 0.70;
   return (
     <>
@@ -338,8 +338,9 @@ export default function TacticalScreen() {
   const [drawMode, setDrawMode] = useState<DrawMode>("move");
   const [preview, setPreview] = useState<{ x1: number; y1: number; x2: number; y2: number; type: "arrow" | "line" } | null>(null);
   const [draggingIdState, setDraggingIdState] = useState<number | null>(null);
-  // Available height for the field area (measured at runtime)
+  // Available area for the field (measured at runtime)
   const [fieldAreaHeight, setFieldAreaHeight] = useState(0);
+  const [fieldAreaWidth, setFieldAreaWidth] = useState(0);
 
   const [fieldTexts, setFieldTexts] = useState<FieldText[]>([]);
   const fieldTextsRef = useRef<FieldText[]>([]);
@@ -357,12 +358,21 @@ export default function TacticalScreen() {
   const [newTextValue, setNewTextValue] = useState("");
   const [editingText, setEditingText] = useState<{ id: number; text: string } | null>(null);
 
-  const fhNatural = FH_MAP[fieldType];
-  // Scale field to fit the available area without scrolling
-  const scale = fieldAreaHeight > 0 && fhNatural > fieldAreaHeight
-    ? fieldAreaHeight / fhNatural
-    : 1;
-  const fh = fhNatural; // keep native coords, apply CSS scale on container
+  // Dynamic field dimensions: fit field into available area preserving aspect ratio
+  const RATIO_MAP: Record<FieldType, number> = { full: 1.55, half: 0.85, threequarter: 1.18 };
+  const ratio = RATIO_MAP[fieldType];
+  const fw = fieldAreaWidth > 0 ? fieldAreaWidth : FW;
+  // Height based on width; if it overflows available height, constrain by height instead
+  const fhByWidth = fw * ratio;
+  const fh = fieldAreaHeight > 0 && fhByWidth > fieldAreaHeight
+    ? fieldAreaHeight
+    : fhByWidth > 0 ? fhByWidth : FW * ratio;
+  // If constrained by height, recalc width
+  const fwFinal = fieldAreaHeight > 0 && fhByWidth > fieldAreaHeight ? fieldAreaHeight / ratio : fw;
+  // Use these as the actual field dimensions
+  // (reassign for clarity)
+  // fw -> fwFinal, fh already correct
+  const scale = 1; // no CSS scale needed anymore
 
   const drawModeRef = useRef<DrawMode>("move");
   const playersRef = useRef(players);
@@ -600,9 +610,9 @@ export default function TacticalScreen() {
   ).current;
 
   const renderField = () => {
-    if (fieldType === "full") return <FieldFull fh={fh} />;
-    if (fieldType === "half") return <FieldHalf fh={fh} />;
-    return <FieldThreeQuarter fh={fh} />;
+    if (fieldType === "full") return <FieldFull fh={fh} fw={fw} />;
+    if (fieldType === "half") return <FieldHalf fh={fh} fw={fw} />;
+    return <FieldThreeQuarter fh={fh} fw={fw} />;
   };
 
   const handleSave = async (name: string) => {
@@ -806,7 +816,7 @@ export default function TacticalScreen() {
       </ScrollView>
 
       {/* Toolbar */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexShrink: 0 }} contentContainerStyle={s.toolbar}>
+      <View style={s.toolbar}>
         <TouchableOpacity style={[s.toolBtn, drawMode === "move" && s.toolBtnMove]} onPress={() => setDrawMode("move")} activeOpacity={0.8}>
           <Cursor color={drawMode === "move" ? "#fff" : c.textMuted} size={13} />
           <Text style={[s.toolTxt, drawMode === "move" && { color: "#fff" }]}>{t("Muovi", "Move")}</Text>
@@ -831,7 +841,7 @@ export default function TacticalScreen() {
         <TouchableOpacity style={[s.toolBtn, { borderColor: "#ffffffaa" }]} onPress={() => { setNewTextValue(""); setAddingText(true); }} activeOpacity={0.8}>
           <Text style={[s.toolTxt, { color: "#fff", fontSize: 13, fontWeight: "700" }]}>T</Text>
         </TouchableOpacity>
-      </ScrollView>
+      </View>
 
       {/* Field — fixed, no scroll, scales to fit available height */}
       <View
@@ -969,8 +979,8 @@ function mkStyles(c: ThemeColors) {
     formText: { fontSize: 12, fontWeight: "600", color: c.textMuted },
     formTextActive: { color: c.primary },
 
-    toolbar: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 16, paddingBottom: 8 },
-    toolBtn: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 11, paddingVertical: 7, borderRadius: 14, borderWidth: 1, borderColor: c.border, backgroundColor: c.bgCard },
+    toolbar: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 5, paddingHorizontal: 16, paddingBottom: 8 },
+    toolBtn: { flexDirection: "row", alignItems: "center", gap: 3, paddingHorizontal: 9, paddingVertical: 7, borderRadius: 14, borderWidth: 1, borderColor: c.border, backgroundColor: c.bgCard },
     toolBtnMove: { backgroundColor: c.primary, borderColor: c.primary },
     toolBtnArrow: { backgroundColor: "#c0392b", borderColor: "#c0392b" },
     toolBtnLine: { backgroundColor: "#b7950b", borderColor: "#b7950b" },
