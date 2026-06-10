@@ -280,10 +280,10 @@ const app = new Hono()
       // 1. Nullifica invite_codes.used_by (FK senza cascade)
       await db.update(inviteCodes).set({ usedBy: null }).where(eq(inviteCodes.usedBy, id));
 
-      // 2. Matches → cascade DB elimina convocations, lineup, goals
+      // 2. Matches -> cascade DB elimina convocations, lineup, goals
       await db.delete(matches).where(eq(matches.userId, id));
 
-      // 3. Players (dopo matches — playerId nei match già eliminati)
+      // 3. Players (dopo matches -- playerId nei match già eliminati)
       await db.delete(players).where(eq(players.userId, id));
 
       // 4. sessionExercises delle sessioni utente (FK senza cascade sull'exerciseId)
@@ -338,8 +338,8 @@ const app = new Hono()
       {
         id: randomUUID(), name: 'Attivazione neuromotoria con palla', nameEn: 'Neuromotor activation with ball',
         category: 'riscaldamento',
-        description: 'Coppie a 8m. Sequenza: palleggio sinistro-destro alternato → controllo orientato a destra → dribbling 3 coni → passaggio a rimbalzo → colpo di testa. 4 ripetizioni per coppia invertendo ruoli. Progressione: aumentare ritmo ogni giro. Attivazione tobillo, ginocchio, anca.',
-        descriptionEn: 'Pairs 8m apart. Sequence: left-right alternate juggle → oriented control right → dribble 3 cones → bounce pass → header. 4 reps per pair switching roles. Progression: increase pace each round.',
+        description: 'Coppie a 8m. Sequenza: palleggio sinistro-destro alternato -> controllo orientato a destra -> dribbling 3 coni -> passaggio a rimbalzo -> colpo di testa. 4 ripetizioni per coppia invertendo ruoli. Progressione: aumentare ritmo ogni giro. Attivazione tobillo, ginocchio, anca.',
+        descriptionEn: 'Pairs 8m apart. Sequence: left-right alternate juggle -> oriented control right -> dribble 3 cones -> bounce pass -> header. 4 reps per pair switching roles. Progression: increase pace each round.',
         primaryObjective: 'Attivare le catene cinetiche del calciatore attraverso gesti tecnici progressivi',
         secondaryObjectives: JSON.stringify(['Coordinazione oculo-podalica', 'Controllo orientato in movimento', 'Colpo di testa tecnica base', 'Riscaldamento articolare completo']),
         duration: 14, players: 2, intensity: 'bassa', materials: 'palle, coni', isCustom: false, createdAt: now
@@ -358,8 +358,8 @@ const app = new Hono()
       {
         id: randomUUID(), name: 'Combinazione 1-2 con terzo uomo', nameEn: 'One-two combination with third man',
         category: 'tecnica',
-        description: 'Triangolo coni 8m lato. A passa a B → B restituisce di prima → A conduce e serve C in profondità → C controlla e calcia in porta. 3 varianti: (1) palla a terra, (2) palla in aria, (3) inserimento con taglio del terzo. 5 min per variante. Obiettivo qualità tocco: il passaggio deve essere sempre nel piede corretto del ricevitore.',
-        descriptionEn: 'Cone triangle 8m side. A passes B → B returns first-time → A drives and serves C deep → C controls and shoots. 3 variants: ground, aerial, diagonal run.',
+        description: 'Triangolo coni 8m lato. A passa a B -> B restituisce di prima -> A conduce e serve C in profondità -> C controlla e calcia in porta. 3 varianti: (1) palla a terra, (2) palla in aria, (3) inserimento con taglio del terzo. 5 min per variante. Obiettivo qualità tocco: il passaggio deve essere sempre nel piede corretto del ricevitore.',
+        descriptionEn: 'Cone triangle 8m side. A passes B -> B returns first-time -> A drives and serves C deep -> C controls and shoots. 3 variants: ground, aerial, diagonal run.',
         primaryObjective: 'Sviluppare automatismi di combinazione a velocità elevata con soluzione finale',
         secondaryObjectives: JSON.stringify(['Passaggio preciso nel piede corretto', 'Controllo orientato verso la porta', 'Timing dell\'inserimento del terzo uomo', 'Tiro dopo ricezione in movimento']),
         duration: 18, players: 3, intensity: 'media', materials: 'palle, coni, porta', isCustom: false, createdAt: now
@@ -396,8 +396,8 @@ const app = new Hono()
       {
         id: randomUUID(), name: 'Pressing alto coordinato (3-2-5 vs 4-3-3)', nameEn: 'Coordinated high press (3-2-5 vs 4-3-3)',
         category: 'tattica',
-        description: 'Campo diviso in 3 terzi. Fase non possesso: tridente offensivo copre le linee di passaggio sui difensori avversari → pressing trigger = passaggio al terzino → tutta la linea scala di 10m → MCD chiude l\'interno. Regola: se la palla arriva al portiere avversario si resetta. Obiettivo: recupero entro 5 secondi nella metà campo avversaria.',
-        descriptionEn: 'Field divided in 3 thirds. Non-possession phase: front 3 cover passing lanes on defenders → trigger = pass to fullback → whole line drops 10m → CDM closes inside. Goal: recovery within 5 seconds in opponent half.',
+        description: 'Campo diviso in 3 terzi. Fase non possesso: tridente offensivo copre le linee di passaggio sui difensori avversari -> pressing trigger = passaggio al terzino -> tutta la linea scala di 10m -> MCD chiude l\'interno. Regola: se la palla arriva al portiere avversario si resetta. Obiettivo: recupero entro 5 secondi nella metà campo avversaria.',
+        descriptionEn: 'Field divided in 3 thirds. Non-possession phase: front 3 cover passing lanes on defenders -> trigger = pass to fullback -> whole line drops 10m -> CDM closes inside. Goal: recovery within 5 seconds in opponent half.',
         primaryObjective: 'Automatizzare il pressing alto coordinato come meccanismo collettivo di recupero immediato',
         secondaryObjectives: JSON.stringify(['Trigger recognition per scatenare il pressing', 'Scalamento a catena dei reparti', 'Trappola del fuorigioco integrata nel pressing', 'Transizione offensiva immediata post-recupero']),
         duration: 25, players: 11, intensity: 'alta', materials: 'palle, coni, porte', isCustom: false, createdAt: now
@@ -423,8 +423,8 @@ const app = new Hono()
       {
         id: randomUUID(), name: 'Blocco difensivo 4-4-2 (bassa intensità)', nameEn: '4-4-2 defensive block (low block)',
         category: 'tattica',
-        description: 'La squadra si organizza in 4-4-2 basso. L\'avversario (6 uomini) circolano palla cercando varchi. Regola: la squadra difende mantenendo blocco compatto, distanza tra linee max 12m. Trigger per uscita: palla al terzino avversario → terzino sale, ala stringe, MCD copre. 15 minuti di lavoro continuato. Debriefing video.',
-        descriptionEn: 'Team organizes in low 4-4-2. Opponent (6) circulates seeking openings. Rule: compact block maintained, max 12m between lines. Trigger: ball to fullback → fullback pushes, winger narrows.',
+        description: 'La squadra si organizza in 4-4-2 basso. L\'avversario (6 uomini) circolano palla cercando varchi. Regola: la squadra difende mantenendo blocco compatto, distanza tra linee max 12m. Trigger per uscita: palla al terzino avversario -> terzino sale, ala stringe, MCD copre. 15 minuti di lavoro continuato. Debriefing video.',
+        descriptionEn: 'Team organizes in low 4-4-2. Opponent (6) circulates seeking openings. Rule: compact block maintained, max 12m between lines. Trigger: ball to fullback -> fullback pushes, winger narrows.',
         primaryObjective: 'Consolidare il blocco difensivo basso con corretti trigger di uscita su portatore laterale',
         secondaryObjectives: JSON.stringify(['Distanze inter-reparto (max 12m)', 'Copertura della zona centrale', 'Chiusura degli spazi alle spalle della linea difensiva', 'Comunicazione difensiva (chiamate verbali)']),
         duration: 20, players: 11, intensity: 'media', materials: 'palle, coni, porte', isCustom: false, createdAt: now
@@ -443,8 +443,8 @@ const app = new Hono()
       {
         id: randomUUID(), name: 'HIT integrato con palla (5-3-2)', nameEn: 'Ball-integrated HIIT (5-3-2)',
         category: 'atletico',
-        description: 'Protocollo 5-3-2: 5" sprint massimale → 3" pausa attiva (conduzione lenta) → 2" pausa assoluta. Ripetuto 10 volte = 1 serie. 3 serie totali con 3 min recupero. Ogni sprint include un gesto tecnico: dribbling su cono, passaggio al volo, colpo di testa. Carico cardiovascolare: zona 4-5 (85-95% FCmax).',
-        descriptionEn: '5-3-2 protocol: 5s max sprint → 3s active recovery (slow dribble) → 2s full rest. Repeated 10 times = 1 set. 3 sets total with 3min recovery. Each sprint includes: cone dribble, volley, header.',
+        description: 'Protocollo 5-3-2: 5" sprint massimale -> 3" pausa attiva (conduzione lenta) -> 2" pausa assoluta. Ripetuto 10 volte = 1 serie. 3 serie totali con 3 min recupero. Ogni sprint include un gesto tecnico: dribbling su cono, passaggio al volo, colpo di testa. Carico cardiovascolare: zona 4-5 (85-95% FCmax).',
+        descriptionEn: '5-3-2 protocol: 5s max sprint -> 3s active recovery (slow dribble) -> 2s full rest. Repeated 10 times = 1 set. 3 sets total with 3min recovery. Each sprint includes: cone dribble, volley, header.',
         primaryObjective: 'Aumentare la capacità di lavoro ad alta intensità mantenendo qualità tecnica sotto fatica',
         secondaryObjectives: JSON.stringify(['Zona cardiovascolare 4-5 (85-95% FCmax)', 'Qualità tecnica in stato di affaticamento', 'Recupero attivo efficiente', 'Adattamento metabolico anaerobico lattacido']),
         duration: 22, players: 1, intensity: 'alta', materials: 'palle, coni, cardiofrequenzimetro', isCustom: false, createdAt: now
@@ -501,8 +501,8 @@ const app = new Hono()
       {
         id: randomUUID(), name: 'Schema corner: blocco + taglio incrociato', nameEn: 'Corner scheme: block + cross-cut',
         category: 'calci_piazzati',
-        description: 'Schema A: attaccante X fa blocco sul difensore di Y → Y taglia sul primo palo basso → calciatore Z attacca il secondo palo. Schema B: finta corta → cross lungo diretto su 6° metro. 10 ripetizioni per schema. Difesa passiva nelle prime 5, semi-attiva nelle successive. Analisi: timing del taglio va anticipato di 2 passi rispetto al calcio.',
-        descriptionEn: 'Scheme A: attacker X blocks defender of Y → Y cuts near post low → Z attacks far post. Scheme B: short feint → long cross to 6th meter. 10 reps per scheme.',
+        description: 'Schema A: attaccante X fa blocco sul difensore di Y -> Y taglia sul primo palo basso -> calciatore Z attacca il secondo palo. Schema B: finta corta -> cross lungo diretto su 6° metro. 10 ripetizioni per schema. Difesa passiva nelle prime 5, semi-attiva nelle successive. Analisi: timing del taglio va anticipato di 2 passi rispetto al calcio.',
+        descriptionEn: 'Scheme A: attacker X blocks defender of Y -> Y cuts near post low -> Z attacks far post. Scheme B: short feint -> long cross to 6th meter. 10 reps per scheme.',
         primaryObjective: 'Automatizzare schemi di attacco su calcio d\'angolo con soluzioni multiple per sorprendere qualsiasi marcatura',
         secondaryObjectives: JSON.stringify(['Timing preciso del taglio incrociato', 'Qualità del cross (3 tipologie)', 'Blocco tecnico conforme alle regole', 'Lettura della marcatura avversaria']),
         duration: 20, players: 11, intensity: 'bassa', materials: 'palle, porta, coni', isCustom: false, createdAt: now
@@ -519,8 +519,8 @@ const app = new Hono()
       {
         id: randomUUID(), name: 'Rimessa laterale in zona offensiva', nameEn: 'Throw-in in offensive third',
         category: 'calci_piazzati',
-        description: 'Schema da rimessa a 30m dalla porta avversaria: Schema 1: rimettitore → appoggio corto → terzo uomo in profondità. Schema 2: finta corta → lungo sul secondo palo con inserimento. Schema 3: rimessa lunga sul taglio del terzino. 8 ripetizioni per schema. Focus su tecnica della rimessa (piedi a terra, palla dietro la testa).',
-        descriptionEn: 'Throw-in schemes 30m from goal. Scheme 1: short support → third man deep. Scheme 2: fake short → long far post run. Scheme 3: long throw to fullback cut.',
+        description: 'Schema da rimessa a 30m dalla porta avversaria: Schema 1: rimettitore -> appoggio corto -> terzo uomo in profondità. Schema 2: finta corta -> lungo sul secondo palo con inserimento. Schema 3: rimessa lunga sul taglio del terzino. 8 ripetizioni per schema. Focus su tecnica della rimessa (piedi a terra, palla dietro la testa).',
+        descriptionEn: 'Throw-in schemes 30m from goal. Scheme 1: short support -> third man deep. Scheme 2: fake short -> long far post run. Scheme 3: long throw to fullback cut.',
         primaryObjective: 'Sfruttare la rimessa laterale in zona offensiva come veicolo di creazione del pericolo',
         secondaryObjectives: JSON.stringify(['Tecnica regolamentare della rimessa', 'Lettura dello spazio per il terzo uomo', 'Sincronizzazione dei movimenti senza palla', 'Velocità di esecuzione dello schema']),
         duration: 15, players: 6, intensity: 'bassa', materials: 'palle, coni', isCustom: false, createdAt: now
@@ -530,8 +530,8 @@ const app = new Hono()
       {
         id: randomUUID(), name: 'Riflessi e posizionamento ravvicinato', nameEn: 'Reflexes and short-range positioning',
         category: 'portieri',
-        description: 'Portiere sulla linea dei 6m. Tiratore a 8m. Sequenza: (1) tiro basso angolo destro → (2) rimbalzo tiro di sinistro → (3) colpo di testa rasoterra → (4) tiro potente al centro. 4 tiri in sequenza = 1 serie. 6 serie con 45" recupero. Portiere NON si resetta completamente tra i tiri: allena la riapertura rapida. Progressione: accorciare i tempi tra i tiri.',
-        descriptionEn: 'GK on 6m line. Shooter at 8m. Sequence: (1) low right → (2) rebound left → (3) headed grounded → (4) power center. 4 shots = 1 set. 6 sets with 45s recovery.',
+        description: 'Portiere sulla linea dei 6m. Tiratore a 8m. Sequenza: (1) tiro basso angolo destro -> (2) rimbalzo tiro di sinistro -> (3) colpo di testa rasoterra -> (4) tiro potente al centro. 4 tiri in sequenza = 1 serie. 6 serie con 45" recupero. Portiere NON si resetta completamente tra i tiri: allena la riapertura rapida. Progressione: accorciare i tempi tra i tiri.',
+        descriptionEn: 'GK on 6m line. Shooter at 8m. Sequence: (1) low right -> (2) rebound left -> (3) headed grounded -> (4) power center. 4 shots = 1 set. 6 sets with 45s recovery.',
         primaryObjective: 'Sviluppare i riflessi del portiere e la capacità di riapertura rapida tra tiri ravvicinati in sequenza',
         secondaryObjectives: JSON.stringify(['Riapertura rapida (recovery position)', 'Presa bassa vs deviazione', 'Gestione del rimbalzo post-parata', 'Timing del salto su tiro alto']),
         duration: 18, players: 2, intensity: 'alta', materials: 'palle, porta', isCustom: false, createdAt: now
@@ -579,7 +579,7 @@ const app = new Hono()
         id: randomUUID(), name: 'Rondo 4+2vs2 a tema uscita', nameEn: 'Rondo 4+2vs2 with exit theme',
         category: 'riscaldamento',
         description: 'Quadrato 12x12m. 4 giocatori esterni + 2 jolly centrali vs 2 pressatori. Il possesso vale 1 punto; se i 2 jolly ricevono e si girano superando la linea opposta = 2 punti (simulazione uscita dalla pressione). Turni da 3 minuti, rotazione pressatori. Vincolo progressivo: prima libero, poi massimo 2 tocchi per esterni e tocco singolo per jolly. Esercitazione usata dal Barcellona B e dal Bayer Leverkusen come attivazione tattico-tecnica.',
-        descriptionEn: '12x12m square. 4 outer players + 2 jokers vs 2 pressers. Possession = 1pt; jokers turn and cross line = 2pts. 3-min rounds. Constraint progression: free → max 2 touches → 1 touch jokers.',
+        descriptionEn: '12x12m square. 4 outer players + 2 jokers vs 2 pressers. Possession = 1pt; jokers turn and cross line = 2pts. 3-min rounds. Constraint progression: free -> max 2 touches -> 1 touch jokers.',
         primaryObjective: 'Attivare meccanismi di possesso e uscita dalla pressione in forma giocata durante il riscaldamento',
         secondaryObjectives: JSON.stringify(['Velocità di gioco 1-2 tocchi', 'Orientamento del corpo per giocare in avanti', 'Pressing coordinato in coppia', 'Transizione da difesa ad attacco']),
         duration: 15, players: 8, intensity: 'media', materials: 'palla, coni (quadrato 12x12)', isCustom: false, createdAt: now
@@ -594,7 +594,7 @@ const app = new Hono()
         duration: 20, players: 16, intensity: 'bassa', materials: 'palle, coni, ostacoli bassi', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Futebol de esquema — riscaldamento brasiliano', nameEn: 'Brazilian scheme football warmup',
+        id: randomUUID(), name: 'Futebol de esquema -- riscaldamento brasiliano', nameEn: 'Brazilian scheme football warmup',
         category: 'riscaldamento',
         description: 'Metodo di riscaldamento ispirato alla Seleção Brasileira: coppie a 10m si scambiano la palla in sequenze codificate. Schema A: interno-esterno-tacco-colpo di testa. Schema B: triangolo con terzo uomo in movimento. Schema C: dai e vai con finta nel mezzo. Ogni schema dura 3 minuti. Nessuna pausa tra schemi, solo cambio ritmo. Finalità: attivazione tecnica profonda, riscaldamento mentale e senso del ritmo collettivo.',
         descriptionEn: 'Pairs at 10m exchanging ball in coded sequences. Scheme A: inside-outside-heel-header. Scheme B: triangle with moving third man. Scheme C: give-and-go with feint. 3 min each scheme.',
@@ -605,7 +605,7 @@ const app = new Hono()
       {
         id: randomUUID(), name: 'Labirinto cognitivo con numerazione', nameEn: 'Cognitive labyrinth with numbering',
         category: 'riscaldamento',
-        description: 'Griglia 15x15m con 8 coni numerati disposti casualmente. Giocatori in palleggio individuale devono toccare i coni in ordine crescente (1→8) poi decrescente. Progressione 1: toccano con piede destro i dispari e sinistro i pari. Progressione 2: allenatore chiama "+2" e devono sommare (es. partono da 3, vanno a 5, poi 7). Progressione 3: con un compagno, uno tocca pari e l\'altro dispari, comunicandosi la sequenza. Esercizio ispirato al metodo cognitivo di Marcelo Bielsa.',
+        description: 'Griglia 15x15m con 8 coni numerati disposti casualmente. Giocatori in palleggio individuale devono toccare i coni in ordine crescente (1->8) poi decrescente. Progressione 1: toccano con piede destro i dispari e sinistro i pari. Progressione 2: allenatore chiama "+2" e devono sommare (es. partono da 3, vanno a 5, poi 7). Progressione 3: con un compagno, uno tocca pari e l\'altro dispari, comunicandosi la sequenza. Esercizio ispirato al metodo cognitivo di Marcelo Bielsa.',
         descriptionEn: 'Grid with 8 numbered cones. Players juggle and touch cones in ascending/descending order. Progressions: foot-number pairing, mental arithmetic, partner coordination.',
         primaryObjective: 'Attivare le funzioni cognitive superiori (calcolo, memoria di lavoro, attenzione divisa) durante il riscaldamento',
         secondaryObjectives: JSON.stringify(['Controllo palla automatizzato', 'Orientamento spaziale', 'Comunicazione tra compagni', 'Doppio compito motorio-cognitivo']),
@@ -641,7 +641,7 @@ const app = new Hono()
       {
         id: randomUUID(), name: 'Tic-tac-toe umano con palla', nameEn: 'Human tic-tac-toe with ball',
         category: 'riscaldamento',
-        description: 'Griglia 3x3 di cerchi a terra (o coni) distanziati 3m l\'uno dall\'altro. Due squadre di 4 (uno in panchina). A turno un giocatore prende una palla, esegue 5 palleggi e poi occupa un cerchio. Vince chi fa tris. Regola: non si può stare fermo — chi è in campo deve sempre muoversi sul posto. Chi sbaglia il palleggio (palla a terra) deve tornare in fondo e rimandare il compagno. Sviluppa attenzione tattica, palleggio sotto pressione e spirito di squadra.',
+        description: 'Griglia 3x3 di cerchi a terra (o coni) distanziati 3m l\'uno dall\'altro. Due squadre di 4 (uno in panchina). A turno un giocatore prende una palla, esegue 5 palleggi e poi occupa un cerchio. Vince chi fa tris. Regola: non si può stare fermo -- chi è in campo deve sempre muoversi sul posto. Chi sbaglia il palleggio (palla a terra) deve tornare in fondo e rimandare il compagno. Sviluppa attenzione tattica, palleggio sotto pressione e spirito di squadra.',
         descriptionEn: '3x3 grid of circles. Teams alternate: player does 5 juggles then occupies a circle. First to get three in a row wins. Players in field must keep moving. Drop ball = restart.',
         primaryObjective: 'Sviluppare attenzione tattica e palleggio sotto pressione in forma ludico-competitiva',
         secondaryObjectives: JSON.stringify(['Palleggio controllato', 'Pensiero strategico', 'Comunicazione tra compagni', 'Spirito di squadra']),
@@ -652,14 +652,14 @@ const app = new Hono()
       {
         id: randomUUID(), name: 'Controllo orientato Coerver avanzato', nameEn: 'Advanced Coerver oriented control',
         category: 'tecnica',
-        description: 'Metodologia Coerver applicata al controllo orientato. Coppie a 15m con 2 coni separati 2m davanti ad ogni giocatore (porta di controllo). A calcia verso B — B deve controllare passando attraverso uno dei due coni (scelta in base al colore che A indica con la mano al momento del passaggio). Progressioni: (1) controllo + passaggio di prima verso terzo uomo; (2) controllo + dribbling verso porta piccola; (3) controllo + finta Cruyff + tiro. L\'orientamento del corpo prima di ricevere è il focus principale.',
-        descriptionEn: 'Coerver method for oriented control. Pairs at 15m with 2-cone gate. A passes to B — B controls through one cone based on A\'s hand signal. Progressions: control+layoff, control+dribble to mini-goal, control+Cruyff turn+shot.',
+        description: 'Metodologia Coerver applicata al controllo orientato. Coppie a 15m con 2 coni separati 2m davanti ad ogni giocatore (porta di controllo). A calcia verso B -- B deve controllare passando attraverso uno dei due coni (scelta in base al colore che A indica con la mano al momento del passaggio). Progressioni: (1) controllo + passaggio di prima verso terzo uomo; (2) controllo + dribbling verso porta piccola; (3) controllo + finta Cruyff + tiro. L\'orientamento del corpo prima di ricevere è il focus principale.',
+        descriptionEn: 'Coerver method for oriented control. Pairs at 15m with 2-cone gate. A passes to B -- B controls through one cone based on A\'s hand signal. Progressions: control+layoff, control+dribble to mini-goal, control+Cruyff turn+shot.',
         primaryObjective: 'Automatizzare il controllo orientato con scelta pre-cognitiva del lato, fondamentale per il gioco rapido',
         secondaryObjectives: JSON.stringify(['Postura del corpo in ricezione', 'Lettura del segnale visivo ante-ricezione', 'Transizione controllo-azione', 'Velocità di decisione']),
         duration: 20, players: 10, intensity: 'media', materials: 'palle, coni (porte 2m), porte piccole', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Wall passing a specchio — 1000 tocchi', nameEn: 'Mirror wall passing — 1000 touches',
+        id: randomUUID(), name: 'Wall passing a specchio -- 1000 tocchi', nameEn: 'Mirror wall passing -- 1000 touches',
         category: 'tecnica',
         description: 'Esercitazione individuale con tabellone rimbalzo (o muro). Protocollo: (1) passaggi interni 30 secondi dx; (2) passaggi interni 30s sx; (3) interni alternati; (4) esterni dx; (5) esterni sx; (6) alternati dx-sx; (7) punta del piede; (8) tacco; (9) ginocchio; (10) testa. 3 serie complete. Obiettivo: ~1000 tocchi per sessione. Usato da Ronaldo (Fenomeno) e ribattezzato nel calcio moderno come "paredes" dai tecnici spagnoli. Sviluppa sensibilità del tocco e automatismo del gesto.',
         descriptionEn: 'Individual wall-passing protocol: 10 surfaces (inside R/L, alternate, outside R/L, alternate, toe, heel, knee, head). 30s each, 3 sets. Target ~1000 touches per session.',
@@ -677,7 +677,7 @@ const app = new Hono()
         duration: 18, players: 2, intensity: 'alta', materials: 'palla, coni, 2 porte piccole 1.5m', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Passaggio filtrante in corsa — linee spezzate', nameEn: 'Through pass in motion — broken lines',
+        id: randomUUID(), name: 'Passaggio filtrante in corsa -- linee spezzate', nameEn: 'Through pass in motion -- broken lines',
         category: 'tecnica',
         description: 'Tre linee parallele di coni a 10m l\'una dall\'altra. Giocatore A è sulla linea 1, B sulla linea 2 (di lato), C sulla linea 3 (di fronte). A passa filtrante a C che scatta tra due coni della linea 2 (corridoio 3m); B deve aver già liberato il corridoio con finta verso l\'esterno. C controlla, gira e passa a B che è entrato in corsa. B finalizza. Sequenza rotante ogni 3 azioni. Sviluppa timing del passaggio filtrante, movimento senza palla e finalizzazione.',
         descriptionEn: 'Three parallel cone lines 10m apart. A plays through ball to C cutting between line-2 cones (B clears with decoy run). C controls, turns, passes to B running in. B finishes.',
@@ -686,18 +686,18 @@ const app = new Hono()
         duration: 20, players: 9, intensity: 'media', materials: 'palle, coni, porta', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Colpo di testa — circuito a 5 stazioni', nameEn: 'Heading circuit — 5 stations',
+        id: randomUUID(), name: 'Colpo di testa -- circuito a 5 stazioni', nameEn: 'Heading circuit -- 5 stations',
         category: 'tecnica',
-        description: 'Circuito 5 stazioni (2 min ciascuna, riposo 30"): (1) testa a rimbalzo contro muro a 3m — continuità ritmica; (2) cross basso → salto di anticipo → testata verso porta; (3) colpo di testa difensivo di allontanamento da pallone alzato da compagno; (4) duello aereo 1vs1 su cross del mister; (5) gioco di testa a coppie in spazio 5x5m (no piedi). Focus tecnico: uso del collo, apertura occhi, timing del salto, rotazione del busto.',
+        description: 'Circuito 5 stazioni (2 min ciascuna, riposo 30"): (1) testa a rimbalzo contro muro a 3m -- continuità ritmica; (2) cross basso -> salto di anticipo -> testata verso porta; (3) colpo di testa difensivo di allontanamento da pallone alzato da compagno; (4) duello aereo 1vs1 su cross del mister; (5) gioco di testa a coppie in spazio 5x5m (no piedi). Focus tecnico: uso del collo, apertura occhi, timing del salto, rotazione del busto.',
         descriptionEn: '5-station heading circuit (2 min each, 30" rest): wall-bounce continuity, cross-jump-header to goal, defensive clearance header, aerial 1v1 on cross, head-only 5v5.',
         primaryObjective: 'Sviluppare la tecnica del colpo di testa in tutte le sue varianti: offensivo, difensivo, di deviazione e duello aereo',
         secondaryObjectives: JSON.stringify(['Timing del salto', 'Uso corretto del collo', 'Colpo di testa difensivo di allontanamento', 'Duello aereo 1vs1']),
         duration: 20, players: 14, intensity: 'alta', materials: 'palle, coni, porta, muro/tabellone', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Tiro in caduta — volée e rovesciata tecnica', nameEn: 'Falling shot — volley and bicycle kick technique',
+        id: randomUUID(), name: 'Tiro in caduta -- volée e rovesciata tecnica', nameEn: 'Falling shot -- volley and bicycle kick technique',
         category: 'tecnica',
-        description: 'Esercitazione progressiva per finalizzatori: (1) tiro di volée frontale su pallone alzato dal compagno a 1m — focus su piede di appoggio e superficie di contatto; (2) volée di mezza altezza con approccio laterale; (3) volée di esterno con aggancio sulla linea d\'area; (4) rovesciata tecnica su pallone alzato lentamente a 1.5m dal petto (solo tecnica, nessun rischio fisico). Materassino protettivo per rovesciate. Ogni giocatore 5 tentativi per variante.',
+        description: 'Esercitazione progressiva per finalizzatori: (1) tiro di volée frontale su pallone alzato dal compagno a 1m -- focus su piede di appoggio e superficie di contatto; (2) volée di mezza altezza con approccio laterale; (3) volée di esterno con aggancio sulla linea d\'area; (4) rovesciata tecnica su pallone alzato lentamente a 1.5m dal petto (solo tecnica, nessun rischio fisico). Materassino protettivo per rovesciate. Ogni giocatore 5 tentativi per variante.',
         descriptionEn: 'Progressive finishing: frontal volley on raised ball, half-volley from side, outside-foot volley, bicycle kick on slow-raised ball. Mat for bicycle kicks. 5 attempts per variant.',
         primaryObjective: 'Sviluppare il tiro di prima intenzione su palla alta nelle sue varianti tecniche avanzate',
         secondaryObjectives: JSON.stringify(['Tecnica della volée frontale', 'Coordinazione con appoggio', 'Coraggio tecnico', 'Rovesciata tecnica in sicurezza']),
@@ -713,16 +713,16 @@ const app = new Hono()
         duration: 18, players: 9, intensity: 'media', materials: 'palle, coni, porta', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Cross e finalizzazione 3 zone', nameEn: 'Crossing and finishing — 3 zone attack',
+        id: randomUUID(), name: 'Cross e finalizzazione 3 zone', nameEn: 'Crossing and finishing -- 3 zone attack',
         category: 'tecnica',
-        description: 'Mezza campo con 3 attaccanti posizionati in zona (primo palo, punto di rigore, secondo palo). Crossatore parte dalla fascia, sceglie cross rasoterra, teso o alto. I tre attaccanti interpretano la traiettoria e uno attacca il pallone. Gli altri due devono comunque muoversi per non essere marcabili. Progressione: aggiunta di 2 difensori passivi → semi-attivi → attivi. Variante: crossatore può anche accentrarsi e tirare (intenzione doppia).',
-        descriptionEn: 'Half-field. 3 attackers in zones (near post, penalty spot, far post). Crosser chooses type of cross (ground, driven, high). Attackers read trajectory. Progression: 0 → 2 passive → active defenders.',
+        description: 'Mezza campo con 3 attaccanti posizionati in zona (primo palo, punto di rigore, secondo palo). Crossatore parte dalla fascia, sceglie cross rasoterra, teso o alto. I tre attaccanti interpretano la traiettoria e uno attacca il pallone. Gli altri due devono comunque muoversi per non essere marcabili. Progressione: aggiunta di 2 difensori passivi -> semi-attivi -> attivi. Variante: crossatore può anche accentrarsi e tirare (intenzione doppia).',
+        descriptionEn: 'Half-field. 3 attackers in zones (near post, penalty spot, far post). Crosser chooses type of cross (ground, driven, high). Attackers read trajectory. Progression: 0 -> 2 passive -> active defenders.',
         primaryObjective: 'Sviluppare la tecnica del cross e la lettura delle traiettorie aeree da parte dei finalizzatori',
         secondaryObjectives: JSON.stringify(['Tecnica del cross (3 varianti)', 'Lettura della traiettoria aerea', 'Attacco al primo e secondo palo', 'Movimento degli attaccanti sul cross']),
         duration: 20, players: 7, intensity: 'alta', materials: 'palle multiple, porta, coni di zona', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Stop e tiro da fuori area — tecnica del destro e sinistro', nameEn: 'Control and shoot from outside — both feet',
+        id: randomUUID(), name: 'Stop e tiro da fuori area -- tecnica del destro e sinistro', nameEn: 'Control and shoot from outside -- both feet',
         category: 'tecnica',
         description: 'Mezzaluna fuori area. Giocatore riceve da centrocampista a 20m, controlla con piede debole e tira con piede forte (o viceversa). Progressione: (1) palla ferma; (2) palla in movimento trasversale; (3) palla in movimento frontale; (4) con pressatore alle spalle. Tecnica del tiro: inclinazione del busto, piede d\'appoggio, impatto sul pallone, follow-through. Variante del mister Guardiola: dopo il tiro il giocatore sprinta verso l\'area per il rebound. 8 tentativi per piede.',
         descriptionEn: 'Outside area crescent. Player receives, controls weak foot, shoots strong foot (or reverse). Progressions: static ball, lateral movement, frontal movement, presser behind. 8 attempts per foot.',
@@ -733,25 +733,25 @@ const app = new Hono()
       {
         id: randomUUID(), name: 'Conduzione di velocità e cambio di passo', nameEn: 'Speed dribbling and change of pace',
         category: 'tecnica',
-        description: 'Corridoio 40m con 3 zone: zona A (0-15m) conduzione veloce a piede aperto verso esterno; zona B (15-25m) finta e cambio di direzione a 90°; zona C (25-40m) accelerazione esplosiva con palla al piede verso porta. Confronto cronometrato in coppia. Focus tecnico: (1) tocchi lunghi in velocità (non corti); (2) punto di attacco nella finta — spostamento peso prima del cambio; (3) accelerazione post-cambio: primo tocco allungato.',
+        description: 'Corridoio 40m con 3 zone: zona A (0-15m) conduzione veloce a piede aperto verso esterno; zona B (15-25m) finta e cambio di direzione a 90°; zona C (25-40m) accelerazione esplosiva con palla al piede verso porta. Confronto cronometrato in coppia. Focus tecnico: (1) tocchi lunghi in velocità (non corti); (2) punto di attacco nella finta -- spostamento peso prima del cambio; (3) accelerazione post-cambio: primo tocco allungato.',
         descriptionEn: '40m corridor in 3 zones: fast open-foot dribble, feint + 90° direction change, explosive acceleration to goal. Timed in pairs. Technical focus: long touches at speed, weight shift in feint, lengthened first touch post-change.',
         primaryObjective: 'Sviluppare la conduzione di velocità con cambio di passo e cambio di direzione in contesto di accelerazione',
         secondaryObjectives: JSON.stringify(['Conduzione a piede aperto in velocità', 'Tecnica della finta con cambio di peso', 'Accelerazione esplosiva post-cambio', 'Coordinazione in velocità massima']),
         duration: 20, players: 14, intensity: 'alta', materials: 'palle, coni, birilli, porta', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Palla lunga e controllo — lancio del portiere', nameEn: 'Long ball and control — goalkeeper distribution',
+        id: randomUUID(), name: 'Palla lunga e controllo -- lancio del portiere', nameEn: 'Long ball and control -- goalkeeper distribution',
         category: 'tecnica',
-        description: 'Il portiere lancia lungo (rilancio con le mani o calcio di rinvio) verso l\'attaccante di riferimento posizionato a 40-50m. L\'attaccante deve: (1) orientarsi prima del lancio; (2) ricevere con petto/coscia per abbassare; (3) controllare con il piede e proteggere; (4) giocare in profondità per il compagno che taglia. Variante difensiva: aggiunta di un difensore che va in anticipo. Focus: la tecnica dell\'attaccante nel gioco aereo lungo — spesso trascurata negli allenamenti moderni.',
+        description: 'Il portiere lancia lungo (rilancio con le mani o calcio di rinvio) verso l\'attaccante di riferimento posizionato a 40-50m. L\'attaccante deve: (1) orientarsi prima del lancio; (2) ricevere con petto/coscia per abbassare; (3) controllare con il piede e proteggere; (4) giocare in profondità per il compagno che taglia. Variante difensiva: aggiunta di un difensore che va in anticipo. Focus: la tecnica dell\'attaccante nel gioco aereo lungo -- spesso trascurata negli allenamenti moderni.',
         descriptionEn: 'GK launches long ball to striker at 40-50m. Striker: orient before launch, receive with chest/thigh, control with foot, play forward for cutting teammate. Defensive variant: add one anticipating defender.',
         primaryObjective: 'Sviluppare la tecnica dell\'attaccante nel ricevere palla lunga: ricezione aerea, protezione e giocata successiva',
         secondaryObjectives: JSON.stringify(['Controllo del petto/coscia su palla alta', 'Protezione della palla sotto pressione', 'Orientamento prima della ricezione', 'Giocata rapida post-controllo']),
         duration: 18, players: 6, intensity: 'media', materials: 'palle, coni, porta, portiere', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Tecnica del pressing individuale — chiusura dello spazio', nameEn: 'Individual pressing technique — space closure',
+        id: randomUUID(), name: 'Tecnica del pressing individuale -- chiusura dello spazio', nameEn: 'Individual pressing technique -- space closure',
         category: 'tecnica',
-        description: 'Corridoio 15x8m. Un difensore, un attaccante con palla. Il difensore deve avvicinarsi al portatore entro 3 secondi (trigger: palla ricevuta) con corsa orientata — non frontale ma diagonale per chiudere il lato forte. Tecnica del recupero: (1) corsa di avvicinamento rapida ma con rallentamento negli ultimi 3m; (2) baricentro basso; (3) piede di punta verso la palla; (4) spostamento laterale reattivo. L\'attaccante può muoversi solo nel corridoio.',
+        description: 'Corridoio 15x8m. Un difensore, un attaccante con palla. Il difensore deve avvicinarsi al portatore entro 3 secondi (trigger: palla ricevuta) con corsa orientata -- non frontale ma diagonale per chiudere il lato forte. Tecnica del recupero: (1) corsa di avvicinamento rapida ma con rallentamento negli ultimi 3m; (2) baricentro basso; (3) piede di punta verso la palla; (4) spostamento laterale reattivo. L\'attaccante può muoversi solo nel corridoio.',
         descriptionEn: '15x8m corridor. Defender must close attacker within 3s using diagonal approach run (not frontal). Technique: fast approach, slow last 3m, low center of gravity, toe toward ball, reactive lateral shuffle.',
         primaryObjective: 'Insegnare la tecnica corretta del pressing individuale: approccio diagonale, distanza di sicurezza e baricentro',
         secondaryObjectives: JSON.stringify(['Approccio diagonale al portatore', 'Rallentamento di controllo negli ultimi metri', 'Baricentro basso e piede di punta', 'Lettura del peso dell\'attaccante']),
@@ -778,7 +778,7 @@ const app = new Hono()
         duration: 25, players: 12, intensity: 'alta', materials: 'palle, coni, 2 porte', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Pressing a zona — trigger e compattezza', nameEn: 'Zonal pressing — trigger and compactness',
+        id: randomUUID(), name: 'Pressing a zona -- trigger e compattezza', nameEn: 'Zonal pressing -- trigger and compactness',
         category: 'tattica',
         description: 'Campo 60x40m. 6vs6 con 2 portieri. Si stabilisce 1 trigger di pressing (es. retropassaggio al portiere avversario o ricevuta in fascia dal terzino in posizione chiusa). Al trigger, tutta la squadra avanza di 10-15m in blocco compatto. Obiettivo: recupero entro 6 secondi nel 1/3 campo avversario o allontanamento della palla. Se avversario supera il pressing: tutti rientrano velocemente. Basato sulla metodologia del Napoli di Sarri 2017-18.',
         descriptionEn: '60x40m, 6v6+GKs. One pre-defined pressing trigger (e.g. backpass to GK or tight flank receive). On trigger: whole team advances 10-15m in compact block. Goal: win ball in 6s or clear. Debrief: who saw trigger?',
@@ -796,7 +796,7 @@ const app = new Hono()
         duration: 18, players: 9, intensity: 'alta', materials: 'palle, coni (zona 20x15), porte piccole', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Difesa della profondità — linea alta e offside', nameEn: 'Depth defence — high line and offside trap',
+        id: randomUUID(), name: 'Difesa della profondità -- linea alta e offside', nameEn: 'Depth defence -- high line and offside trap',
         category: 'tattica',
         description: 'Campo 60x40m. Linea difensiva a 4 vs 3 attaccanti + centrocampista di supporto. La difesa lavora ad una linea alta (a 40m dalla propria porta). Allenatore lancia palla lunga per l\'attaccante di punta: la linea deve avanzare compatta al momento del lancio (non prima, non dopo) per intrappolare in fuorigioco. Trigger: momento del backswing del piede del lanciatore. Progressione: aggiunta di attaccante che parte in corsa; poi con terzini che possono scappare.',
         descriptionEn: '60x40m. 4-man defensive line vs 3 attackers + support. Line is set high (40m from own goal). Coach plays long ball: line must advance in sync at kick moment to trap offside. Progression: runner, then escaping fullbacks.',
@@ -814,7 +814,7 @@ const app = new Hono()
         duration: 22, players: 12, intensity: 'alta', materials: 'palle, coni, 4 porte piccole', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Mezzala in proiezione offensiva — inserimento sul 3-5-2', nameEn: 'Mezzala in offensive projection — 3-5-2 insertion',
+        id: randomUUID(), name: 'Mezzala in proiezione offensiva -- inserimento sul 3-5-2', nameEn: 'Mezzala in offensive projection -- 3-5-2 insertion',
         category: 'tattica',
         description: 'Mezza campo. Schieramento 3-5-2 in fase offensiva. La mezzala (uno dei due centrocampisti laterali) deve inserirsi tra terzino e centrale avversario quando il terzino alto sale sulla fascia. Meccanismo: (1) terzino alto verticalizza o crossa; (2) la mezzala parte in corsa al momento del passaggio al terzino alto; (3) arriva in area sull\'eventuale respinta. Timing fondamentale: troppo presto = offside; troppo tardi = fuori dall\'azione. Ripetuto 15 volte per lato.',
         descriptionEn: '3-5-2 offensive setup. Mezzala inserts between fullback and CB when high wingback overlaps. Mechanism: wingback plays forward, mezzala runs on the pass, arrives in area on clearance. Timing drill × 15 each side.',
@@ -823,7 +823,7 @@ const app = new Hono()
         duration: 20, players: 11, intensity: 'alta', materials: 'palle, coni, porta, portiere', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Pressing coordinato in 4-4-2 — blocco mediano', nameEn: 'Coordinated pressing in 4-4-2 — medium block',
+        id: randomUUID(), name: 'Pressing coordinato in 4-4-2 -- blocco mediano', nameEn: 'Coordinated pressing in 4-4-2 -- medium block',
         category: 'tattica',
         description: 'Campo intero. Il 4-4-2 difende a blocco medio (tra le due linee di metà campo e area). Principi: (1) le due punte pressano i centrali difensivi avversari quando ricevono; (2) i centrocampisti scalano sul lato della palla; (3) i terzini salgono sul terzino avversario solo se la palla è sulla loro fascia. Trigger di compressione: retropassaggio al centrale avversario. Allenatore distribuisce palla agli avversari in schemi predefiniti, il 4-4-2 deve adattarsi.',
         descriptionEn: 'Full field. 4-4-2 medium block. Principles: 2 strikers press CBs on receive, midfielders shift ball-side, fullbacks step up only on their flank. Trigger: backpass to opponent CB. Coach distributes in set patterns.',
@@ -832,7 +832,7 @@ const app = new Hono()
         duration: 25, players: 14, intensity: 'alta', materials: 'palle, coni, 2 porte, portieri', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Fase offensiva 4-3-3 — attacco alla profondità della seconda punta', nameEn: '4-3-3 offensive phase — second striker depth attack',
+        id: randomUUID(), name: 'Fase offensiva 4-3-3 -- attacco alla profondità della seconda punta', nameEn: '4-3-3 offensive phase -- second striker depth attack',
         category: 'tattica',
         description: 'Mezza campo offensiva. Il 4-3-3 costruisce dal basso con terzini alti. Il centravanti fissa i centrali avversari. Il trequartista/seconda punta (ala dentro) deve inserirsi in profondità tra terzino e centrale avversario nel momento in cui la mezzala esterna riceve in spazio. Meccanismo codificato: (1) mezzala riceve con campo aperto; (2) seconda punta taglia in profondità diagonale; (3) mezzala serve in profondità o triangola col centravanti. Ripetuto 10 volte per lato.',
         descriptionEn: '4-3-3 half-field attack. CF pins CBs. Second striker (inside winger) runs in depth between fullback and CB when wide midfielder receives in space. Mechanism × 10 each side. Key Ajax/Ten Hag mechanism.',
@@ -841,7 +841,7 @@ const app = new Hono()
         duration: 20, players: 11, intensity: 'alta', materials: 'palle, coni, porta, portiere', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Zona mista 4-2-3-1 — transizione difensiva organizzata', nameEn: '4-2-3-1 mixed zone — organized defensive transition',
+        id: randomUUID(), name: 'Zona mista 4-2-3-1 -- transizione difensiva organizzata', nameEn: '4-2-3-1 mixed zone -- organized defensive transition',
         category: 'tattica',
         description: 'Campo intero. Il 4-2-3-1 perde palla in fase offensiva (simulato dal mister). Trigger: fischio. La squadra deve organizzarsi in 4 secondi in un blocco di 8 (trequartista + ala lontana + 2 mediani + 4 difensori) coprendo il centro. Chi è più alto (punta + ala vicina) inizia il ripiegamento ma non deve sprecare energia: deve bloccare linee di passaggio. Principio: non inseguire ma bloccare. Dopo 4 secondi: pressing attivo.',
         descriptionEn: 'Full field. 4-2-3-1 loses ball (simulated). Trigger: whistle. Team must organize in 4s into 8-man block covering center. High players block passing lanes, don\'t chase. After 4s: active pressing.',
@@ -850,18 +850,18 @@ const app = new Hono()
         duration: 22, players: 14, intensity: 'alta', materials: 'palle, coni, 2 porte, portieri', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Gestione del vantaggio — rallentamento con possesso', nameEn: 'Lead management — slowdown through possession',
+        id: randomUUID(), name: 'Gestione del vantaggio -- rallentamento con possesso', nameEn: 'Lead management -- slowdown through possession',
         category: 'tattica',
-        description: 'Campo 40x30m. Squadra A con 1 gol di vantaggio, ultimi 15 minuti. Compito: mantenere il possesso senza rischiare. Principi tattici: (1) allargare il campo usando i terzini; (2) cercare sempre la superiorità numerica locale prima di passare; (3) non fare passaggi verticali rischiosi — solo orizzontali e indietro; (4) forzare l\'avversario ad inseguire e stancarsi. Squadra B deve recuperare con pressing alto urgente. Se A perde palla, -1 punto.',
+        description: 'Campo 40x30m. Squadra A con 1 gol di vantaggio, ultimi 15 minuti. Compito: mantenere il possesso senza rischiare. Principi tattici: (1) allargare il campo usando i terzini; (2) cercare sempre la superiorità numerica locale prima di passare; (3) non fare passaggi verticali rischiosi -- solo orizzontali e indietro; (4) forzare l\'avversario ad inseguire e stancarsi. Squadra B deve recuperare con pressing alto urgente. Se A perde palla, -1 punto.',
         descriptionEn: 'Small-sided game simulating final 15 min with 1-goal lead. Team A must keep possession safely: widen field, seek local superiority, no risky vertical passes, force opponents to chase.',
         primaryObjective: 'Sviluppare la mentalità e i principi tattici per gestire un vantaggio attraverso il possesso palla sicuro',
         secondaryObjectives: JSON.stringify(['Allargamento del campo in gestione', 'Superiorità numerica locale obbligatoria', 'Passaggi sicuri orizzontali', 'Mentalità di gestione del risultato']),
         duration: 20, players: 12, intensity: 'media', materials: 'palle, coni, 2 porte', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Calcio d\'angolo difensivo — zona vs uomo', nameEn: 'Defensive corner kick — zone vs man marking',
+        id: randomUUID(), name: 'Calcio d\'angolo difensivo -- zona vs uomo', nameEn: 'Defensive corner kick -- zone vs man marking',
         category: 'tattica',
-        description: 'Ripetizione sistematica del calcio d\'angolo difensivo in doppio sistema: (A) ZONA — 4 difensori sulla linea del piccolo area, 2 sui pali, 2 sul limite area; trigger: palla calciata, tutti avanzano verso il punto di atterraggio. (B) UOMO — ogni difensore assegnato a marcatura specifica, più 1 libero. Confronto dei due sistemi sulla stessa squadra attaccante. 8 ripetizioni per sistema.',
+        description: 'Ripetizione sistematica del calcio d\'angolo difensivo in doppio sistema: (A) ZONA -- 4 difensori sulla linea del piccolo area, 2 sui pali, 2 sul limite area; trigger: palla calciata, tutti avanzano verso il punto di atterraggio. (B) UOMO -- ogni difensore assegnato a marcatura specifica, più 1 libero. Confronto dei due sistemi sulla stessa squadra attaccante. 8 ripetizioni per sistema.',
         descriptionEn: 'Systematic defensive corner repetition in two systems. ZONE: 4 on small-area line + 2 on posts + 2 on edge, advance on kick. MAN: assigned marking + 1 free. Compare systems vs same attacking team. 8 reps each.',
         primaryObjective: 'Sviluppare e confrontare i due sistemi difensivi sui calci d\'angolo: zona pura vs marcatura a uomo',
         secondaryObjectives: JSON.stringify(['Posizionamento nel sistema a zona', 'Marcatura a uomo rigorosa', 'Gestione del secondo pallone', 'Analisi e confronto dei due sistemi']),
@@ -881,7 +881,7 @@ const app = new Hono()
       {
         id: randomUUID(), name: 'Forza esplosiva: salti pliometrici a circuito', nameEn: 'Explosive power: plyometric jump circuit',
         category: 'atletico',
-        description: 'Circuito 6 stazioni pliometriche (45 secondi lavoro, 30 secondi recupero): (1) squat jump con massima elevazione; (2) box jump su plinto 40cm; (3) depth jump da plinto 30cm → countermovement jump; (4) lateral bounds (salti laterali monopodalici); (5) hurdle hop su 5 ostacoli bassi; (6) bounding progressivo su 20m. 2-3 circuiti completi. Indicazioni: atterraggio elastico (non rigido), massima potenza su ogni ripetizione.',
+        description: 'Circuito 6 stazioni pliometriche (45 secondi lavoro, 30 secondi recupero): (1) squat jump con massima elevazione; (2) box jump su plinto 40cm; (3) depth jump da plinto 30cm -> countermovement jump; (4) lateral bounds (salti laterali monopodalici); (5) hurdle hop su 5 ostacoli bassi; (6) bounding progressivo su 20m. 2-3 circuiti completi. Indicazioni: atterraggio elastico (non rigido), massima potenza su ogni ripetizione.',
         descriptionEn: '6-station plyometric circuit (45s work, 30s rest): squat jump, box jump 40cm, depth jump, lateral bounds, hurdle hops, bounding 20m. 2-3 rounds. Elastic landing cue. Max 1×/week in-season.',
         primaryObjective: 'Sviluppare la forza esplosiva e la potenza del salto attraverso esercitazioni pliometriche progressive',
         secondaryObjectives: JSON.stringify(['Potenza del salto verticale', 'Stiffness tendinea', 'Forza reattiva del piede', 'Elasticità e rigidità muscolare']),
@@ -890,14 +890,14 @@ const app = new Hono()
       {
         id: randomUUID(), name: 'Interval training Yo-Yo Test simulato', nameEn: 'Yo-Yo Intermittent Recovery Test simulation',
         category: 'atletico',
-        description: 'Protocollo Yo-Yo Level 1 (Bangsbo): coppie di coni a 20m. Giocatori corrono avanti-indietro sui 20m seguendo segnale acustico progressivamente più veloce. 10 secondi di recupero attivo dopo ogni coppia di shuttle. Inizia a 10 km/h, accelera ogni livello (3 shuttle per livello). Fine del test: quando il giocatore non raggiunge il cono al segnale per 2 volte consecutive. Registra il livello raggiunto — baseline per monitorare la condizione aerobica stagionale.',
+        description: 'Protocollo Yo-Yo Level 1 (Bangsbo): coppie di coni a 20m. Giocatori corrono avanti-indietro sui 20m seguendo segnale acustico progressivamente più veloce. 10 secondi di recupero attivo dopo ogni coppia di shuttle. Inizia a 10 km/h, accelera ogni livello (3 shuttle per livello). Fine del test: quando il giocatore non raggiunge il cono al segnale per 2 volte consecutive. Registra il livello raggiunto -- baseline per monitorare la condizione aerobica stagionale.',
         descriptionEn: 'Yo-Yo Intermittent Recovery Level 1 (Bangsbo). 20m shuttle with progressive audio signal. 10s active recovery after each pair. Starts at 10 km/h. Test ends on 2 consecutive failures. Record level as seasonal aerobic baseline.',
         primaryObjective: 'Misurare e sviluppare la capacità aerobica intermittente specifica del calciatore attraverso il protocollo Yo-Yo',
         secondaryObjectives: JSON.stringify(['VO2max specifico del calcio', 'Resistenza intermittente', 'Baseline condizionale', 'Monitoraggio stagionale']),
         duration: 20, players: 16, intensity: 'massima', materials: 'coni 20m, segnale acustico Yo-Yo, cronometro', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Core stability calcistico — plank progressivo', nameEn: 'Football core stability — progressive plank',
+        id: randomUUID(), name: 'Core stability calcistico -- plank progressivo', nameEn: 'Football core stability -- progressive plank',
         category: 'atletico',
         description: 'Circuito core specifico per il calcio: (1) plank frontale 45" con palleggio palla tra compagni; (2) plank laterale 30" per lato con sollevamento gamba superiore; (3) dead bug 10 ripetizioni; (4) Russian twist con palla da calcio 3×15; (5) roll-out con pallone sotto l\'addome (rotolamento avanti-indietro); (6) hollow hold 30". 2 giri. Focus: stabilità del core durante movimenti calcistici.',
         descriptionEn: 'Football-specific core circuit: plank with pass juggling, side plank with leg raise, dead bug, Russian twist with football, ab wheel rollout, hollow hold. 2 rounds.',
@@ -915,7 +915,7 @@ const app = new Hono()
         duration: 18, players: 12, intensity: 'alta', materials: 'coni, cartellini direzionali o tablet', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Forza funzionale calcistica — circuito 6 stazioni', nameEn: 'Football functional strength — 6-station circuit',
+        id: randomUUID(), name: 'Forza funzionale calcistica -- circuito 6 stazioni', nameEn: 'Football functional strength -- 6-station circuit',
         category: 'atletico',
         description: 'Circuito forza funzionale (40s lavoro, 20s recupero): (1) squat monopodalico con palla medica; (2) affondi laterali con palla in rotazione; (3) step-up su panchina con ginocchio alto e sprint 3m; (4) Copenhagen plank 30" per lato; (5) hip thrust con spalle su panchina; (6) salto su scatola + sprint 5m con palla. 3 giri completi. Obiettivo: forza dei glutei, stabilità del ginocchio, potenza monopodalica.',
         descriptionEn: '6-station functional strength circuit (40s work, 20s rest): single-leg squat + med ball, lateral lunge with rotation, step-up + high knee + 3m sprint, Copenhagen plank, hip thrust, box jump + sprint + ball. 3 rounds.',
@@ -924,7 +924,7 @@ const app = new Hono()
         duration: 28, players: 16, intensity: 'alta', materials: 'palla medica, panchina, scatola 40cm, coni', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Fartlek calcistico — variazioni di ritmo simulate', nameEn: 'Football fartlek — simulated pace variations',
+        id: randomUUID(), name: 'Fartlek calcistico -- variazioni di ritmo simulate', nameEn: 'Football fartlek -- simulated pace variations',
         category: 'atletico',
         description: 'Fartlek (gioco di velocità svedese) adattato al calcio su campo intero: 20 minuti continui con variazioni di ritmo simulate da schede: (1) trot 1 min; (2) corsa media 90s; (3) sprint 10s; (4) cammino recupero 30s; (5) corsa laterale 20s; (6) sprint massimale 6s; (7) trot 1 min. Ripetuto 3-4 cicli. Con palla: ogni sprint è un dribbling; ogni cambio di ritmo include un tocco di palla.',
         descriptionEn: '20-min continuous football fartlek: 1min trot, 90s medium run, 10s sprint, 30s walk, 20s lateral run, 6s maximal sprint. 3-4 cycles. With ball variant: each sprint is dribble, each pace change includes ball touch.',
@@ -933,7 +933,7 @@ const app = new Hono()
         duration: 25, players: 16, intensity: 'alta', materials: 'palle, cronometro, schede ritmo', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Mobilità degli arti inferiori — protocollo FMS', nameEn: 'Lower limb mobility — FMS protocol',
+        id: randomUUID(), name: 'Mobilità degli arti inferiori -- protocollo FMS', nameEn: 'Lower limb mobility -- FMS protocol',
         category: 'atletico',
         description: 'Functional Movement Screen applicato al calcio: 7 test di mobilità e stabilità: (1) deep squat (punteggio 0-3); (2) hurdle step; (3) lunge in linea; (4) shoulder mobility; (5) active straight leg raise; (6) trunk stability push-up; (7) rotational stability. Ogni test ha standard tecnici precisi. Punteggio totale < 14 = rischio infortuni aumentato. Protocollo di correzione: per ogni asimmetria, 3 esercizi correttivi specifici. Ideale inizio preseason e mid-season.',
         descriptionEn: 'Functional Movement Screen for football: 7 mobility/stability tests scored 0-3. Total <14 = elevated injury risk. Correction protocol: for each asymmetry, 3 specific corrective exercises. Ideal start of pre-season and mid-season.',
@@ -946,7 +946,7 @@ const app = new Hono()
       {
         id: randomUUID(), name: 'Partitella a tema: pressing e transizione', nameEn: 'Themed small-sided game: pressing and transition',
         category: 'partitella',
-        description: 'Campo 50x35m, 7vs7 con portieri. Tema doppio: (1) pressing ultra-offensivo — squadra che attacca deve riconquistare entro 6 secondi dalla perdita palla; (2) transizione rapida — dopo ogni recupero palla obbligo di superare metà campo entro 4 secondi. Punti bonus: +1 per ogni pressing riuscito in meno di 6 secondi; +2 per ogni gol segnato entro 5 secondi dal recupero.',
+        description: 'Campo 50x35m, 7vs7 con portieri. Tema doppio: (1) pressing ultra-offensivo -- squadra che attacca deve riconquistare entro 6 secondi dalla perdita palla; (2) transizione rapida -- dopo ogni recupero palla obbligo di superare metà campo entro 4 secondi. Punti bonus: +1 per ogni pressing riuscito in meno di 6 secondi; +2 per ogni gol segnato entro 5 secondi dal recupero.',
         descriptionEn: '50x35m, 7v7+GKs. Double theme: ultra-offensive pressing (win ball back within 6s) + rapid transition (must cross halfway within 4s of recovery). Bonus points for fast pressing and quick goals. Tactical debrief.',
         primaryObjective: 'Applicare in forma giocata i principi di pressing coordinato e transizione offensiva rapida con incentivi concreti',
         secondaryObjectives: JSON.stringify(['Pressing collettivo immediato', 'Velocità di transizione', 'Mentalità offensiva nella transizione', 'Riconoscimento del momento della perdita di palla']),
@@ -1000,8 +1000,8 @@ const app = new Hono()
       {
         id: randomUUID(), name: 'Partitella con porte multiple a colori', nameEn: 'Multi-goal coloured small-sided game',
         category: 'partitella',
-        description: 'Campo 35x25m. 5vs5 senza portieri. 6 porte piccole (2 per colore: rosso, blu, giallo) disposte casualmente ai bordi. Prima del kick-off l\'allenatore chiama un colore — si può segnare solo in quelle porte per 2 minuti, poi nuovo colore. Sviluppa: orientamento spaziale continuo, pressing contestuale, capacità di riorganizzarsi rapidamente. Alta intensità cognitiva. Ispirato al metodo olandese di Wiel Coerver.',
-        descriptionEn: '35x25m, 5v5 no GKs. 6 mini-goals (2 each colour: red, blue, yellow). Coach calls a colour before each 2-min period — only that colour counts. Forces: continuous spatial orientation, contextual pressing, rapid reorganisation.',
+        description: 'Campo 35x25m. 5vs5 senza portieri. 6 porte piccole (2 per colore: rosso, blu, giallo) disposte casualmente ai bordi. Prima del kick-off l\'allenatore chiama un colore -- si può segnare solo in quelle porte per 2 minuti, poi nuovo colore. Sviluppa: orientamento spaziale continuo, pressing contestuale, capacità di riorganizzarsi rapidamente. Alta intensità cognitiva. Ispirato al metodo olandese di Wiel Coerver.',
+        descriptionEn: '35x25m, 5v5 no GKs. 6 mini-goals (2 each colour: red, blue, yellow). Coach calls a colour before each 2-min period -- only that colour counts. Forces: continuous spatial orientation, contextual pressing, rapid reorganisation.',
         primaryObjective: 'Sviluppare orientamento spaziale dinamico e pressing contestuale attraverso obiettivi che cambiano continuamente',
         secondaryObjectives: JSON.stringify(['Orientamento spaziale dinamico', 'Pressing contestuale', 'Riorganizzazione rapida', 'Intelligenza tattica collettiva']),
         duration: 20, players: 10, intensity: 'alta', materials: 'palle, 6 porte piccole (2 rosso, 2 blu, 2 giallo)', isCustom: false, createdAt: now
@@ -1018,7 +1018,7 @@ const app = new Hono()
 
       // CALCI PIAZZATI (10)
       {
-        id: randomUUID(), name: 'Calcio d\'angolo offensivo a zona — schema Liverpool', nameEn: 'Offensive corner — zonal attacking scheme Liverpool',
+        id: randomUUID(), name: 'Calcio d\'angolo offensivo a zona -- schema Liverpool', nameEn: 'Offensive corner -- zonal attacking scheme Liverpool',
         category: 'calci_piazzati',
         description: 'Schema da calcio d\'angolo ispirato al Liverpool di Klopp: battitore a sinistra calcia teso al secondo palo. 6 giocatori in area posizionati: 2 sul primo palo (blocco), 2 sul punto del rigore (stacco di testa), 1 al limite area (secondo pallone), 1 sul palo lontano (rimbalzo). Movimento codificato: al momento del calcio, i 2 del primo palo fanno blocco sui difensori, 1 dei 2 al punto del rigore fa corsa verso primo palo. Ripetuto 10 volte.',
         descriptionEn: 'Liverpool-inspired corner scheme. Taker crosses driven to far post. 6 players in area: 2 near-post (block), 2 penalty spot (header), 1 edge of area (second ball), 1 far post (rebound). Coded movement: near-post pair blocks, one penalty-spot player runs to near post.',
@@ -1029,7 +1029,7 @@ const app = new Hono()
       {
         id: randomUUID(), name: 'Punizione diretta: tecnica della barriera e del tiro', nameEn: 'Direct free kick: wall technique and shooting',
         category: 'calci_piazzati',
-        description: 'Due stazioni simultanee: STAZIONE TIRO — tecnica: (1) run-up angolato 45°; (2) piede d\'appoggio 15cm dalla palla; (3) contatto con zona interna del piede (effetto) o collo (potenza); (4) follow-through verso l\'obiettivo. 5 tiri da ogni posizione (25, 20, 18m; centrale e angolata). STAZIONE BARRIERA — 3 giocatori imparano il salto coordinato: segnale = fischio, salto simultaneo. Portiere lavora sul posizionamento. Al termine: simulazione completa con barriera reale.',
+        description: 'Due stazioni simultanee: STAZIONE TIRO -- tecnica: (1) run-up angolato 45°; (2) piede d\'appoggio 15cm dalla palla; (3) contatto con zona interna del piede (effetto) o collo (potenza); (4) follow-through verso l\'obiettivo. 5 tiri da ogni posizione (25, 20, 18m; centrale e angolata). STAZIONE BARRIERA -- 3 giocatori imparano il salto coordinato: segnale = fischio, salto simultaneo. Portiere lavora sul posizionamento. Al termine: simulazione completa con barriera reale.',
         descriptionEn: 'Two simultaneous stations. SHOOTING: 45° run-up, 15cm support foot, inside contact (curve) or instep (power), follow-through. 5 shots each position (25/20/18m, central/angled). WALL: synchronized jump on whistle. GK positioning.',
         primaryObjective: 'Sviluppare la tecnica della punizione diretta e della barriera difensiva attraverso lavoro simultaneo dei due reparti',
         secondaryObjectives: JSON.stringify(['Tecnica del tiro a effetto', 'Tecnica del tiro di potenza', 'Salto coordinato della barriera', 'Posizionamento portiere su punizione']),
@@ -1045,7 +1045,7 @@ const app = new Hono()
         duration: 18, players: 8, intensity: 'bassa', materials: 'palle, porta, portiere, coni barriera', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Rimessa laterale lunga — schema di attivazione', nameEn: 'Long throw-in activation scheme',
+        id: randomUUID(), name: 'Rimessa laterale lunga -- schema di attivazione', nameEn: 'Long throw-in activation scheme',
         category: 'calci_piazzati',
         description: 'Per squadre con lanciatore di rimessa lunga. Schema: A lancia lungo verso B che fa blocco su difensore avversario; C (attaccante) si inserisce dalla parte opposta del blocco di B per ricevere pulito; D è sul secondo pallone a 12m. Progressione: (1) senza difensori; (2) difensori passivi; (3) difensori attivi. Tecnica del lancio: apertura piedi pari, presa della palla con pollici opposti, arco del corpo, estensione completa.',
         descriptionEn: 'For teams with a long throw specialist. A throws long to B (who screens defender); C attacks from opposite side of B\'s screen; D waits for second ball at 12m. Progressions: no defenders, passive, active. Technique: balanced stance, thumb grip, body arch, full extension.',
@@ -1056,14 +1056,14 @@ const app = new Hono()
       {
         id: randomUUID(), name: 'Calcio di rigore: protocollo mentale e tecnico', nameEn: 'Penalty kick: mental and technical protocol',
         category: 'calci_piazzati',
-        description: 'Protocollo completo rigore per tutti i giocatori della rosa: TECNICA — (1) scegliere angolo prima di avvicinarsi; (2) rincorsa di 3-5 passi; (3) piede d\'appoggio 20cm dalla palla; (4) non guardare il portiere dopo la scelta. MENTALE — respirazione diaframmatica 3 secondi prima; visualizzazione del gol; frase di attivazione personale. Ogni giocatore batte 5 rigori con portiere attivo. Statististica: % conversione per giocatore.',
-        descriptionEn: 'Complete penalty protocol: TECHNIQUE — choose angle before approaching, 3-5 step run-up, support foot 20cm from ball. MENTAL — diaphragmatic breathing, visualization, activation phrase. 5 kicks each vs active GK. Track individual conversion %.',
+        description: 'Protocollo completo rigore per tutti i giocatori della rosa: TECNICA -- (1) scegliere angolo prima di avvicinarsi; (2) rincorsa di 3-5 passi; (3) piede d\'appoggio 20cm dalla palla; (4) non guardare il portiere dopo la scelta. MENTALE -- respirazione diaframmatica 3 secondi prima; visualizzazione del gol; frase di attivazione personale. Ogni giocatore batte 5 rigori con portiere attivo. Statististica: % conversione per giocatore.',
+        descriptionEn: 'Complete penalty protocol: TECHNIQUE -- choose angle before approaching, 3-5 step run-up, support foot 20cm from ball. MENTAL -- diaphragmatic breathing, visualization, activation phrase. 5 kicks each vs active GK. Track individual conversion %.',
         primaryObjective: 'Sviluppare la tecnica e la routine mentale del calcio di rigore per ogni giocatore della rosa in condizioni simulate di pressione',
         secondaryObjectives: JSON.stringify(['Tecnica del tiro dal dischetto', 'Routine pre-rigore', 'Gestione della pressione', 'Statistica individuale di conversione']),
         duration: 25, players: 16, intensity: 'media', materials: 'palle, porta, portiere, dischetto', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Schema calcio d\'angolo corto — triangolo veloce', nameEn: 'Short corner scheme — fast triangle',
+        id: randomUUID(), name: 'Schema calcio d\'angolo corto -- triangolo veloce', nameEn: 'Short corner scheme -- fast triangle',
         category: 'calci_piazzati',
         description: 'Schema su calcio d\'angolo corto: A batte corto verso B a 5m; B di prima scarica su C che è venuto in appoggio da fuori area; C verticalizza per D che taglia sul secondo palo sul cross basso di C oppure scarica al limite per il tiro di E. Schema prevede 5 movimenti: A, B, C, D, E. Alternativa: A batte, B la protegge e si gira verso D che ha fatto corsa sul secondo palo. Ripetuto 8 volte per lato.',
         descriptionEn: 'Short corner scheme: A plays short to B; B first-touch to C coming from outside area; C plays through for D cutting far post or lays off for E\'s shot. 5-player movement. Alternative: A plays, B protects-turns for D far post. 8 reps each side.',
@@ -1072,7 +1072,7 @@ const app = new Hono()
         duration: 18, players: 10, intensity: 'media', materials: 'palle, porta, portiere, coni schema', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Punizione nella propria metà campo — costruzione', nameEn: 'Own-half free kick — build-up scheme',
+        id: randomUUID(), name: 'Punizione nella propria metà campo -- costruzione', nameEn: 'Own-half free kick -- build-up scheme',
         category: 'calci_piazzati',
         description: 'Spesso trascurate: le punizioni nella propria metà campo. Schema: il battitore ha 3 scelte pre-definite in base alla posizione degli avversari: (1) palla corta al terzino libero; (2) palla media per il centrocampista che scappa; (3) lancio lungo per l\'attaccante in profondità. Il portiere comunica la scelta con un segnale da 2m dietro la palla. 8 ripetizioni per schema.',
         descriptionEn: 'Often neglected: own-half free kicks. Taker has 3 pre-defined choices based on opponent position: (1) short to free fullback; (2) medium pass to escaping midfielder; (3) long to striker in depth. GK signals choice from 2m behind ball. 8 reps each.',
@@ -1083,14 +1083,14 @@ const app = new Hono()
       {
         id: randomUUID(), name: 'Schema punizione in fascia: cross al secondo palo', nameEn: 'Wide free kick scheme: cross to far post',
         category: 'calci_piazzati',
-        description: 'Punizione in fascia a 30-35m. Due battitori: A e B. Finta: A fa gesto di battere, B taglia verso la palla; il difensore pensa a uomo ma B non calcia — devia con il tacco verso C che arriva in corsa; C crossa basso teso verso il secondo palo dove D ha fatto corsa d\'attacco. Variante semplice senza tacco: A batte direttamente cross teso. Analisi: primo palo vs secondo palo. 8 ripetizioni complete dello schema.',
-        descriptionEn: 'Wide free kick 30-35m. A fakes kick, B cuts toward ball — B heel-deflects to C arriving in stride; C crosses low to far post where D makes attacking run. Simple variant: A crosses direct. Analysis: near vs far post danger.',
+        description: 'Punizione in fascia a 30-35m. Due battitori: A e B. Finta: A fa gesto di battere, B taglia verso la palla; il difensore pensa a uomo ma B non calcia -- devia con il tacco verso C che arriva in corsa; C crossa basso teso verso il secondo palo dove D ha fatto corsa d\'attacco. Variante semplice senza tacco: A batte direttamente cross teso. Analisi: primo palo vs secondo palo. 8 ripetizioni complete dello schema.',
+        descriptionEn: 'Wide free kick 30-35m. A fakes kick, B cuts toward ball -- B heel-deflects to C arriving in stride; C crosses low to far post where D makes attacking run. Simple variant: A crosses direct. Analysis: near vs far post danger.',
         primaryObjective: 'Sviluppare lo schema su punizione in fascia con deviazione di tacco per liberare il crossatore in corsa verso il secondo palo',
         secondaryObjectives: JSON.stringify(['Deviazione di tacco su punizione', 'Cross in corsa basso e teso', 'Attacco al secondo palo', 'Timing della corsa del finalizzatore']),
         duration: 20, players: 10, intensity: 'media', materials: 'palle, porta, portiere, coni schema', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Calcio di punizione ad effetto — curva a cadere', nameEn: 'Free kick with effect — dropping curve',
+        id: randomUUID(), name: 'Calcio di punizione ad effetto -- curva a cadere', nameEn: 'Free kick with effect -- dropping curve',
         category: 'calci_piazzati',
         description: 'Tecnica avanzata: la punizione con effetto a scendere (top-spin) che supera la barriera e cade sotto la traversa. Tecnica: (1) rincorsa dritta; (2) piede d\'appoggio 25cm a lato; (3) contatto sulla parte alta-centrale della palla con collo piede; (4) gamba che segue verso il basso (follow-through discendente). 10 tiri da 20-22m con barriera reale. L\'allenatore posiziona un cono a 50cm sotto la traversa per dare un riferimento visivo.',
         descriptionEn: 'Advanced technique: top-spin dipping free kick over wall. Technique: straight run-up, support foot 25cm to side, contact top-center of ball with instep, downward follow-through. 10 shots from 20-22m with real wall. Cone 50cm under crossbar as target.',
@@ -1099,7 +1099,7 @@ const app = new Hono()
         duration: 22, players: 6, intensity: 'media', materials: 'palle, porta, portiere, barriera, spray', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Ripartenza veloce da calcio d\'angolo — contropiede schematizzato', nameEn: 'Fast restart from corner — schematic counter',
+        id: randomUUID(), name: 'Ripartenza veloce da calcio d\'angolo -- contropiede schematizzato', nameEn: 'Fast restart from corner -- schematic counter',
         category: 'calci_piazzati',
         description: 'Scenario: l\'avversario ha appena battuto un calcio d\'angolo e la difesa rinvia. Schema di ripartenza rapida pre-definito: (1) portiere lancia lungo su A che è rimasto alto; (2) B (centrocampista) parte in diagonale appena calciato il corner; (3) A protegge e aspetta B in triangolo; (4) A-B-C (terzo uomo in inserimento) sviluppano 3vs2 in contropiede. Trigger: il corner viene calciato. Ripetuto 8 volte.',
         descriptionEn: 'Scenario: opponent has just taken corner, defense clears. Pre-defined quick restart: GK launches long to A (stayed high), B (MF) runs diagonal as corner is kicked, A protects + waits for B, A-B-C develop 3v2 counter. Trigger: corner kick.',
@@ -1110,16 +1110,16 @@ const app = new Hono()
 
       // PORTIERI (10)
       {
-        id: randomUUID(), name: 'Tuffo laterale — tecnica del diving progressiva', nameEn: 'Lateral dive — progressive diving technique',
+        id: randomUUID(), name: 'Tuffo laterale -- tecnica del diving progressiva', nameEn: 'Lateral dive -- progressive diving technique',
         category: 'portieri',
-        description: 'Protocollo tecnico tuffo laterale in 4 fasi: FASE 1 (da inginocchiato): palla calciata piano a lato, tuffo morbido con atterraggio su fianco; focus su mani (a coppa), polso di sostegno, testa alzata. FASE 2 (da accovacciato): stessa dinamica ma partendo accovacciati. FASE 3 (da in piedi): palla calciata a lato-basso, tuffo completo. FASE 4 (con cross): tuffo su cross rasoterra degli ultimi 2m di traiettoria. 8 ripetizioni per lato per fase. Focus: non cadere — tuffarsi.',
-        descriptionEn: 'Technical diving protocol in 4 phases: kneeling (soft roll, hands, wrist), crouched, standing (full dive on low ball), with cross (dive on last 2m). 8 reps per side per phase. 30s rest. Focus: don\'t fall — dive.',
+        description: 'Protocollo tecnico tuffo laterale in 4 fasi: FASE 1 (da inginocchiato): palla calciata piano a lato, tuffo morbido con atterraggio su fianco; focus su mani (a coppa), polso di sostegno, testa alzata. FASE 2 (da accovacciato): stessa dinamica ma partendo accovacciati. FASE 3 (da in piedi): palla calciata a lato-basso, tuffo completo. FASE 4 (con cross): tuffo su cross rasoterra degli ultimi 2m di traiettoria. 8 ripetizioni per lato per fase. Focus: non cadere -- tuffarsi.',
+        descriptionEn: 'Technical diving protocol in 4 phases: kneeling (soft roll, hands, wrist), crouched, standing (full dive on low ball), with cross (dive on last 2m). 8 reps per side per phase. 30s rest. Focus: don\'t fall -- dive.',
         primaryObjective: 'Costruire la tecnica corretta del tuffo laterale dal basso verso l\'alto con progressione di complessità e altezza',
         secondaryObjectives: JSON.stringify(['Tecnica delle mani a coppa', 'Polso di sostegno nell\'atterraggio', 'Tuffo su palla bassa', 'Transizione tuffo-recupero']),
         duration: 25, players: 2, intensity: 'media', materials: 'palle, materassino, porta', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Uscita alta sul cross — tecnica della presa aerea', nameEn: 'High exit on cross — aerial catch technique',
+        id: randomUUID(), name: 'Uscita alta sul cross -- tecnica della presa aerea', nameEn: 'High exit on cross -- aerial catch technique',
         category: 'portieri',
         description: 'Tecnica dell\'uscita alta: (1) posizione di partenza al secondo palo (non al centro); (2) al cross, leggere la traiettoria dal primo tocco del crossatore; (3) partire con decisione (non attendismo); (4) salto con ginocchio sollevato come protezione; (5) presa a mani aperte con pollici opposti; (6) atterraggio su un piede per mantenere equilibrio. 10 cross da destra + 10 da sinistra con crossatori reali. Progressione: aggiunta di attaccante che disturba; poi duello reale. Standard di valutazione: 8/10 prese pulite = ottimo.',
         descriptionEn: 'High exit technique: start at far post, read trajectory from crosser\'s first touch, decisive exit, raised knee for protection, open hands with opposing thumbs, one-foot landing. 10 crosses each side. Add attacker distraction, then real aerial contest.',
@@ -1128,16 +1128,16 @@ const app = new Hono()
         duration: 25, players: 4, intensity: 'alta', materials: 'palle, porta, crossatori', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Distribuzione del portiere — 4 tipi di rilancio', nameEn: 'Goalkeeper distribution — 4 types of release',
+        id: randomUUID(), name: 'Distribuzione del portiere -- 4 tipi di rilancio', nameEn: 'Goalkeeper distribution -- 4 types of release',
         category: 'portieri',
-        description: 'Sessione specialistica sulla distribuzione: (1) ROLLATA — rotolamento a terra preciso verso terzino a 15m; (2) LANCIO DI PRECISIONE — lancio a rimbalzo verso centrocampista a 30m; (3) RINVIO CON PIEDE — calcio dal basso a giro verso fascia (40-50m); (4) LANCIO LUNGO — da mani per attaccante spalle a porta a 50m. 10 ripetizioni per tipo. Simulazione delle 4 situazioni di partita. Analisi: % di passaggi arrivati al bersaglio per tipo.',
+        description: 'Sessione specialistica sulla distribuzione: (1) ROLLATA -- rotolamento a terra preciso verso terzino a 15m; (2) LANCIO DI PRECISIONE -- lancio a rimbalzo verso centrocampista a 30m; (3) RINVIO CON PIEDE -- calcio dal basso a giro verso fascia (40-50m); (4) LANCIO LUNGO -- da mani per attaccante spalle a porta a 50m. 10 ripetizioni per tipo. Simulazione delle 4 situazioni di partita. Analisi: % di passaggi arrivati al bersaglio per tipo.',
         descriptionEn: 'Distribution specialization: (1) rolling pass to fullback 15m; (2) precision overarm to midfielder 30m; (3) half-volley swinging to flank 40-50m; (4) long throw to striker 50m. 10 reps each. Simulate 4 match situations. Track % to target.',
         primaryObjective: 'Sviluppare la tecnica delle 4 tipologie di distribuzione del portiere adattandola alle distanze e situazioni di partita reali',
         secondaryObjectives: JSON.stringify(['Rollata precisa a terra', 'Lancio di precisione a media distanza', 'Rinvio a giro sulla fascia', 'Lancio lungo per l\'attaccante di punta']),
         duration: 25, players: 3, intensity: 'media', materials: 'palle multiple, coni bersaglio, porta', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Reazione su tiro ravvicinato — riflessi e posizione', nameEn: 'Close-range reaction save — reflexes and positioning',
+        id: randomUUID(), name: 'Reazione su tiro ravvicinato -- riflessi e posizione', nameEn: 'Close-range reaction save -- reflexes and positioning',
         category: 'portieri',
         description: 'Esercizio ad alta intensità per riflessi: portiere in piedi a 5m dalla porta senza rete. 2 tiratori alternati a 7m con palle a cadenza rapida (ogni 5 secondi). Il portiere deve respingere (non trattenere obbligatoriamente). Variante 1: tiro piazzato basso-angolo; variante 2: tiro forte centrale; variante 3: palla alzata sul palo. 3 serie da 8 tiri. Recupero 2 minuti. Allena riflessi puri e posizionamento proattivo.',
         descriptionEn: 'High-intensity reflex drill: GK stands 5m from goal. 2 alternating shooters at 7m, ball every 5s. GK must react (not necessarily catch). Variants: low-angle placed, powerful central, ball flicked to post. 3 sets of 8 shots. 2 min rest.',
@@ -1146,34 +1146,34 @@ const app = new Hono()
         duration: 20, players: 3, intensity: 'alta', materials: 'palle multiple, porta, 2 tiratori', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Portiere in costruzione — ruolo nel 3-4-3', nameEn: 'GK in build-up — role in 3-4-3',
+        id: randomUUID(), name: 'Portiere in costruzione -- ruolo nel 3-4-3', nameEn: 'GK in build-up -- role in 3-4-3',
         category: 'portieri',
-        description: 'Il portiere come decimo giocatore di campo: in un 3-4-3 che costruisce basso, il portiere deve posizionarsi tra i 3 difensori (stopper) quando uno esce a pressare. Meccanismo: (1) difensore centrale viene pressato → si gira e cerca portiere; (2) portiere è già nella posizione corretta (3-4m dietro la linea difensiva, non sulla linea di porta); (3) portiere riceve, controlla, gioca sul lato libero. Progressione: con 2 pressatori; poi con pressing alto organizzato a 3.',
-        descriptionEn: 'GK as 10th outfield player in 3-4-3 build-up. When a CB is pressed, GK positions between the three CBs. Mechanism: CB turns back to GK → GK already positioned 3-4m behind defensive line → GK receives, controls, plays to free side. Add 2 then 3 pressers.',
+        description: 'Il portiere come decimo giocatore di campo: in un 3-4-3 che costruisce basso, il portiere deve posizionarsi tra i 3 difensori (stopper) quando uno esce a pressare. Meccanismo: (1) difensore centrale viene pressato -> si gira e cerca portiere; (2) portiere è già nella posizione corretta (3-4m dietro la linea difensiva, non sulla linea di porta); (3) portiere riceve, controlla, gioca sul lato libero. Progressione: con 2 pressatori; poi con pressing alto organizzato a 3.',
+        descriptionEn: 'GK as 10th outfield player in 3-4-3 build-up. When a CB is pressed, GK positions between the three CBs. Mechanism: CB turns back to GK -> GK already positioned 3-4m behind defensive line -> GK receives, controls, plays to free side. Add 2 then 3 pressers.',
         primaryObjective: 'Sviluppare il portiere come giocatore attivo nella costruzione bassa del 3-4-3 con posizionamento proattivo tra i difensori',
         secondaryObjectives: JSON.stringify(['Posizionamento del portiere tra i difensori', 'Controllo orientato del portiere', 'Lettura della pressione avversaria', 'Uscita coraggiosa dal portiere']),
         duration: 20, players: 8, intensity: 'media', materials: 'palle, coni, porta', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Parata del tiro a giro — tecnica del palo vicino', nameEn: 'Curling shot save — near post technique',
+        id: randomUUID(), name: 'Parata del tiro a giro -- tecnica del palo vicino', nameEn: 'Curling shot save -- near post technique',
         category: 'portieri',
         description: 'Tipologia di tiro più difficile da parare: il tiro a giro dall\'interno dell\'area che entra sul primo palo. Esercizio: tiratori calciando da 18-22m con effetto interno sul primo palo. Il portiere deve: (1) non tagliare troppo l\'angolo (errore comune); (2) mantenere 1/3 del corpo sul palo; (3) tuffarsi in avanti-laterale, non solo laterale (il pallone entra curva). 10 tiri per tipologia. Progressione: tiro con ostacolo umano a 3m.',
-        descriptionEn: 'Hardest shot to save: curling shot entering near post. Shooters from 18-22m with inside curl. GK must: not cut too much angle, keep 1/3 of body on post, dive forward-lateral (not just lateral — ball curves in). 10 shots each type. Progression: human obstacle at 3m.',
+        descriptionEn: 'Hardest shot to save: curling shot entering near post. Shooters from 18-22m with inside curl. GK must: not cut too much angle, keep 1/3 of body on post, dive forward-lateral (not just lateral -- ball curves in). 10 shots each type. Progression: human obstacle at 3m.',
         primaryObjective: 'Sviluppare la tecnica specifica per parare il tiro a giro sul primo palo: angolo corretto, tuffo in avanti-laterale',
         secondaryObjectives: JSON.stringify(['Posizionamento sul palo vicino', 'Tuffo in avanti-laterale', 'Lettura della traiettoria a effetto', 'Angolo corretto vs tiro a giro']),
         duration: 22, players: 3, intensity: 'alta', materials: 'palle, porta, 2-3 tiratori', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Uscita in profondità 1vs1 — postura e chiusura dell\'angolo', nameEn: '1v1 depth exit — posture and angle closure',
+        id: randomUUID(), name: 'Uscita in profondità 1vs1 -- postura e chiusura dell\'angolo', nameEn: '1v1 depth exit -- posture and angle closure',
         category: 'portieri',
-        description: 'Situazione più frequente e temuta: attaccante solo davanti al portiere. Tecnica: (1) uscire rapidamente ma fermarsi a 3-4m dall\'attaccante; (2) baricentro basso, piedi alla larghezza delle spalle; (3) espandersi lateralmente (non alzarsi); (4) aspettare il tiro senza buttarsi; (5) se l\'attaccante dribbling → restare in piedi e chiudere la porta. 8 ripetizioni con attaccanti diversi (velocità diversa, conclusione diversa).',
+        description: 'Situazione più frequente e temuta: attaccante solo davanti al portiere. Tecnica: (1) uscire rapidamente ma fermarsi a 3-4m dall\'attaccante; (2) baricentro basso, piedi alla larghezza delle spalle; (3) espandersi lateralmente (non alzarsi); (4) aspettare il tiro senza buttarsi; (5) se l\'attaccante dribbling -> restare in piedi e chiudere la porta. 8 ripetizioni con attaccanti diversi (velocità diversa, conclusione diversa).',
         descriptionEn: '1v1 depth exit. Technique: exit fast then stop 3-4m from attacker, low center of gravity feet shoulder-width, spread laterally (not upward), wait for shot without diving prematurely, if attacker dribbles stay up and track. 8 reps with different attacker types.',
         primaryObjective: 'Sviluppare la tecnica del 1vs1 in uscita: distanza corretta, postura espansa, attesa del tiro senza anticipare',
         secondaryObjectives: JSON.stringify(['Distanza di sicurezza nel 1vs1', 'Postura espansa lateralmente', 'Attesa del tiro', 'Gestione del dribbling dell\'attaccante']),
         duration: 20, players: 4, intensity: 'alta', materials: 'palle, porta, attaccanti variabili', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Coordinazione portiere — circuito atletico specifico', nameEn: 'GK coordination — sport-specific athletic circuit',
+        id: randomUUID(), name: 'Coordinazione portiere -- circuito atletico specifico', nameEn: 'GK coordination -- sport-specific athletic circuit',
         category: 'portieri',
         description: 'Circuito atletico specifico per portieri (3 giri da 6 stazioni): (1) scala agilità laterale × 5m poi tuffo su palla; (2) box jump 30cm + parata immediata su cross; (3) skip avanti + arresto + tuffo; (4) salto verticale con presa palla alzata dal compagno; (5) plank 30" + sprint 5m + presa; (6) esercizio di reazione con palla da rimbalzo su muro. Recupero 1 minuto tra giri. Allena gli attributi fisici specifici del portiere.',
         descriptionEn: 'GK-specific athletic circuit (3 rounds, 6 stations): lateral ladder + dive on ball, box jump + immediate cross save, skip + stop + dive, vertical jump + catch raised ball, plank + sprint + catch, wall-bounce reaction ball. 1 min rest between rounds.',
@@ -1182,7 +1182,7 @@ const app = new Hono()
         duration: 28, players: 2, intensity: 'alta', materials: 'scala agilità, box 30cm, palle, muro', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Comunicazione con la difesa — organizzazione sui cross', nameEn: 'Communication with defense — organization on crosses',
+        id: randomUUID(), name: 'Comunicazione con la difesa -- organizzazione sui cross', nameEn: 'Communication with defense -- organization on crosses',
         category: 'portieri',
         description: 'Esercizio fondamentale spesso trascurato: il portiere deve guidare verbalmente i difensori sui cross. Simulazione: 4 difensori + portiere vs 3 attaccanti + crossatore. Il portiere deve: (1) chiamare "MIEI!" se esce; (2) chiamare il numero del difensore che deve marcare l\'attaccante libero; (3) chiamare "PORTA!" se non esce e il difensore deve difendere il palo. 8 cross da destra + 8 da sinistra. Feedback: qualità della comunicazione valutata dall\'allenatore.',
         descriptionEn: '4 defenders + GK vs 3 attackers + crosser. GK must: call "MINE!" if exiting, call defender\'s number to mark free attacker, call "POST!" if staying. 8 crosses each side. Coach evaluates communication quality (0-3 for clarity, timing, impact).',
@@ -1191,7 +1191,7 @@ const app = new Hono()
         duration: 22, players: 8, intensity: 'media', materials: 'palle, porta, coni di zona', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Tiro in tuffo su secondo palo — tecnica avanzata', nameEn: 'Diving save far post — advanced technique',
+        id: randomUUID(), name: 'Tiro in tuffo su secondo palo -- tecnica avanzata', nameEn: 'Diving save far post -- advanced technique',
         category: 'portieri',
         description: 'Situazione tecnica avanzata: tiro che cambia direzione sul secondo palo dopo deviazione o cross rasoterra che taglia tutta l\'area. Il portiere deve: (1) partire a sinistra (primo palo); (2) il tiro devia a destra (secondo palo); (3) recupero immediato e tuffo inverso. Tecnica del recupero rapido: pivot su piede di appoggio, spinta esplosiva verso il secondo palo. 10 ripetizioni con tiratori che scelgono casualmente primo o secondo palo.',
         descriptionEn: 'Advanced save: shot diverts to far post after deflection. GK starts near post, ball diverts far post. Technique: pivot on support foot, explosive push to far post. 10 reps, shooters choose near/far at random. Variant: ground cross across area. Pure reactivity.',
@@ -1222,7 +1222,7 @@ const app = new Hono()
         duration: 10, players: 1, intensity: 'bassa', materials: '1 pallone a testa', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Passaggio di prima intenzione in movimento — quadrato a 6', nameEn: 'First-time passing in movement — 6-man square',
+        id: randomUUID(), name: 'Passaggio di prima intenzione in movimento -- quadrato a 6', nameEn: 'First-time passing in movement -- 6-man square',
         category: 'tecnica',
         description: '6 giocatori sugli angoli di un quadrato 12x12m + 2 al centro. Il giocatore centrale riceve, scarica di prima e si scambia col passante. Rotazione continua per 4 minuti, poi cambio. Enfasi sul piede debole ogni 2 minuti.',
         descriptionEn: '6 players on corners of 12x12m square + 2 central. Central receives, first-time release, swaps with passer. Continuous rotation 4 min then switch. Emphasis on weak foot every 2 min.',
@@ -1231,7 +1231,7 @@ const app = new Hono()
         duration: 18, players: 6, intensity: 'media', materials: '2 palloni, coni per il quadrato', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Finta e doppio passo — circuito a coni', nameEn: 'Feint and double step — cone circuit',
+        id: randomUUID(), name: 'Finta e doppio passo -- circuito a coni', nameEn: 'Feint and double step -- cone circuit',
         category: 'tecnica',
         description: 'Percorso a 8 coni con finte programmate (doppio passo, elastico, cut inverso) a ogni cono. 6 ripetizioni a velocità crescente. Recupero 45s tra i giri. Cronometrato dalla 3a rep in poi per misurare progressione.',
         descriptionEn: '8-cone circuit with assigned moves (double step, elastico, reverse cut) at each cone. 6 reps at increasing speed. 45s recovery between runs. Timed from rep 3 to measure progress.',
@@ -1289,8 +1289,8 @@ const app = new Hono()
       {
         id: randomUUID(), name: 'Forza esplosiva: squat jump + accelerazione', nameEn: 'Explosive strength: squat jump + acceleration',
         category: 'atletico',
-        description: '3 serie: 5 squat jump → sprint 15m → recupero camminando. Recupero completo tra le serie (3 minuti). Focus sulla qualità del salto (massima altezza) e sull\'uscita esplosiva dallo squat. Misurare distanza sprint dopo il salto.',
-        descriptionEn: '3 sets: 5 squat jumps → 15m sprint → walk back recovery. Full rest between sets (3 min). Focus on jump quality (max height) and explosive exit. Measure sprint distance after jump.',
+        description: '3 serie: 5 squat jump -> sprint 15m -> recupero camminando. Recupero completo tra le serie (3 minuti). Focus sulla qualità del salto (massima altezza) e sull\'uscita esplosiva dallo squat. Misurare distanza sprint dopo il salto.',
+        descriptionEn: '3 sets: 5 squat jumps -> 15m sprint -> walk back recovery. Full rest between sets (3 min). Focus on jump quality (max height) and explosive exit. Measure sprint distance after jump.',
         primaryObjective: 'Sviluppare la potenza degli arti inferiori in connessione con l\'accelerazione',
         secondaryObjectives: JSON.stringify(['Potenza esplosiva', 'Coordinazione salto-sprint', 'Forza reattiva']),
         duration: 18, players: 4, intensity: 'alta', materials: 'Coni per marcature sprint', isCustom: false, createdAt: now
@@ -1325,7 +1325,7 @@ const app = new Hono()
       },
       // ── PARTITELLA ──
       {
-        id: randomUUID(), name: 'Partitella 7vs7 su campo stretto — verticalità', nameEn: '7v7 small-sided game — verticality',
+        id: randomUUID(), name: 'Partitella 7vs7 su campo stretto -- verticalità', nameEn: '7v7 small-sided game -- verticality',
         category: 'partitella',
         description: 'Campo 35x28m, 7vs7 + portieri. Regola: gol vale doppio se segnato entro 5 secondi da un recupero palla. Stimola le transizioni rapide e la verticalità nel gioco. Nessuna regola sul numero di tocchi. 2 tempi da 8 minuti.',
         descriptionEn: '35x28m pitch, 7v7 + GKs. Rule: goal counts double if scored within 5 seconds of winning the ball. Stimulates fast transitions and vertical play. No touch limit. 2×8 min halves.',
@@ -1381,7 +1381,7 @@ const app = new Hono()
       },
       // ── PORTIERI ──
       {
-        id: randomUUID(), name: 'Portiere: piede — distribuzione corta e lunga', nameEn: 'Goalkeeper: feet — short and long distribution',
+        id: randomUUID(), name: 'Portiere: piede -- distribuzione corta e lunga', nameEn: 'Goalkeeper: feet -- short and long distribution',
         category: 'portieri',
         description: 'Serie di rilanci: 5 passaggi corti rasoterra ai difensori (max 20m), 5 lanci medi (20-35m) con buona traiettoria, 5 calci lunghi (35m+) orientati sulle fasce. Feedback su traiettoria, precisione e velocità di esecuzione. Poi ripetere sotto pressione simulata (pressing a 30m).',
         descriptionEn: '5 short ground rolls to defenders (max 20m), 5 medium throws (20-35m), 5 long kicks (35m+) targeted wide. Feedback on trajectory, accuracy, execution speed. Repeat under simulated press (presser at 30m).',
@@ -1390,7 +1390,7 @@ const app = new Hono()
         duration: 20, players: 2, intensity: 'media', materials: 'Porta, palloni, coni', isCustom: false, createdAt: now
       },
       {
-        id: randomUUID(), name: 'Portiere: 1vs1 uscita bassa — tecnica del piede', nameEn: 'Goalkeeper: 1v1 low exit — foot technique',
+        id: randomUUID(), name: 'Portiere: 1vs1 uscita bassa -- tecnica del piede', nameEn: 'Goalkeeper: 1v1 low exit -- foot technique',
         category: 'portieri',
         description: 'Attaccante avanzato 1vs1 da diverse angolazioni (centro, destra, sinistra). Il portiere deve scegliere il timing dell\'uscita (non troppo presto, non troppo tardi). Focus: tecnica del piede (blocco con piede avanzato, corpo largo). 15 situazioni, 3 per angolazione.',
         descriptionEn: 'Attacker 1v1 from different angles (center, right, left). GK must choose correct exit timing. Focus: foot technique (block with leading foot, wide body). 15 situations, 3 per angle.',
@@ -1400,19 +1400,19 @@ const app = new Hono()
       },
 
       // ══════════════════════════════════════════════════════════════════════
-      // ESERCITAZIONI AVANZATE — LIBRERIA V2
-      // ══════════════════════════════════════════════════════════════════════
+      // ESERCITAZIONI AVANZATE -- LIBRERIA V2
+      // ======================================================================
 
-      // ── TATTICA AVANZATA ──────────────────────────────────────────────────
+      // -- TATTICA AVANZATA --------------------------------------------------
       {
         id: randomUUID(),
-        name: 'Costruzione in superiorità: positional play con pressing trigger',
+        name: 'Costruzione in superiorita: positional play con pressing trigger',
         nameEn: 'Build-up overload: positional play with pressing trigger',
         category: 'tattica',
-        description: 'Campo 40x30m diviso in 5 corridoi verticali. 8 costruttori vs 5 pressatori. Regola: il pallone deve passare per tutti e 3 i corridoi prima di poter entrare nella zona finale. Pressing trigger: passaggio al terzino → pressing immediato. Se i pressatori recuperano entro 4 passaggi, vincono il round. Focus sulla circolazione veloce, larghezza e profondità simultanee (ampiezza + 9 in profondità). 4 round da 5 minuti, rotazione dei ruoli.',
-        descriptionEn: '40x30m split into 5 vertical corridors. 8 builders vs 5 pressers. Rule: ball must pass through all 3 corridors before entering the final zone. Pressing trigger: pass to fullback → immediate press. If pressers win ball in 4 passes, they win the round. Focus on fast circulation, simultaneous width and depth. 4×5 min rounds, roles rotate.',
+        description: 'Campo 40x30m diviso in 5 corridoi verticali. 8 costruttori vs 5 pressatori. Regola: il pallone deve passare per tutti e 3 i corridoi prima di poter entrare nella zona finale. Pressing trigger: passaggio al terzino -> pressing immediato. Se i pressatori recuperano entro 4 passaggi, vincono il round. Focus sulla circolazione veloce, larghezza e profondita simultanee (ampiezza + 9 in profondita). 4 round da 5 minuti, rotazione dei ruoli.',
+        descriptionEn: '40x30m split into 5 vertical corridors. 8 builders vs 5 pressers. Rule: ball must pass through all 3 corridors before entering the final zone. Pressing trigger: pass to fullback -> immediate press. If pressers win ball in 4 passes, they win the round. Focus on fast circulation, simultaneous width and depth. 4x5 min rounds, roles rotate.',
         primaryObjective: 'Automatizzare il gioco posizionale con circolazione su tutti i corridoi e risposta al pressing trigger',
-        secondaryObjectives: JSON.stringify(['Ampiezza e profondità simultanee', 'Reazione al pressing trigger', 'Velocità di circolazione', 'Posizionamento inter-linea', 'Comunicazione offensiva']),
+        secondaryObjectives: JSON.stringify(['Ampiezza e profondita simultanee', 'Reazione al pressing trigger', 'Velocita di circolazione', 'Posizionamento inter-linea', 'Comunicazione offensiva']),
         duration: 30, players: 13, intensity: 'alta', materials: 'Campo 40x30m con coni per corridoi, 2-3 palloni', isCustom: false, createdAt: now
       },
       {
@@ -1420,8 +1420,8 @@ const app = new Hono()
         name: 'Difesa a zona orientata: scalamento a catena',
         nameEn: 'Ball-oriented zone defense: chain pressing shifts',
         category: 'tattica',
-        description: 'Blocco medio 4-3 (7 difensori) vs 9 attaccanti con possesso su campo 50x35m. Ogni spostamento palla attiva uno scalamento a catena: il mediano scala sul portatore, il difensore centrale copre il corridoio centrale, i difensori laterali orientano verso la fascia. Trigger di pressing: retropassaggio al portiere avversario → i 3 del blocco avanzato aggrediscono. Esercizio in blocchi 6'+90s recupero. Obiettivo: non concedere linee di passaggio centrali per più di 3 secondi.',
-        descriptionEn: '4-3 mid-block (7 defenders) vs 9 attackers on 50x35m. Every ball shift triggers a chain pressing shift: central mid steps to ball carrier, CB covers central corridor, wide defenders orient toward flank. Pressing trigger: back pass to opponent GK → 3 advanced players press immediately. 6 min blocks + 90s rest. Goal: deny central passing lanes for more than 3 seconds.',
+        description: 'Blocco medio 4-3 (7 difensori) vs 9 attaccanti con possesso su campo 50x35m. Ogni spostamento palla attiva uno scalamento a catena: il mediano scala sul portatore, il difensore centrale copre il corridoio centrale, i difensori laterali orientano verso la fascia. Trigger di pressing: retropassaggio al portiere avversario -> i 3 del blocco avanzato aggrediscono. Esercizio in blocchi 6min+90s recupero. Obiettivo: non concedere linee di passaggio centrali per piu di 3 secondi.',
+        descriptionEn: '4-3 mid-block (7 defenders) vs 9 attackers on 50x35m. Every ball shift triggers a chain pressing shift: central mid steps to ball carrier, CB covers central corridor, wide defenders orient toward flank. Pressing trigger: back pass to opponent GK -> 3 advanced players press immediately. 6 min blocks + 90s rest. Goal: deny central passing lanes for more than 3 seconds.',
         primaryObjective: 'Sincronizzare il blocco difensivo a zona orientata al pallone con scalamenti a catena automatici',
         secondaryObjectives: JSON.stringify(['Scalamento coordinato', 'Orientamento al pallone', 'Compattezza orizzontale', 'Pressing trigger sul retropassaggio', 'Comunicazione difensiva']),
         duration: 30, players: 16, intensity: 'alta', materials: 'Campo 50x35m, coni per zone, 2-3 palloni', isCustom: false, createdAt: now
@@ -1431,20 +1431,20 @@ const app = new Hono()
         name: 'Trap laterale: pressing situazionale con linea del fuorigioco',
         nameEn: 'Lateral trap: situational pressing with offside line',
         category: 'tattica',
-        description: 'Schema difensivo avanzato: la squadra attira deliberatamente il pallone in fascia con pressing orientato, poi chiude la trappola alzando la linea difensiva per creare il fuorigioco. Esercizio: 7 difensori vs 7 attaccanti su metà campo. Trigger: il terzino attaccante riceve sulla fascia → pressing immediato del mediano + chiusura della mezzala + alzata sincrona della linea difensiva (min 3 difensori in linea). 20 situazioni ripetute con analisi dei fuorigioco creati. Variante: con jolly neutro che simula la seconda punta avversaria.',
-        descriptionEn: 'Advanced defensive pattern: team deliberately funnels ball wide with oriented pressing, then springs the trap by raising the offside line. Setup: 7 defenders vs 7 attackers on half-pitch. Trigger: attacking fullback receives wide → immediate pressing by central mid + halfback closes + synchronized offside line raise (min 3 defenders in line). 20 repetitions, count offside traps created. Variant: with neutral joker simulating opponent second striker.',
+        description: 'Schema difensivo avanzato: la squadra attira deliberatamente il pallone in fascia con pressing orientato, poi chiude la trappola alzando la linea difensiva per creare il fuorigioco. Esercizio: 7 difensori vs 7 attaccanti su meta campo. Trigger: il terzino attaccante riceve sulla fascia -> pressing immediato del mediano + chiusura della mezzala + alzata sincrona della linea difensiva (min 3 difensori in linea). 20 situazioni ripetute con analisi dei fuorigioco creati. Variante: con jolly neutro che simula la seconda punta avversaria.',
+        descriptionEn: 'Advanced defensive pattern: team deliberately funnels ball wide with oriented pressing, then springs the trap by raising the offside line. Setup: 7 defenders vs 7 attackers on half-pitch. Trigger: attacking fullback receives wide -> immediate pressing by central mid + halfback closes + synchronized offside line raise (min 3 defenders in line). 20 repetitions, count offside traps created. Variant: with neutral joker simulating opponent second striker.',
         primaryObjective: 'Costruire automatismo del trap laterale con pressing orientato e alzata sincrona della linea per creare fuorigioco',
         secondaryObjectives: JSON.stringify(['Sincronizzazione della linea difensiva', 'Pressing orientato sul lato palla', 'Comunicazione del fuorigioco', 'Reazione al dribbling per sfuggire la trappola', 'Lettura del movimento avversario']),
-        duration: 28, players: 14, intensity: 'alta', materials: 'Metà campo, coni per marcature, 2 palloni', isCustom: false, createdAt: now
+        duration: 28, players: 14, intensity: 'alta', materials: 'Meta campo, coni per marcature, 2 palloni', isCustom: false, createdAt: now
       },
       {
         id: randomUUID(),
         name: 'Trequartista nel mezzo spazio: gioco tra le linee',
         nameEn: 'Attacking midfielder in the half-space: between the lines',
         category: 'tattica',
-        description: 'Esercizio specifico per il trequartista/seconda punta che opera nel mezzo spazio. 6vs4 in 25x20m con 2 zone proibite centrali per i difensori. Il trequartista parte sempre tra le linee (fuori dalla zona proibita) e deve: (1) ricevere spalle alla porta; (2) effettuare il mezzo giro o 1-2 con il centrocampista; (3) aprire verso la porta con accelerazione. Il difensore può seguirlo fuori zona dopo la ricezione. 5 serie da 4 minuti, feedback individuale dopo ogni serie.',
-        descriptionEn: 'Specific drill for the attacking mid/second striker operating in the half-space. 6v4 on 25x20m with 2 central zones forbidden for defenders. Trequartista always starts between the lines and must: (1) receive with back to goal; (2) half-turn or 1-2 with midfielder; (3) open toward goal with burst. Defender can follow after reception. 5×4 min sets, individual feedback after each.',
-        primaryObjective: 'Sviluppare la capacità del trequartista di ricevere e girare nel mezzo spazio creando superiorità numerica locale',
+        description: 'Esercizio specifico per il trequartista/seconda punta che opera nel mezzo spazio. 6vs4 in 25x20m con 2 zone proibite centrali per i difensori. Il trequartista parte sempre tra le linee (fuori dalla zona proibita) e deve: (1) ricevere spalle alla porta; (2) effettuare il mezzo giro o 1-2 con il centrocampista; (3) aprire verso la porta con accelerazione. Il difensore puo seguirlo fuori zona dopo la ricezione. 5 serie da 4 minuti, feedback individuale dopo ogni serie.',
+        descriptionEn: 'Specific drill for the attacking mid/second striker operating in the half-space. 6v4 on 25x20m with 2 central zones forbidden for defenders. Trequartista always starts between the lines and must: (1) receive with back to goal; (2) half-turn or 1-2 with midfielder; (3) open toward goal with burst. Defender can follow after reception. 5x4 min sets, individual feedback after each.',
+        primaryObjective: 'Sviluppare la capacita del trequartista di ricevere e girare nel mezzo spazio creando superiorita numerica locale',
         secondaryObjectives: JSON.stringify(['Ricezione spalle alla porta', 'Mezzo giro sotto pressione', 'Timing dell\'inserimento', 'Combinazione 1-2 in spazio stretto', 'Lettura del momento di aprirsi']),
         duration: 25, players: 10, intensity: 'alta', materials: 'Campo 25x20m, coni per zone proibite, 2 porte piccole', isCustom: false, createdAt: now
       },
@@ -1453,45 +1453,45 @@ const app = new Hono()
         name: 'Rotazioni di reparto in fase di non possesso: mid-block 4-3-3',
         nameEn: 'Unit rotations out of possession: 4-3-3 mid-block',
         category: 'tattica',
-        description: 'Applicazione del mid-block organizzato con il 4-3-3. Scenario: avversario in costruzione dal basso. La squadra in fase di non possesso mantiene il 4-3-3 (non il 4-1-4-1 statico) con rotazioni specifiche: (A) attaccante esterno scala sul terzino avversario → la mezzala sale a coprire il centrocampista → il mediano abbassa a coprire l\'ala. (B) 9 orienta la pressione verso il centro-destra → tutta la struttura ruota verso quel lato. Lavoro organizzato: 11 vs 8 costruttori, 20 minuti con stop e analisi.',
-        descriptionEn: 'Organised mid-block in 4-3-3. Scenario: opponent builds from the back. Non-possessing team maintains 4-3-3 (not static 4-1-4-1) with specific rotations: (A) wide attacker presses opposing fullback → halfback rises to cover CM → pivot drops to cover the winger. (B) striker orients pressure toward center-right → whole structure shifts that side. Organised work: 11 vs 8 builders, 20 min with stops and analysis.',
+        description: 'Applicazione del mid-block organizzato con il 4-3-3. Scenario: avversario in costruzione dal basso. La squadra in fase di non possesso mantiene il 4-3-3 (non il 4-1-4-1 statico) con rotazioni specifiche: (A) attaccante esterno scala sul terzino avversario -> la mezzala sale a coprire il centrocampista -> il mediano abbassa a coprire l\'ala. (B) 9 orienta la pressione verso il centro-destra -> tutta la struttura ruota verso quel lato. Lavoro organizzato: 11 vs 8 costruttori, 20 minuti con stop e analisi.',
+        descriptionEn: 'Organised mid-block in 4-3-3. Scenario: opponent builds from the back. Non-possessing team maintains 4-3-3 (not static 4-1-4-1) with specific rotations: (A) wide attacker presses opposing fullback -> halfback rises to cover CM -> pivot drops to cover the winger. (B) striker orients pressure toward center-right -> whole structure shifts that side. Organised work: 11 vs 8 builders, 20 min with stops and analysis.',
         primaryObjective: 'Automatizzare le rotazioni di reparto nel mid-block 4-3-3 in relazione alla posizione del pallone',
         secondaryObjectives: JSON.stringify(['Orientamento collettivo al pallone', 'Rotazione mezzala-mediano', 'Pressing orientato con il 9', 'Compattezza del blocco', 'Comunicazione nei cambi di orientamento']),
         duration: 30, players: 19, intensity: 'media', materials: 'Campo intero, 2 porte, 3-4 palloni', isCustom: false, createdAt: now
       },
       {
         id: randomUUID(),
-        name: 'Transizione offensiva: ampiezza + profondità in 3 secondi',
+        name: 'Transizione offensiva: ampiezza + profondita in 3 secondi',
         nameEn: 'Offensive transition: width + depth in 3 seconds',
         category: 'tattica',
-        description: 'Esercizio specifico sulla transizione offensiva immediata dopo recupero palla. Partenza da blocco difensivo simulato (5 difensori + 4 centrocampisti posizionati). Al segnale (recupero palla), la squadra ha 3 secondi per aprire l\'ampiezza con gli esterni + attaccare la profondità con una punta. 8vs6 su campo 50x40m. Regola: primo tiro entro 6 secondi dal recupero o il punto non vale. 5 round da 4 minuti, conta le transizioni positive.',
-        descriptionEn: 'Specific offensive transition drill immediately after winning the ball. Start from simulated defensive block (5 defenders + 4 midfielders positioned). On signal (ball won), the team has 3 seconds to open width with wide players + attack depth with a striker. 8v6 on 50x40m. Rule: first shot within 6 seconds of winning ball or no goal. 5×4 min rounds, count positive transitions.',
-        primaryObjective: 'Costruire l\'automatismo di ampiezza e profondità simultanee nella transizione offensiva entro 3 secondi',
-        secondaryObjectives: JSON.stringify(['Reazione esplosiva al recupero palla', 'Lettura della profondità', 'Timing della punta sul lancio', 'Qualità del passaggio verticale', 'Sincronizzazione esterno-punta']),
+        description: 'Esercizio specifico sulla transizione offensiva immediata dopo recupero palla. Partenza da blocco difensivo simulato (5 difensori + 4 centrocampisti posizionati). Al segnale (recupero palla), la squadra ha 3 secondi per aprire l\'ampiezza con gli esterni + attaccare la profondita con una punta. 8vs6 su campo 50x40m. Regola: primo tiro entro 6 secondi dal recupero o il punto non vale. 5 round da 4 minuti, conta le transizioni positive.',
+        descriptionEn: 'Specific offensive transition drill immediately after winning the ball. Start from simulated defensive block (5 defenders + 4 midfielders positioned). On signal (ball won), the team has 3 seconds to open width with wide players + attack depth with a striker. 8v6 on 50x40m. Rule: first shot within 6 seconds of winning ball or no goal. 5x4 min rounds, count positive transitions.',
+        primaryObjective: 'Costruire l\'automatismo di ampiezza e profondita simultanee nella transizione offensiva entro 3 secondi',
+        secondaryObjectives: JSON.stringify(['Reazione esplosiva al recupero palla', 'Lettura della profondita', 'Timing della punta sul lancio', 'Qualita del passaggio verticale', 'Sincronizzazione esterno-punta']),
         duration: 28, players: 14, intensity: 'alta', materials: 'Campo 50x40m, coni per posizioni di partenza, 2 porte', isCustom: false, createdAt: now
       },
 
-      // ── TECNICA AVANZATA ──────────────────────────────────────────────────
+      // -- TECNICA AVANZATA --------------------------------------------------
       {
         id: randomUUID(),
         name: 'Ricezione spalle + 1-2 in spazio stretto (Xavi/Iniesta drill)',
         nameEn: 'Back-to-goal receive + wall pass in tight space',
         category: 'tecnica',
-        description: 'Trio: giocatore A (passante), B (ricevente spalle alla porta), C (parete). A passa a B che riceve spalle a C. B gioca la sponda a C di prima, poi si gira e riceve il filtrante di C in corsa. Distanze: A-B 8m, B-C 4m. Vincoli: B può usare solo la pianta del piede per orientare la ricezione. Max 1 tocco per la sponda. Poi accelerazione su filtrante di C con tiro in porta (porta a 12m). 4 serie da 8 ripetizioni per lato. Progressione: aggiungere un difensore passivo su B.',
-        descriptionEn: 'Trio: A (passer), B (back-to-goal receiver), C (wall). A passes to B who receives with back to C. B first-time wall-passes to C, then turns to receive C\'s through ball in stride. Distances: A-B 8m, B-C 4m. Constraints: B uses only sole of foot to orient control. Max 1 touch for wall pass. Then accelerate on C\'s through ball with shot on goal (goal 12m away). 4×8 reps per side. Progression: add passive defender on B.',
+        description: 'Trio: giocatore A (passante), B (ricevente spalle alla porta), C (parete). A passa a B che riceve spalle a C. B gioca la sponda a C di prima, poi si gira e riceve il filtrante di C in corsa. Distanze: A-B 8m, B-C 4m. Vincoli: B puo usare solo la pianta del piede per orientare la ricezione. Max 1 tocco per la sponda. Poi accelerazione su filtrante di C con tiro in porta (porta a 12m). 4 serie da 8 ripetizioni per lato. Progressione: aggiungere un difensore passivo su B.',
+        descriptionEn: 'Trio: A (passer), B (back-to-goal receiver), C (wall). A passes to B who receives with back to C. B first-time wall-passes to C, then turns to receive C\'s through ball in stride. Distances: A-B 8m, B-C 4m. Constraints: B uses only sole of foot to orient control. Max 1 touch for wall pass. Then accelerate on C\'s through ball with shot on goal (goal 12m away). 4x8 reps per side. Progression: add passive defender on B.',
         primaryObjective: 'Automatizzare la ricezione spalle alla porta con scarico immediato e lettura della prossima giocata in condizioni di spazio stretto',
-        secondaryObjectives: JSON.stringify(['Orientamento della ricezione col piede', 'Velocità dello smistamento', 'Lettura del filtrante', 'Accelerazione post-ricezione', 'Coordinazione nel trio']),
+        secondaryObjectives: JSON.stringify(['Orientamento della ricezione col piede', 'Velocita dello smistamento', 'Lettura del filtrante', 'Accelerazione post-ricezione', 'Coordinazione nel trio']),
         duration: 22, players: 3, intensity: 'media', materials: 'Coni, 1 palla, porta o cinesini come goal', isCustom: false, createdAt: now
       },
       {
         id: randomUUID(),
-        name: 'Cambio di velocità in conduzione: accelerazione/decelerazione 1vs1',
+        name: 'Cambio di velocita in conduzione: accelerazione/decelerazione 1vs1',
         nameEn: 'Speed change in dribbling: acceleration/deceleration 1v1',
         category: 'tecnica',
-        description: 'Percorso 20m con coni ogni 5m. Il giocatore conduce palla alternando: accelerazione massimale nel primo segmento, decelerazione brusca al cono, pausa di 0.5s, poi riaccelerazione esplosiva. Al cono finale, 1vs1 diretto contro un difensore. Focus: il cambio di velocità deve essere così brusco da disorientare il difensore nel 1vs1. 5 ripetizioni per giocatore. Variante: inserire una finta (step-over o cut) al momento della decelerazione prima dell\'accelerazione finale.',
+        description: 'Percorso 20m con coni ogni 5m. Il giocatore conduce palla alternando: accelerazione massimale nel primo segmento, decelerazione brusca al cono, pausa di 0.5s, poi riaccelerazione esplosiva. Al cono finale, 1vs1 diretto contro un difensore. Focus: il cambio di velocita deve essere cosi brusco da disorientare il difensore nel 1vs1. 5 ripetizioni per giocatore. Variante: inserire una finta (step-over o cut) al momento della decelerazione prima dell\'accelerazione finale.',
         descriptionEn: '20m course with cones every 5m. Player dribbles alternating: max acceleration first segment, abrupt deceleration at cone, 0.5s pause, then explosive re-acceleration. At final cone, direct 1v1 against defender. Focus: speed change must be sharp enough to unbalance defender. 5 reps per player. Variant: add feint (step-over or cut) at deceleration moment before final burst.',
-        primaryObjective: 'Padroneggiare il cambio di velocità come strumento tecnico per creare vantaggio nel 1vs1',
-        secondaryObjectives: JSON.stringify(['Conduzione ad alta velocità', 'Controllo del pallone nella decelerazione', 'Accelerazione esplosiva post-pausa', 'Lettura del difensore', 'Finta combinata al cambio ritmo']),
+        primaryObjective: 'Padroneggiare il cambio di velocita come strumento tecnico per creare vantaggio nel 1vs1',
+        secondaryObjectives: JSON.stringify(['Conduzione ad alta velocita', 'Controllo del pallone nella decelerazione', 'Accelerazione esplosiva post-pausa', 'Lettura del difensore', 'Finta combinata al cambio ritmo']),
         duration: 20, players: 4, intensity: 'alta', materials: 'Coni ogni 5m su 20m, palloni', isCustom: false, createdAt: now
       },
       {
@@ -1499,10 +1499,10 @@ const app = new Hono()
         name: 'Switch di gioco: passaggio lungo calibrato su fascia opposta',
         nameEn: 'Switch of play: long diagonal pass to the opposite flank',
         category: 'tecnica',
-        description: 'Esercizio specifico per il passaggio lungo diagonale (switch). Centrocampista centrale in 3 tocchi max: riceve, si orienta, effettua il passaggio diagonale lungo (30-40m) verso l\'esterno opposto che parte in corsa. L\'esterno deve controllare orientato verso la porta senza perdere il passo. 3 sequenze: (A) campo aperto; (B) con difensore che pressiona il centrocampista dopo il primo tocco; (C) con difensore sull\'esterno. 8 ripetizioni per sequenza. Focus qualità della traiettoria (no troppo alta, no rasoterra su campo bagnato).',
+        description: 'Esercizio specifico per il passaggio lungo diagonale (switch). Centrocampista centrale in 3 tocchi max: riceve, si orienta, effettua il passaggio diagonale lungo (30-40m) verso l\'esterno opposto che parte in corsa. L\'esterno deve controllare orientato verso la porta senza perdere il passo. 3 sequenze: (A) campo aperto; (B) con difensore che pressiona il centrocampista dopo il primo tocco; (C) con difensore sull\'esterno. 8 ripetizioni per sequenza. Focus qualita della traiettoria (no troppo alta, no rasoterra su campo bagnato).',
         descriptionEn: 'Specific long diagonal switch drill. Central midfielder in max 3 touches: receives, orientates, plays long diagonal (30-40m) toward the far winger running in stride. Winger must control oriented toward goal without breaking stride. 3 sequences: (A) open field; (B) with defender pressing CM after first touch; (C) with defender on the winger. 8 reps per sequence. Focus: trajectory quality (not too high, not on the ground on wet pitch).',
         primaryObjective: 'Sviluppare la precisione e la scelta del passaggio lungo diagonale per cambiare gioco velocemente',
-        secondaryObjectives: JSON.stringify(['Orientamento prima della ricezione', 'Traiettoria calibrata del passaggio', 'Controllo orientato dell\'esterno', 'Velocità di esecuzione sotto pressione', 'Lettura del momento giusto per lo switch']),
+        secondaryObjectives: JSON.stringify(['Orientamento prima della ricezione', 'Traiettoria calibrata del passaggio', 'Controllo orientato dell\'esterno', 'Velocita di esecuzione sotto pressione', 'Lettura del momento giusto per lo switch']),
         duration: 25, players: 4, intensity: 'media', materials: 'Campo largo, coni per marcature, palloni', isCustom: false, createdAt: now
       },
       {
@@ -1510,47 +1510,47 @@ const app = new Hono()
         name: 'Stop di coscia orientato + accelerazione: la punta moderna',
         nameEn: 'Oriented thigh control + burst: modern striker drill',
         category: 'tecnica',
-        description: 'Simulazione del gesto tecnico della punta moderna su palla in arrivo dalla fascia o dal centrocampo. Serie: server lancia palla aerea a 8-10m, la punta effettua stop di coscia orientando il pallone a 45° verso il lato opposto al server (simulando controllo orientato lontano dal difensore), poi accelerazione esplosiva verso porta. 3 varianti: (A) palla da destra → controllo verso sinistra; (B) palla da sinistra → controllo verso destra; (C) palla centrale alta → controllo frontale + girata immediata. 6 ripetizioni per variante, poi tiro in porta. Progressione: aggiungere difensore che parte da 3m dopo il lancio.',
-        descriptionEn: 'Technical drill simulating the modern striker\'s oriented thigh control on aerial balls from wide or midfield. Sequence: server launches ball from 8-10m, striker stops with thigh orienting 45° away from server (simulating control away from defender), then explosive burst toward goal. 3 variants: (A) ball from right → control left; (B) ball from left → control right; (C) high central ball → frontal control + immediate turn. 6 reps per variant, then shot on goal. Progression: add defender starting 3m away on the throw.',
+        description: 'Simulazione del gesto tecnico della punta moderna su palla in arrivo dalla fascia o dal centrocampo. Serie: server lancia palla aerea a 8-10m, la punta effettua stop di coscia orientando il pallone a 45 gradi verso il lato opposto al server (simulando controllo orientato lontano dal difensore), poi accelerazione esplosiva verso porta. 3 varianti: (A) palla da destra -> controllo verso sinistra; (B) palla da sinistra -> controllo verso destra; (C) palla centrale alta -> controllo frontale + girata immediata. 6 ripetizioni per variante, poi tiro in porta. Progressione: aggiungere difensore che parte da 3m dopo il lancio.',
+        descriptionEn: 'Technical drill simulating the modern striker\'s oriented thigh control on aerial balls from wide or midfield. Sequence: server launches ball from 8-10m, striker stops with thigh orienting 45 gradi away from server (simulating control away from defender), then explosive burst toward goal. 3 variants: (A) ball from right -> control left; (B) ball from left -> control right; (C) high central ball -> frontal control + immediate turn. 6 reps per variant, then shot on goal. Progression: add defender starting 3m away on the throw.',
         primaryObjective: 'Automatizzare lo stop di coscia orientato come strumento per creare spazio e accelerare verso la porta',
         secondaryObjectives: JSON.stringify(['Lettura della traiettoria aerea', 'Orientamento del corpo pre-controllo', 'Tecnica dello stop di coscia', 'Accelerazione esplosiva post-controllo', 'Tiro in porta dopo controllo orientato']),
         duration: 22, players: 3, intensity: 'alta', materials: 'Porta, palloni, coni, 1 server', isCustom: false, createdAt: now
       },
 
-      // ── ATLETICO AVANZATO ─────────────────────────────────────────────────
+      // -- ATLETICO AVANZATO -------------------------------------------------
       {
         id: randomUUID(),
-        name: 'RSA — Repeated Sprint Ability: protocollo con recupero incompleto',
-        nameEn: 'RSA — Repeated Sprint Ability: incomplete recovery protocol',
+        name: 'RSA -- Repeated Sprint Ability: protocollo con recupero incompleto',
+        nameEn: 'RSA -- Repeated Sprint Ability: incomplete recovery protocol',
         category: 'atletico',
-        description: 'Protocollo scientifico RSA per valutare e sviluppare la capacità di sprint ripetuto. Struttura: 6 sprint x 30m all-out con 20 secondi di recupero passivo tra gli sprint (recupero incompleto, caratteristica del calcio). Misurare: (1) tempo di ogni sprint; (2) indice di fatica (diff tra sprint migliore e peggiore / sprint migliore x 100). Soglia di qualità: indice di fatica < 3% = eccellente, < 5% = buono, > 8% = da migliorare. 2 serie totali con 5 minuti di recupero tra le serie. Prerequisito: buona base aerobica. Non usare in pre-stagione precoce.',
-        descriptionEn: 'Scientific RSA protocol to assess and develop repeated sprint capacity. Structure: 6 sprints × 30m all-out with 20 seconds passive recovery between sprints (incomplete recovery, characteristic of football). Measure: (1) each sprint time; (2) fatigue index (diff between best and worst sprint / best sprint × 100). Quality thresholds: fatigue index < 3% = excellent, < 5% = good, > 8% = needs improvement. 2 total sets with 5 min rest between. Prerequisite: solid aerobic base. Do not use in early pre-season.',
+        description: 'Protocollo scientifico RSA per valutare e sviluppare la capacita di sprint ripetuto. Struttura: 6 sprint x 30m all-out con 20 secondi di recupero passivo tra gli sprint (recupero incompleto, caratteristica del calcio). Misurare: (1) tempo di ogni sprint; (2) indice di fatica (diff tra sprint migliore e peggiore / sprint migliore x 100). Soglia di qualita: indice di fatica < 3% = eccellente, < 5% = buono, > 8% = da migliorare. 2 serie totali con 5 minuti di recupero tra le serie. Prerequisito: buona base aerobica. Non usare in pre-stagione precoce.',
+        descriptionEn: 'Scientific RSA protocol to assess and develop repeated sprint capacity. Structure: 6 sprints x 30m all-out with 20 seconds passive recovery between sprints (incomplete recovery, characteristic of football). Measure: (1) each sprint time; (2) fatigue index (diff between best and worst sprint / best sprint x 100). Quality thresholds: fatigue index < 3% = excellent, < 5% = good, > 8% = needs improvement. 2 total sets with 5 min rest between. Prerequisite: solid aerobic base. Do not use in early pre-season.',
         primaryObjective: 'Sviluppare e misurare la RSA (Repeated Sprint Ability) con protocollo scientifico e indice di fatica',
-        secondaryObjectives: JSON.stringify(['Potenza anaerobica alattacida', 'Capacità di recupero neuromuscolare', 'Monitoraggio dell\'indice di fatica', 'Resistenza alla velocità', 'Preparazione mentale alla sofferenza da sprint ripetuto']),
+        secondaryObjectives: JSON.stringify(['Potenza anaerobica alattacida', 'Capacita di recupero neuromuscolare', 'Monitoraggio dell\'indice di fatica', 'Resistenza alla velocita', 'Preparazione mentale alla sofferenza da sprint ripetuto']),
         duration: 25, players: 4, intensity: 'massima', materials: 'Cronometro GPS o fotocellule, coni a 30m, campo aperto', isCustom: false, createdAt: now
       },
       {
         id: randomUUID(),
-        name: 'Potenza anaerobica: protocollo 10-20-30m a intensità progressiva',
+        name: 'Potenza anaerobica: protocollo 10-20-30m a intensita progressiva',
         nameEn: 'Anaerobic power: 10-20-30m progressive sprint protocol',
         category: 'atletico',
-        description: 'Protocollo per lo sviluppo della potenza anaerobica e dell\'accelerazione multi-fase, utilizzato nelle squadre professionistiche con supporto GPS. Struttura: blocco da 3 sprint consecutivi (10m + 20m + 30m, recupero 10s tra i segmenti) → 3 minuti di recupero → 5 ripetizioni del blocco. Nel blocco: 10m = accelerazione esplosiva; 20m = mantenimento; 30m = velocità massima. Target GPS: velocità di picco nel segmento 20-30m ≥ 95% della velocità massima individuale. Progressione mensile: aggiungere 1 blocco ogni 3 settimane fino a 8 blocchi totali.',
-        descriptionEn: 'Protocol for anaerobic power and multi-phase acceleration development, used in professional clubs with GPS support. Structure: block of 3 consecutive sprints (10m + 20m + 30m, 10s rest between segments) → 3 min rest → 5 block repetitions. Block: 10m = explosive acceleration; 20m = maintenance; 30m = max velocity. GPS target: peak speed in 20-30m segment ≥ 95% of individual max speed. Monthly progression: add 1 block every 3 weeks up to 8 total blocks.',
-        primaryObjective: 'Sviluppare la potenza anaerobica e l\'accelerazione multi-fase con target di velocità misurabili',
-        secondaryObjectives: JSON.stringify(['Accelerazione esplosiva 0-10m', 'Mantenimento della velocità 10-20m', 'Velocità massima 20-30m', 'Monitoraggio GPS della velocità di picco', 'Progressione del carico mensile']),
+        description: 'Protocollo per lo sviluppo della potenza anaerobica e dell\'accelerazione multi-fase, utilizzato nelle squadre professionistiche con supporto GPS. Struttura: blocco da 3 sprint consecutivi (10m + 20m + 30m, recupero 10s tra i segmenti) -> 3 minuti di recupero -> 5 ripetizioni del blocco. Nel blocco: 10m = accelerazione esplosiva; 20m = mantenimento; 30m = velocita massima. Target GPS: velocita di picco nel segmento 20-30m >= 95% della velocita massima individuale. Progressione mensile: aggiungere 1 blocco ogni 3 settimane fino a 8 blocchi totali.',
+        descriptionEn: 'Protocol for anaerobic power and multi-phase acceleration development, used in professional clubs with GPS support. Structure: block of 3 consecutive sprints (10m + 20m + 30m, 10s rest between segments) -> 3 min rest -> 5 block repetitions. Block: 10m = explosive acceleration; 20m = maintenance; 30m = max velocity. GPS target: peak speed in 20-30m segment >= 95% of individual max speed. Monthly progression: add 1 block every 3 weeks up to 8 total blocks.',
+        primaryObjective: 'Sviluppare la potenza anaerobica e l\'accelerazione multi-fase con target di velocita misurabili',
+        secondaryObjectives: JSON.stringify(['Accelerazione esplosiva 0-10m', 'Mantenimento della velocita 10-20m', 'Velocita massima 20-30m', 'Monitoraggio GPS della velocita di picco', 'Progressione del carico mensile']),
         duration: 30, players: 4, intensity: 'massima', materials: 'Campo aperto, coni a 10-20-30m, cronometro/GPS', isCustom: false, createdAt: now
       },
 
-      // ── PARTITELLA AVANZATA ────────────────────────────────────────────────
+      // -- PARTITELLA AVANZATA ------------------------------------------------
       {
         id: randomUUID(),
-        name: 'Juego de Posición 7vs7 con zone e corridoi',
-        nameEn: 'Juego de Posición 7v7 with zones and corridors',
+        name: 'Juego de Posicion 7vs7 con zone e corridoi',
+        nameEn: 'Juego de Posicion 7v7 with zones and corridors',
         category: 'partitella',
-        description: 'Applicazione del gioco posizionale (Guardiola-style) in formato SSG. Campo 45x35m diviso in 5 corridoi verticali + 3 zone orizzontali. Regole: (1) non si può stazionare nello stesso corridoio con un compagno; (2) gol valido solo se preceduto da almeno un passaggio in zona 3 (zona avanzata); (3) pressing trigger: retropassaggio → tutti avanzano di una zona. Team in possesso: 7 giocatori + 1 joker jolly. Team difendente: 7 giocatori. Obiettivo difensivo: recuperare palla entro 6 secondi dalla perdita. 3 periodi da 8 minuti + analisi.',
-        descriptionEn: 'Positional play (Guardiola-style) in SSG format. 45x35m split into 5 vertical corridors + 3 horizontal zones. Rules: (1) no two teammates in the same corridor; (2) goal only valid after at least one pass in zone 3 (advanced zone); (3) pressing trigger: back pass → all advance one zone. Possessing team: 7 + 1 neutral joker. Defending team: 7. Defensive goal: win ball within 6 seconds of losing it. 3×8 min periods + analysis.',
-        primaryObjective: 'Applicare i principi del gioco posizionale (occupazione corridoi, superiorità numerica locale, pressing trigger) in contesto di partitella strutturata',
-        secondaryObjectives: JSON.stringify(['Occupazione dei corridoi', 'Superiorità numerica locale', 'Pressing trigger sul retropassaggio', 'Transizione difensiva in 6 secondi', 'Gioco tra le linee in zona 3']),
+        description: 'Applicazione del gioco posizionale (Guardiola-style) in formato SSG. Campo 45x35m diviso in 5 corridoi verticali + 3 zone orizzontali. Regole: (1) non si puo stazionare nello stesso corridoio con un compagno; (2) gol valido solo se preceduto da almeno un passaggio in zona 3 (zona avanzata); (3) pressing trigger: retropassaggio -> tutti avanzano di una zona. Team in possesso: 7 giocatori + 1 joker jolly. Team difendente: 7 giocatori. Obiettivo difensivo: recuperare palla entro 6 secondi dalla perdita. 3 periodi da 8 minuti + analisi.',
+        descriptionEn: 'Positional play (Guardiola-style) in SSG format. 45x35m split into 5 vertical corridors + 3 horizontal zones. Rules: (1) no two teammates in the same corridor; (2) goal only valid after at least one pass in zone 3 (advanced zone); (3) pressing trigger: back pass -> all advance one zone. Possessing team: 7 + 1 neutral joker. Defending team: 7. Defensive goal: win ball within 6 seconds of losing it. 3x8 min periods + analysis.',
+        primaryObjective: 'Applicare i principi del gioco posizionale (occupazione corridoi, superiorita numerica locale, pressing trigger) in contesto di partitella strutturata',
+        secondaryObjectives: JSON.stringify(['Occupazione dei corridoi', 'Superiorita numerica locale', 'Pressing trigger sul retropassaggio', 'Transizione difensiva in 6 secondi', 'Gioco tra le linee in zona 3']),
         duration: 35, players: 15, intensity: 'alta', materials: 'Campo 45x35m con coni per corridoi e zone, 2 porte, 3-4 palloni', isCustom: false, createdAt: now
       },
       {
@@ -1558,21 +1558,21 @@ const app = new Hono()
         name: 'Partitella: gol valido solo dopo cambio campo',
         nameEn: 'Small-sided game: goal valid only after switching play',
         category: 'partitella',
-        description: 'Partitella 6vs6 su campo 40x30m. Regola chiave: il gol è valido solo se l\'azione ha incluso almeno un cambio di campo (passaggio che attraversa il corridoio centrale verticale da una fascia all\'altra). Sviluppa la capacità di aprire il gioco, attaccare il lato debole e trovare la profondità dopo aver spostato la difesa. Nessun limite di tocchi. 2 tempi da 10 minuti. Conta i cambi campo tentati e riusciti ogni tempo.',
-        descriptionEn: '6v6 on 40x30m. Key rule: goal only counts if the move included at least one switch of play (pass crossing the vertical central corridor from one flank to the other). Develops ability to open play, attack the weak side, and find depth after shifting the defense. No touch limit. 2×10 min halves. Count attempted and successful switches each half.',
+        description: 'Partitella 6vs6 su campo 40x30m. Regola chiave: il gol e valido solo se l\'azione ha incluso almeno un cambio di campo (passaggio che attraversa il corridoio centrale verticale da una fascia all\'altra). Sviluppa la capacita di aprire il gioco, attaccare il lato debole e trovare la profondita dopo aver spostato la difesa. Nessun limite di tocchi. 2 tempi da 10 minuti. Conta i cambi campo tentati e riusciti ogni tempo.',
+        descriptionEn: '6v6 on 40x30m. Key rule: goal only counts if the move included at least one switch of play (pass crossing the vertical central corridor from one flank to the other). Develops ability to open play, attack the weak side, and find depth after shifting the defense. No touch limit. 2x10 min halves. Count attempted and successful switches each half.',
         primaryObjective: 'Sviluppare l\'abitudine di cambiare gioco verso il lato debole come prerequisito per la finalizzazione',
-        secondaryObjectives: JSON.stringify(['Cambio di orientamento verso lato debole', 'Qualità del passaggio lungo', 'Lettura del lato debole', 'Attacco agli spazi dopo shift difensivo', 'Fluidità di circolazione']),
+        secondaryObjectives: JSON.stringify(['Cambio di orientamento verso lato debole', 'Qualita del passaggio lungo', 'Lettura del lato debole', 'Attacco agli spazi dopo shift difensivo', 'Fluidita di circolazione']),
         duration: 25, players: 12, intensity: 'alta', materials: 'Campo 40x30m, coni per corridoio centrale, 2 porte', isCustom: false, createdAt: now
       },
       {
         id: randomUUID(),
-        name: 'Gegenpressing drill: recupero entro 5" con superiorità numerica',
+        name: 'Gegenpressing drill: recupero entro 5" con superiorita numerica',
         nameEn: 'Gegenpressing drill: ball recovery within 5 seconds with overload',
         category: 'partitella',
-        description: 'Esercitazione specifica sul gegenpressing (pressing immediato dopo perdita palla). Struttura: 8vs6 su campo 35x28m. La squadra da 8 ha un jolly extra che appare solo nella fase di pressing (entra in campo quando la sua squadra perde palla → 9vs6 per massimo 5 secondi). Se non recuperano entro 5", il jolly esce e si gioca 8vs6 regolare. Contatore: ogni recupero entro 5" vale 2 punti; ogni gol vale 1 punto. Sviluppa la reazione collettiva immediata alla perdita di possesso. 3 periodi da 6 minuti.',
-        descriptionEn: 'Gegenpressing drill (immediate press after losing the ball). Setup: 8v6 on 35x28m. The team of 8 has an extra joker who only appears during pressing phase (enters when their team loses ball → 9v6 for max 5 seconds). If no recovery in 5", joker exits and normal 8v6 resumes. Scoring: each recovery within 5" = 2 points; each goal = 1 point. Develops immediate collective reaction to possession loss. 3×6 min.',
+        description: 'Esercitazione specifica sul gegenpressing (pressing immediato dopo perdita palla). Struttura: 8vs6 su campo 35x28m. La squadra da 8 ha un jolly extra che appare solo nella fase di pressing (entra in campo quando la sua squadra perde palla -> 9vs6 per massimo 5 secondi). Se non recuperano entro 5", il jolly esce e si gioca 8vs6 regolare. Contatore: ogni recupero entro 5" vale 2 punti; ogni gol vale 1 punto. Sviluppa la reazione collettiva immediata alla perdita di possesso. 3 periodi da 6 minuti.',
+        descriptionEn: 'Gegenpressing drill (immediate press after losing the ball). Setup: 8v6 on 35x28m. The team of 8 has an extra joker who only appears during pressing phase (enters when their team loses ball -> 9v6 for max 5 seconds). If no recovery in 5", joker exits and normal 8v6 resumes. Scoring: each recovery within 5" = 2 points; each goal = 1 point. Develops immediate collective reaction to possession loss. 3x6 min.',
         primaryObjective: 'Automatizzare il gegenpressing collettivo entro 5 secondi dalla perdita palla con vantaggio numerico temporaneo',
-        secondaryObjectives: JSON.stringify(['Reazione istantanea alla perdita', 'Pressing coordinato in superiorità numerica', 'Comunicazione del trigger', 'Copertura degli spazi nel pressing', 'Resistenza ripetuta agli sprint di pressing']),
+        secondaryObjectives: JSON.stringify(['Reazione istantanea alla perdita', 'Pressing coordinato in superiorita numerica', 'Comunicazione del trigger', 'Copertura degli spazi nel pressing', 'Resistenza ripetuta agli sprint di pressing']),
         duration: 28, players: 15, intensity: 'massima', materials: 'Campo 35x28m, 2 porte, 3-4 palloni, cronometro', isCustom: false, createdAt: now
       },
     ];
