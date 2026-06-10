@@ -388,7 +388,7 @@ export default function TacticalScreen() {
   const draggingId = useRef<number | null>(null);
   const playerPRs = useRef<Record<number, ReturnType<typeof PanResponder.create>>>({});
 
-  type Snapshot = { players: PlayerToken[]; lines: DrawnLine[] };
+  type Snapshot = { players: PlayerToken[]; lines: DrawnLine[]; fieldTexts: FieldText[] };
   const undoStack = useRef<Snapshot[]>([]);
 
   const pushUndo = useCallback((snap: Snapshot) => {
@@ -401,6 +401,7 @@ export default function TacticalScreen() {
     undoStack.current = undoStack.current.slice(0, -1);
     setPlayers(prev.players);
     setLines(prev.lines);
+    setFieldTexts(prev.fieldTexts);
     playerPRs.current = {};
   }, []);
 
@@ -455,7 +456,7 @@ export default function TacticalScreen() {
   };
 
   const addHomePlayer = () => {
-    pushUndo({ players: playersRef.current, lines: linesRef.current });
+    pushUndo({ players: playersRef.current, lines: linesRef.current, fieldTexts: fieldTextsRef.current });
     const homeManual = playersRef.current.filter(p => p.team === "home" && p.color === HOME_MANUAL_COLOR).length;
     const newId = Date.now();
     const col = homeManual % 5;
@@ -473,7 +474,7 @@ export default function TacticalScreen() {
   const addAwayPlayer = () => {
     const awayCount = playersRef.current.filter(p => p.team === "away").length;
     if (awayCount >= 11) return; // max 11
-    pushUndo({ players: playersRef.current, lines: linesRef.current });
+    pushUndo({ players: playersRef.current, lines: linesRef.current, fieldTexts: fieldTextsRef.current });
     const newId = Date.now();
     // Griglia 6x2 nella zona alta del campo — non escono mai fuori
     const col = awayCount % 6;
@@ -489,13 +490,14 @@ export default function TacticalScreen() {
   };
 
   const addBall = () => {
-    pushUndo({ players: playersRef.current, lines: linesRef.current });
+    pushUndo({ players: playersRef.current, lines: linesRef.current, fieldTexts: fieldTextsRef.current });
     const newId = Date.now() + 1;
     setPlayers(prev => [...prev, { id: newId, x: FW / 2, y: fhRef.current * 0.50, label: "⚽", color: "#ffffff", team: "ball" }]);
   };
 
   const addFieldText = (text: string) => {
     if (!text.trim()) return;
+    pushUndo({ players: playersRef.current, lines: linesRef.current, fieldTexts: fieldTextsRef.current });
     const newId = Date.now() + 2;
     setFieldTexts(prev => [...prev, { id: newId, x: FW / 2, y: fhRef.current * 0.50, text: text.trim() }]);
   };
@@ -534,7 +536,7 @@ export default function TacticalScreen() {
           const pl = playersRef.current.find(p => p.id === pid);
           if (pl) {
             dragStart.current = { ox: pl.x, oy: pl.y };
-            pushUndo({ players: playersRef.current, lines: linesRef.current });
+            pushUndo({ players: playersRef.current, lines: linesRef.current, fieldTexts: fieldTextsRef.current });
           }
         },
         onPanResponderMove: (_: GestureResponderEvent, g: PanResponderGestureState) => {
@@ -596,7 +598,7 @@ export default function TacticalScreen() {
         if (dist > 8) {
           const mode = drawModeRef.current as "arrow" | "line";
           const { x: x1, y: y1 } = drawStartRef.current;
-          pushUndo({ players: playersRef.current, lines: linesRef.current });
+          pushUndo({ players: playersRef.current, lines: linesRef.current, fieldTexts: fieldTextsRef.current });
           setLines(prev => [...prev, { id: lineCounter.current++, x1, y1, x2, y2, type: mode }]);
         }
         drawStartRef.current = null;
@@ -783,7 +785,7 @@ export default function TacticalScreen() {
           <TouchableOpacity style={s.iconBtn} onPress={undo} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <ArrowCounterClockwise color={c.textMuted} size={18} />
           </TouchableOpacity>
-          <TouchableOpacity style={s.iconBtn} onPress={() => { pushUndo({ players: playersRef.current, lines: linesRef.current }); setLines([]); setPlayers([]); playerPRs.current = {}; }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity style={s.iconBtn} onPress={() => { pushUndo({ players: playersRef.current, lines: linesRef.current, fieldTexts: fieldTextsRef.current }); setLines([]); setPlayers([]); setFieldTexts([]); playerPRs.current = {}; textPRs.current = {}; }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Eraser color={c.textMuted} size={18} />
           </TouchableOpacity>
           <TouchableOpacity style={s.iconBtn} onPress={() => router.replace("/tactical-library")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -838,8 +840,8 @@ export default function TacticalScreen() {
         <TouchableOpacity style={[s.toolBtn, { borderColor: AWAY_COLOR }]} onPress={addAwayPlayer} activeOpacity={0.8}>
           <Text style={[s.toolTxt, { color: AWAY_COLOR, fontSize: 11 }]}>+{t("AV", "OPP")}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[s.toolBtn, { borderColor: "#ffffffaa" }]} onPress={() => { setNewTextValue(""); setAddingText(true); }} activeOpacity={0.8}>
-          <Text style={[s.toolTxt, { color: "#fff", fontSize: 13, fontWeight: "700" }]}>T</Text>
+        <TouchableOpacity style={[s.toolBtn, { borderColor: "#D4AF37", backgroundColor: "#1a3a2a" }]} onPress={() => { setNewTextValue(""); setAddingText(true); }} activeOpacity={0.8}>
+          <Text style={[s.toolTxt, { color: "#D4AF37", fontSize: 13, fontWeight: "800" }]}>T</Text>
         </TouchableOpacity>
       </View>
 
@@ -979,8 +981,8 @@ function mkStyles(c: ThemeColors) {
     formText: { fontSize: 12, fontWeight: "600", color: c.textMuted },
     formTextActive: { color: c.primary },
 
-    toolbar: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 5, paddingHorizontal: 16, paddingBottom: 8 },
-    toolBtn: { flexDirection: "row", alignItems: "center", gap: 3, paddingHorizontal: 9, paddingVertical: 7, borderRadius: 14, borderWidth: 1, borderColor: c.border, backgroundColor: c.bgCard },
+    toolbar: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 12, paddingBottom: 8 },
+    toolBtn: { flexDirection: "row", alignItems: "center", gap: 2, paddingHorizontal: 8, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: c.border, backgroundColor: c.bgCard },
     toolBtnMove: { backgroundColor: c.primary, borderColor: c.primary },
     toolBtnArrow: { backgroundColor: "#c0392b", borderColor: "#c0392b" },
     toolBtnLine: { backgroundColor: "#b7950b", borderColor: "#b7950b" },
