@@ -203,13 +203,18 @@ function calcArrowHead(x1: number, y1: number, x2: number, y2: number) {
   };
 }
 
+// ─── Colori fissi per tipologia ──────────────────────────────────────────────
+const HOME_FORMATION_COLOR = "#2980b9"; // azzurro — giocatori da modulo
+const HOME_MANUAL_COLOR    = "#f1c40f"; // giallo  — giocatori casa aggiunti manualmente
+const AWAY_COLOR           = "#e74c3c"; // rosso   — avversari
+
 function buildPlayers(formKey: string, fh: number): PlayerToken[] {
   return FORMATIONS[formKey].positions.map((p, i) => ({
     id: i,
     x: p.x * FW,
     y: p.y * fh,
     label: p.label,
-    color: p.color,
+    color: HOME_FORMATION_COLOR, // sempre azzurro, indipendente dal ruolo
     team: "home" as TeamType,
   }));
 }
@@ -333,6 +338,8 @@ export default function TacticalScreen() {
   const [saveName, setSaveName] = useState("");
   const [currentBoardId, setCurrentBoardId] = useState<string | null>(null);
   const [currentBoardName, setCurrentBoardName] = useState<string>("");
+  // Modal edit label pedina
+  const [editingPlayer, setEditingPlayer] = useState<{ id: number; label: string } | null>(null);
 
   const fhNatural = FH_MAP[fieldType];
   // Scale field to fit the available area without scrolling
@@ -423,23 +430,24 @@ export default function TacticalScreen() {
 
   const addHomePlayer = () => {
     pushUndo({ players: playersRef.current, lines: linesRef.current });
-    const homeCount = playersRef.current.filter(p => p.team === "home").length;
+    const homeManual = playersRef.current.filter(p => p.team === "home" && p.color === HOME_MANUAL_COLOR).length;
     const newId = Date.now();
-    const col = homeCount % 5;
-    const row = Math.floor(homeCount / 5);
+    const col = homeManual % 5;
+    const row = Math.floor(homeManual / 5);
     setPlayers(prev => [...prev, {
       id: newId,
       x: FW * (0.15 + col * 0.175),
       y: fhRef.current * (0.75 - row * 0.18),
       label: "",
-      color: "#3498db",
+      color: HOME_MANUAL_COLOR,
       team: "home",
     }]);
   };
 
   const addAwayPlayer = () => {
-    pushUndo({ players: playersRef.current, lines: linesRef.current });
     const awayCount = playersRef.current.filter(p => p.team === "away").length;
+    if (awayCount >= 11) return; // max 11
+    pushUndo({ players: playersRef.current, lines: linesRef.current });
     const newId = Date.now();
     const col = awayCount % 5;
     const row = Math.floor(awayCount / 5);
@@ -448,7 +456,7 @@ export default function TacticalScreen() {
       x: FW * (0.15 + col * 0.175),
       y: fhRef.current * (0.28 - row * 0.18),
       label: "",
-      color: "#e74c3c",
+      color: AWAY_COLOR,
       team: "away",
     }]);
   };
@@ -597,6 +605,43 @@ export default function TacticalScreen() {
         </View>
       </Modal>
 
+      {/* Edit label pedina (long press) */}
+      <Modal visible={!!editingPlayer} transparent animationType="fade" onRequestClose={() => setEditingPlayer(null)}>
+        <View style={s.modalOverlay}>
+          <View style={s.modalCard}>
+            <Text style={s.modalTitle}>{t("Testo pedina", "Token label")}</Text>
+            <TextInput
+              style={s.modalInput}
+              value={editingPlayer?.label ?? ""}
+              onChangeText={(txt) => setEditingPlayer(prev => prev ? { ...prev, label: txt } : null)}
+              placeholder={t("Es. 9, Totti, AT...", "E.g. 9, name, role...")}
+              placeholderTextColor={c.textMuted}
+              autoFocus
+              maxLength={6}
+              onSubmitEditing={() => {
+                if (editingPlayer) {
+                  setPlayers(prev => prev.map(p => p.id === editingPlayer.id ? { ...p, label: editingPlayer.label } : p));
+                  setEditingPlayer(null);
+                }
+              }}
+            />
+            <View style={s.modalBtns}>
+              <TouchableOpacity style={s.modalBtnCancel} onPress={() => setEditingPlayer(null)}>
+                <Text style={s.modalBtnCancelTxt}>{t("Annulla", "Cancel")}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={s.modalBtnSave} onPress={() => {
+                if (editingPlayer) {
+                  setPlayers(prev => prev.map(p => p.id === editingPlayer.id ? { ...p, label: editingPlayer.label } : p));
+                  setEditingPlayer(null);
+                }
+              }}>
+                <Text style={s.modalBtnSaveTxt}>{t("OK", "OK")}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Top bar */}
       <View style={s.topBar}>
         <TouchableOpacity onPress={() => router.replace("/(tabs)")} style={s.back} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
@@ -659,11 +704,11 @@ export default function TacticalScreen() {
         <TouchableOpacity style={[s.toolBtn, { borderColor: "#ffffff66" }]} onPress={addBall} activeOpacity={0.8}>
           <Text style={[s.toolTxt, { fontSize: 13 }]}>⚽</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[s.toolBtn, { borderColor: "#3498db" }]} onPress={addHomePlayer} activeOpacity={0.8}>
-          <Text style={[s.toolTxt, { color: "#3498db", fontSize: 11 }]}>+{t("Casa", "Home")}</Text>
+        <TouchableOpacity style={[s.toolBtn, { borderColor: HOME_MANUAL_COLOR }]} onPress={addHomePlayer} activeOpacity={0.8}>
+          <Text style={[s.toolTxt, { color: HOME_MANUAL_COLOR, fontSize: 11 }]}>+{t("Casa", "Home")}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[s.toolBtn, { borderColor: "#e74c3c" }]} onPress={addAwayPlayer} activeOpacity={0.8}>
-          <Text style={[s.toolTxt, { color: "#e74c3c", fontSize: 11 }]}>+{t("AV", "OPP")}</Text>
+        <TouchableOpacity style={[s.toolBtn, { borderColor: AWAY_COLOR, opacity: players.filter(p => p.team === "away").length >= 11 ? 0.4 : 1 }]} onPress={addAwayPlayer} activeOpacity={0.8}>
+          <Text style={[s.toolTxt, { color: AWAY_COLOR, fontSize: 11 }]}>+{t("AV", "OPP")} {players.filter(p => p.team === "away").length}/11</Text>
         </TouchableOpacity>
       </View>
 
@@ -711,15 +756,17 @@ export default function TacticalScreen() {
                         left: p.x - 14,
                         top: p.y - 14,
                         backgroundColor: isBall ? "rgba(255,255,255,0.15)" : p.color,
-                        borderColor: isDragging ? "#fff" : isBall ? "rgba(255,255,255,0.8)" : isAway ? "rgba(255,150,150,0.7)" : "rgba(255,255,255,0.55)",
+                        borderColor: isDragging ? "#fff" : isBall ? "rgba(255,255,255,0.8)" : "rgba(255,255,255,0.5)",
                         borderWidth: isDragging ? 2.5 : isBall ? 2 : 1.5,
-                        borderStyle: isAway ? "dashed" : "solid",
+                        borderStyle: "solid",
                         zIndex: isDragging ? 999 : isBall ? 50 : 10,
                         opacity: isDragging ? 0.85 : 1,
                         transform: [{ scale: isDragging ? 1.12 : 1 }],
                       },
                     ]}
                     {...pr.panHandlers}
+                    onLongPress={!isBall ? () => setEditingPlayer({ id: p.id, label: p.label }) : undefined}
+                    delayLongPress={300}
                   >
                     {(p.label !== "") && (
                       <Text style={[s.tokenLabel, isBall && { fontSize: 18 }]}>{p.label}</Text>
@@ -735,15 +782,16 @@ export default function TacticalScreen() {
       {/* Legend */}
       <View style={s.legend}>
         {[
-          { color: "#3498db", label: t("Casa", "Home"), dashed: false },
-          { color: "#e74c3c", label: t("Avversario", "Away"), dashed: true },
+          { color: HOME_FORMATION_COLOR, label: t("Modulo", "Formation") },
+          { color: HOME_MANUAL_COLOR,    label: t("+Casa", "+Home") },
+          { color: AWAY_COLOR,           label: t("Avversari", "Away") },
         ].map((item, i) => (
           <View key={i} style={s.legendItem}>
-            <View style={[s.legendDot, { backgroundColor: item.color }, item.dashed ? { borderWidth: 1, borderColor: "rgba(255,150,150,0.8)", borderStyle: "dashed" } : {}]} />
+            <View style={[s.legendDot, { backgroundColor: item.color }]} />
             <Text style={s.legendTxt}>{item.label}</Text>
           </View>
         ))}
-        <Text style={[s.legendTxt, { color: c.textMuted, marginLeft: 8 }]}>{t("· seleziona modulo per ruoli", "· select formation for roles")}</Text>
+        <Text style={[s.legendTxt, { color: c.textMuted, marginLeft: 6 }]}>{t("· tieni premuto per testo", "· long press for label")}</Text>
       </View>
     </SafeAreaView>
   );
