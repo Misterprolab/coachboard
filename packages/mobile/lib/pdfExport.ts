@@ -40,8 +40,8 @@ const BASE_CSS = `
   
   .pdf-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
   .header-left { display: flex; align-items: center; gap: 12px; }
-  .logo-placeholder { width: 60px; height: 60px; border-radius: 30px; background: #0E5A3C; color: #D4AF37; font-size: 28px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
-  .logo-img { width: 60px; height: 60px; border-radius: 10px; object-fit: contain; }
+  .logo-placeholder { width: 90px; height: 90px; border-radius: 45px; background: #0E5A3C; color: #D4AF37; font-size: 40px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
+  .logo-img { width: 90px; height: 90px; border-radius: 12px; object-fit: contain; }
   .header-text .team-name { font-size: 22px; font-weight: 900; color: #0E5A3C; }
   .header-text .doc-title { font-size: 13px; font-weight: 600; color: #555; margin-top: 2px; }
   .header-text .doc-subtitle { font-size: 12px; color: #888; margin-top: 2px; }
@@ -367,9 +367,17 @@ export interface TacticalPdfData {
 }
 
 export function exportTacticalPdf(header: PdfHeader, data: TacticalPdfData) {
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Campo Tattico</title><style>${BASE_CSS}</style></head><body>
+  // Strip fixed width/height from SVG root so CSS can control size
+  const scaledSvg = data.svgContent.replace(
+    /(<svg[^>]*)\s+width="[^"]*"\s+height="[^"]*"/,
+    '$1 style="width:100%;height:auto;display:block;border-radius:10px"'
+  );
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Campo Tattico</title><style>${BASE_CSS}
+    .tactical-full { width:100%; max-width:680px; margin:0 auto; display:block; }
+    @media print { .tactical-full { max-width:100%; } }
+  </style></head><body>
     ${headerHtml({ ...header, title: data.boardName || "Campo Tattico" })}
-    <div class="pitch-wrap" style="margin:0 auto">${data.svgContent}</div>
+    <div class="tactical-full">${scaledSvg}</div>
   </body></html>`;
   _printHtml(html);
 }
