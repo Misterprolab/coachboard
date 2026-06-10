@@ -69,6 +69,13 @@ interface DrawnLine {
   type: "arrow" | "line";
 }
 
+interface FieldText {
+  id: number;
+  x: number;
+  y: number;
+  text: string;
+}
+
 const FH_MAP: Record<FieldType, number> = {
   full: FW * 1.55,
   half: FW * 0.85,
@@ -334,12 +341,21 @@ export default function TacticalScreen() {
   // Available height for the field area (measured at runtime)
   const [fieldAreaHeight, setFieldAreaHeight] = useState(0);
 
+  const [fieldTexts, setFieldTexts] = useState<FieldText[]>([]);
+  const fieldTextsRef = useRef<FieldText[]>([]);
+  useEffect(() => { fieldTextsRef.current = fieldTexts; }, [fieldTexts]);
+  const textPRs = useRef<Record<number, PanResponder>>({});
+
   const [saveModalVisible, setSaveModalVisible] = useState(false);
   const [saveName, setSaveName] = useState("");
   const [currentBoardId, setCurrentBoardId] = useState<string | null>(null);
   const [currentBoardName, setCurrentBoardName] = useState<string>("");
   // Modal edit label pedina
   const [editingPlayer, setEditingPlayer] = useState<{ id: number; label: string } | null>(null);
+  // Modal testo libero
+  const [addingText, setAddingText] = useState(false);
+  const [newTextValue, setNewTextValue] = useState("");
+  const [editingText, setEditingText] = useState<{ id: number; text: string } | null>(null);
 
   const fhNatural = FH_MAP[fieldType];
   // Scale field to fit the available area without scrolling
@@ -449,12 +465,13 @@ export default function TacticalScreen() {
     if (awayCount >= 11) return; // max 11
     pushUndo({ players: playersRef.current, lines: linesRef.current });
     const newId = Date.now();
-    const col = awayCount % 5;
-    const row = Math.floor(awayCount / 5);
+    // Griglia 6x2 nella zona alta del campo — non escono mai fuori
+    const col = awayCount % 6;
+    const row = Math.floor(awayCount / 6);
     setPlayers(prev => [...prev, {
       id: newId,
-      x: FW * (0.15 + col * 0.175),
-      y: fhRef.current * (0.28 - row * 0.18),
+      x: FW * (0.08 + col * 0.165),
+      y: fhRef.current * (0.12 + row * 0.10),
       label: "",
       color: AWAY_COLOR,
       team: "away",
@@ -466,6 +483,34 @@ export default function TacticalScreen() {
     const newId = Date.now() + 1;
     setPlayers(prev => [...prev, { id: newId, x: FW / 2, y: fhRef.current * 0.50, label: "⚽", color: "#ffffff", team: "ball" }]);
   };
+
+  const addFieldText = (text: string) => {
+    if (!text.trim()) return;
+    const newId = Date.now() + 2;
+    setFieldTexts(prev => [...prev, { id: newId, x: FW / 2, y: fhRef.current * 0.50, text: text.trim() }]);
+  };
+
+  const getTextPR = useCallback((tid: number) => {
+    if (!textPRs.current[tid]) {
+      const dragStart = { ox: 0, oy: 0 };
+      textPRs.current[tid] = PanResponder.create({
+        onStartShouldSetPanResponder: () => drawModeRef.current === "move",
+        onMoveShouldSetPanResponder: () => drawModeRef.current === "move",
+        onStartShouldSetPanResponderCapture: () => drawModeRef.current === "move",
+        onPanResponderGrant: () => {
+          const t = fieldTextsRef.current.find(t => t.id === tid);
+          if (t) { dragStart.ox = t.x; dragStart.oy = t.y; }
+        },
+        onPanResponderMove: (_: GestureResponderEvent, g: PanResponderGestureState) => {
+          const nx = Math.max(0, Math.min(FW, dragStart.ox + g.dx));
+          const ny = Math.max(0, Math.min(fhRef.current, dragStart.oy + g.dy));
+          setFieldTexts(prev => prev.map(t => t.id === tid ? { ...t, x: nx, y: ny } : t));
+        },
+        onPanResponderRelease: () => {},
+      });
+    }
+    return textPRs.current[tid];
+  }, []);
 
   const getPlayerPR = useCallback((pid: number) => {
     if (!playerPRs.current[pid]) {
@@ -642,6 +687,80 @@ export default function TacticalScreen() {
         </View>
       </Modal>
 
+      {/* Modal aggiungi testo libero */}
+      <Modal visible={addingText} transparent animationType="fade" onRequestClose={() => setAddingText(false)}>
+        <View style={s.modalOverlay}>
+          <View style={s.modalCard}>
+            <Text style={s.modalTitle}>{t("Aggiungi testo al campo", "Add field text")}</Text>
+            <TextInput
+              style={s.modalInput}
+              value={newTextValue}
+              onChangeText={setNewTextValue}
+              placeholder={t("Es. Corner, Pressing, Zona...", "E.g. Corner, Press, Zone...")}
+              placeholderTextColor={c.textMuted}
+              autoFocus
+              maxLength={30}
+              onSubmitEditing={() => { addFieldText(newTextValue); setAddingText(false); }}
+            />
+            <View style={s.modalBtns}>
+              <TouchableOpacity style={s.modalBtnCancel} onPress={() => setAddingText(false)}>
+                <Text style={s.modalBtnCancelTxt}>{t("Annulla", "Cancel")}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={s.modalBtnSave} onPress={() => { addFieldText(newTextValue); setAddingText(false); }}>
+                <Text style={s.modalBtnSaveTxt}>{t("Aggiungi", "Add")}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal modifica/elimina testo libero */}
+      <Modal visible={!!editingText} transparent animationType="fade" onRequestClose={() => setEditingText(null)}>
+        <View style={s.modalOverlay}>
+          <View style={s.modalCard}>
+            <Text style={s.modalTitle}>{t("Modifica testo", "Edit text")}</Text>
+            <TextInput
+              style={s.modalInput}
+              value={editingText?.text ?? ""}
+              onChangeText={(txt) => setEditingText(prev => prev ? { ...prev, text: txt } : null)}
+              placeholderTextColor={c.textMuted}
+              autoFocus
+              maxLength={30}
+              onSubmitEditing={() => {
+                if (editingText) {
+                  if (!editingText.text.trim()) {
+                    setFieldTexts(prev => prev.filter(t => t.id !== editingText.id));
+                  } else {
+                    setFieldTexts(prev => prev.map(t => t.id === editingText.id ? { ...t, text: editingText.text } : t));
+                  }
+                  setEditingText(null);
+                }
+              }}
+            />
+            <View style={s.modalBtns}>
+              <TouchableOpacity style={[s.modalBtnCancel, { flex: 1 }]} onPress={() => {
+                if (editingText) setFieldTexts(prev => prev.filter(t => t.id !== editingText.id));
+                setEditingText(null);
+              }}>
+                <Text style={[s.modalBtnCancelTxt, { color: "#e74c3c" }]}>{t("Elimina", "Delete")}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={s.modalBtnSave} onPress={() => {
+                if (editingText) {
+                  if (!editingText.text.trim()) {
+                    setFieldTexts(prev => prev.filter(t => t.id !== editingText.id));
+                  } else {
+                    setFieldTexts(prev => prev.map(t => t.id === editingText.id ? { ...t, text: editingText.text } : t));
+                  }
+                  setEditingText(null);
+                }
+              }}>
+                <Text style={s.modalBtnSaveTxt}>{t("OK", "OK")}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Top bar */}
       <View style={s.topBar}>
         <TouchableOpacity onPress={() => router.replace("/(tabs)")} style={s.back} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
@@ -707,8 +826,11 @@ export default function TacticalScreen() {
         <TouchableOpacity style={[s.toolBtn, { borderColor: HOME_MANUAL_COLOR }]} onPress={addHomePlayer} activeOpacity={0.8}>
           <Text style={[s.toolTxt, { color: HOME_MANUAL_COLOR, fontSize: 11 }]}>+{t("Casa", "Home")}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[s.toolBtn, { borderColor: AWAY_COLOR, opacity: players.filter(p => p.team === "away").length >= 11 ? 0.4 : 1 }]} onPress={addAwayPlayer} activeOpacity={0.8}>
-          <Text style={[s.toolTxt, { color: AWAY_COLOR, fontSize: 11 }]}>+{t("AV", "OPP")} {players.filter(p => p.team === "away").length}/11</Text>
+        <TouchableOpacity style={[s.toolBtn, { borderColor: AWAY_COLOR }]} onPress={addAwayPlayer} activeOpacity={0.8}>
+          <Text style={[s.toolTxt, { color: AWAY_COLOR, fontSize: 11 }]}>+{t("AV", "OPP")}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[s.toolBtn, { borderColor: "#ffffffaa" }]} onPress={() => { setNewTextValue(""); setAddingText(true); }} activeOpacity={0.8}>
+          <Text style={[s.toolTxt, { color: "#fff", fontSize: 13, fontWeight: "700" }]}>T</Text>
         </TouchableOpacity>
       </View>
 
@@ -771,6 +893,35 @@ export default function TacticalScreen() {
                     {(p.label !== "") && (
                       <Text style={[s.tokenLabel, isBall && { fontSize: 18 }]}>{p.label}</Text>
                     )}
+                  </View>
+                );
+              })}
+              {/* Testi liberi sul campo */}
+              {fieldTexts.map(ft => {
+                const pr = getTextPR(ft.id);
+                return (
+                  <View
+                    key={ft.id}
+                    style={{
+                      position: "absolute",
+                      left: ft.x,
+                      top: ft.y,
+                      zIndex: 100,
+                    }}
+                    {...pr.panHandlers}
+                    onLongPress={() => setEditingText({ id: ft.id, text: ft.text })}
+                    delayLongPress={300}
+                  >
+                    <Text style={{
+                      color: "#fff",
+                      fontSize: 11,
+                      fontWeight: "700",
+                      backgroundColor: "rgba(0,0,0,0.55)",
+                      paddingHorizontal: 5,
+                      paddingVertical: 2,
+                      borderRadius: 4,
+                      overflow: "hidden",
+                    }}>{ft.text}</Text>
                   </View>
                 );
               })}
