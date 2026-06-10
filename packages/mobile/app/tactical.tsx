@@ -806,7 +806,7 @@ export default function TacticalScreen() {
       </ScrollView>
 
       {/* Toolbar */}
-      <View style={s.toolbar}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexShrink: 0 }} contentContainerStyle={s.toolbar}>
         <TouchableOpacity style={[s.toolBtn, drawMode === "move" && s.toolBtnMove]} onPress={() => setDrawMode("move")} activeOpacity={0.8}>
           <Cursor color={drawMode === "move" ? "#fff" : c.textMuted} size={13} />
           <Text style={[s.toolTxt, drawMode === "move" && { color: "#fff" }]}>{t("Muovi", "Move")}</Text>
@@ -819,7 +819,6 @@ export default function TacticalScreen() {
           <Minus color={drawMode === "line" ? "#fff" : c.textMuted} size={13} />
           <Text style={[s.toolTxt, drawMode === "line" && { color: "#fff" }]}>{t("Linea", "Line")}</Text>
         </TouchableOpacity>
-        <View style={{ flex: 1 }} />
         <TouchableOpacity style={[s.toolBtn, { borderColor: "#ffffff66" }]} onPress={addBall} activeOpacity={0.8}>
           <Text style={[s.toolTxt, { fontSize: 13 }]}>⚽</Text>
         </TouchableOpacity>
@@ -832,7 +831,7 @@ export default function TacticalScreen() {
         <TouchableOpacity style={[s.toolBtn, { borderColor: "#ffffffaa" }]} onPress={() => { setNewTextValue(""); setAddingText(true); }} activeOpacity={0.8}>
           <Text style={[s.toolTxt, { color: "#fff", fontSize: 13, fontWeight: "700" }]}>T</Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
 
       {/* Field — fixed, no scroll, scales to fit available height */}
       <View
@@ -942,7 +941,6 @@ export default function TacticalScreen() {
             <Text style={s.legendTxt}>{item.label}</Text>
           </View>
         ))}
-        <Text style={[s.legendTxt, { color: c.textMuted, marginLeft: 6 }]}>{t("· tieni premuto per testo", "· long press for label")}</Text>
       </View>
     </SafeAreaView>
   );
