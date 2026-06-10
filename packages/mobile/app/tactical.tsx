@@ -475,9 +475,9 @@ export default function TacticalScreen() {
           }
         },
         onPanResponderMove: (_: GestureResponderEvent, g: PanResponderGestureState) => {
-          const maxY = fhRef.current - 18;
-          const nx = Math.max(18, Math.min(FW - 18, dragStart.current.ox + g.dx));
-          const ny = Math.max(18, Math.min(maxY, dragStart.current.oy + g.dy));
+          const maxY = fhRef.current - 14;
+          const nx = Math.max(14, Math.min(FW - 14, dragStart.current.ox + g.dx));
+          const ny = Math.max(14, Math.min(maxY, dragStart.current.oy + g.dy));
           setPlayers(prev => prev.map(p => p.id === pid ? { ...p, x: nx, y: ny } : p));
         },
         onPanResponderRelease: () => { draggingId.current = null; setDraggingIdState(null); },
@@ -708,8 +708,8 @@ export default function TacticalScreen() {
                       s.token,
                       isBall && s.tokenBall,
                       {
-                        left: p.x - 20,
-                        top: p.y - 20,
+                        left: p.x - 14,
+                        top: p.y - 14,
                         backgroundColor: isBall ? "rgba(255,255,255,0.15)" : p.color,
                         borderColor: isDragging ? "#fff" : isBall ? "rgba(255,255,255,0.8)" : isAway ? "rgba(255,150,150,0.7)" : "rgba(255,255,255,0.55)",
                         borderWidth: isDragging ? 2.5 : isBall ? 2 : 1.5,
@@ -784,13 +784,13 @@ function mkStyles(c: ThemeColors) {
     field: { position: "relative", borderRadius: 12, overflow: "hidden" },
 
     token: {
-      position: "absolute", width: 40, height: 40, borderRadius: 20,
+      position: "absolute", width: 28, height: 28, borderRadius: 14,
       alignItems: "center", justifyContent: "center",
       elevation: 6,
       shadowColor: "#000", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.5, shadowRadius: 4,
     },
-    tokenBall: { width: 36, height: 36, borderRadius: 18 },
-    tokenLabel: { fontSize: 7, fontWeight: "900", color: "white", textAlign: "center" },
+    tokenBall: { width: 28, height: 28, borderRadius: 14 },
+    tokenLabel: { fontSize: 6, fontWeight: "900", color: "white", textAlign: "center" },
 
     legend: { flexDirection: "row", justifyContent: "center", gap: 10, paddingHorizontal: 16, paddingVertical: 8, flexWrap: "wrap" },
     legendItem: { flexDirection: "row", alignItems: "center", gap: 3 },
