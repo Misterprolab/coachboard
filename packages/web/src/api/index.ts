@@ -69,6 +69,12 @@ async function runMigrations() {
   try {
     await db.$client.execute(`ALTER TABLE users ADD COLUMN plain_password TEXT`);
   } catch (_) { /* column already exists */ }
+  try {
+    await db.$client.execute(`ALTER TABLE matches ADD COLUMN meeting_time TEXT`);
+  } catch (_) { /* column already exists */ }
+  try {
+    await db.$client.execute(`ALTER TABLE matches ADD COLUMN meeting_place TEXT`);
+  } catch (_) { /* column already exists */ }
 }
 runMigrations();
 
@@ -1781,6 +1787,8 @@ const app = new Hono()
     if ('competition' in body) patch.competition = body.competition ?? null;
     if ('formation' in body) patch.formation = body.formation ?? null;
     if ('notes' in body) patch.notes = body.notes ?? null;
+    if ('meetingTime' in body) patch.meetingTime = body.meetingTime ?? null;
+    if ('meetingPlace' in body) patch.meetingPlace = body.meetingPlace ?? null;
     if ('goalsFor' in body) patch.goalsFor = body.goalsFor ?? null;
     if ('goalsAgainst' in body) patch.goalsAgainst = body.goalsAgainst ?? null;
     if ('substitutions' in body) patch.substitutions = body.substitutions != null ? JSON.stringify(body.substitutions) : null;

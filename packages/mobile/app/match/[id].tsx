@@ -35,6 +35,7 @@ type Substitution = { playerOutId: string; playerInId: string; minute?: number |
 type Match = {
   id: string; opponent: string; date: string; time?: string; venue?: string;
   homeAway: string; competition?: string; formation?: string; notes?: string;
+  meetingTime?: string; meetingPlace?: string;
   goalsFor?: number; goalsAgainst?: number;
   substitutions?: Substitution[];
   convocations: { playerId: string; jerseyNumber?: number | null; rating?: number | null; player?: Player }[];
@@ -305,6 +306,21 @@ function ConvocatiSection({ match, allPlayers, id, qc, c }: { match: Match; allP
   const { t } = useI18n();
   const profile = useProfile();
 
+  // Orario e luogo appuntamento convocazione
+  const [meetingTime, setMeetingTime] = useState(match.meetingTime ?? "");
+  const [meetingPlace, setMeetingPlace] = useState(match.meetingPlace ?? "");
+  const meetingTimeRef = useRef(meetingTime);
+  const meetingPlaceRef = useRef(meetingPlace);
+  meetingTimeRef.current = meetingTime;
+  meetingPlaceRef.current = meetingPlace;
+
+  const saveMeetingInfo = () => {
+    dbUpdateMatch(id, {
+      meetingTime: meetingTimeRef.current || null,
+      meetingPlace: meetingPlaceRef.current || null,
+    }).then(() => qc.invalidateQueries({ queryKey: ["match", id] }));
+  };
+
   const handleExportPdf = () => {
     const teamName = profile.activeTeam()?.name || profile.displayName() || "MisterProLab";
     const logoUrl = profile.activeTeam()?.logoUri || null;
@@ -319,7 +335,7 @@ function ConvocatiSection({ match, allPlayers, id, qc, c }: { match: Match; allP
       }));
     exportConvocationPdf(
       { teamName, logoUrl, title: "Convocazione", subtitle: `vs ${match.opponent}` },
-      { opponent: match.opponent, date: match.date, time: match.time, venue: match.venue, homeAway: match.homeAway, competition: match.competition, players, notes: match.notes }
+      { opponent: match.opponent, date: match.date, time: match.time, venue: match.venue, homeAway: match.homeAway, competition: match.competition, players, notes: match.notes, meetingTime: meetingTimeRef.current || undefined, meetingPlace: meetingPlaceRef.current || undefined }
     );
   };
   const convIds = new Set(match.convocations.map(cv => cv.playerId));
@@ -384,6 +400,31 @@ function ConvocatiSection({ match, allPlayers, id, qc, c }: { match: Match; allP
           <TouchableOpacity style={s2.saveSmall} onPress={() => saveMutation.mutate()} disabled={saveMutation.isPending || autoSaving}>
             {(saveMutation.isPending || autoSaving) ? <ActivityIndicator size={14} color="#000" /> : <Text style={s2.saveSmallTxt}>{t("Salva","Save")}</Text>}
           </TouchableOpacity>
+        </View>
+      </View>
+      {/* Orario e luogo appuntamento */}
+      <View style={{ flexDirection: "row", gap: 8, marginBottom: 10 }}>
+        <View style={{ flex: 1 }}>
+          <Text style={[s2.label, { marginBottom: 3 }]}>{t("Ora ritrovo","Meeting time")}</Text>
+          <TextInput
+            style={s2.input}
+            value={meetingTime}
+            onChangeText={v => setMeetingTime(v)}
+            onBlur={saveMeetingInfo}
+            placeholder="es. 14:30"
+            placeholderTextColor={c.textDim}
+          />
+        </View>
+        <View style={{ flex: 2 }}>
+          <Text style={[s2.label, { marginBottom: 3 }]}>{t("Luogo ritrovo","Meeting place")}</Text>
+          <TextInput
+            style={s2.input}
+            value={meetingPlace}
+            onChangeText={v => setMeetingPlace(v)}
+            onBlur={saveMeetingInfo}
+            placeholder={t("es. Spogliatoio stadio","e.g. Stadium entrance")}
+            placeholderTextColor={c.textDim}
+          />
         </View>
       </View>
       <Text style={{ fontSize: 11, color: c.textDim, marginBottom: 10, fontStyle: "italic" }}>

@@ -96,6 +96,8 @@ export const matches = sqliteTable("matches", {
   competition: text("competition"),              // campionato, coppa, amichevole...
   formation: text("formation"),                  // es. "4-3-3"
   notes: text("notes"),
+  meetingTime: text("meeting_time"),             // ora appuntamento convocazione
+  meetingPlace: text("meeting_place"),           // luogo appuntamento convocazione
   // Risultato
   goalsFor: integer("goals_for"),
   goalsAgainst: integer("goals_against"),

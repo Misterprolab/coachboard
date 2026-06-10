@@ -40,13 +40,16 @@ const BASE_CSS = `
   
   .pdf-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
   .header-left { display: flex; align-items: center; gap: 12px; }
-  .logo-placeholder { width: 44px; height: 44px; border-radius: 22px; background: #0E5A3C; color: #D4AF37; font-size: 22px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
-  .logo-img { width: 44px; height: 44px; border-radius: 8px; object-fit: contain; }
-  .header-text .team-name { font-size: 16px; font-weight: 800; color: #0E5A3C; }
-  .header-text .doc-title { font-size: 12px; font-weight: 600; color: #666; margin-top: 1px; }
-  .header-text .doc-subtitle { font-size: 11px; color: #999; margin-top: 1px; }
-  .brand-logo { height: 28px; opacity: 0.5; }
+  .logo-placeholder { width: 60px; height: 60px; border-radius: 30px; background: #0E5A3C; color: #D4AF37; font-size: 28px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
+  .logo-img { width: 60px; height: 60px; border-radius: 10px; object-fit: contain; }
+  .header-text .team-name { font-size: 22px; font-weight: 900; color: #0E5A3C; }
+  .header-text .doc-title { font-size: 13px; font-weight: 600; color: #555; margin-top: 2px; }
+  .header-text .doc-subtitle { font-size: 12px; color: #888; margin-top: 2px; }
+  .brand-logo { height: 34px; opacity: 0.5; }
   .header-divider { border: none; border-top: 2px solid #0E5A3C; margin-bottom: 14px; }
+  .close-bar { text-align:right; margin-bottom:8px; }
+  .close-btn { background:#0E5A3C; color:#fff; border:none; border-radius:8px; padding:6px 18px; font-size:13px; font-weight:700; cursor:pointer; }
+  @media print { .close-bar { display:none; } }
 
   /* Match riepilogo */
   .match-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
@@ -322,6 +325,8 @@ export interface ConvocationPdfData {
   competition?: string;
   players: Array<{ name: string; number: number | string; role: string; jerseyNumber?: number | string | null }>;
   notes?: string;
+  meetingTime?: string;
+  meetingPlace?: string;
 }
 
 export function exportConvocationPdf(header: PdfHeader, data: ConvocationPdfData) {
@@ -338,10 +343,15 @@ export function exportConvocationPdf(header: PdfHeader, data: ConvocationPdfData
     <div class="match-meta">
       ${data.competition ? `<span class="badge badge-comp">${data.competition.toUpperCase()}</span>` : ""}
       <span class="vs-title">vs <span class="vs-opp">${data.opponent}</span></span>
-      <span class="meta-detail">${fmtDate(data.date)}${data.time ? `  ${data.time}` : ""}</span>
+      <span class="meta-detail">${fmtDate(data.date)}${data.time ? `  ⚽ ${data.time}` : ""}</span>
       ${data.venue ? `<span class="meta-detail">📍 ${data.venue}</span>` : ""}
       <span class="badge ${data.homeAway === "home" ? "badge-home" : "badge-away"}">${data.homeAway === "home" ? "CASA" : "TRASFERTA"}</span>
     </div>
+    ${(data.meetingTime || data.meetingPlace) ? `
+    <div style="background:#f0f7f3;border:1px solid #0E5A3C30;border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;gap:24px;align-items:center">
+      ${data.meetingTime ? `<div><span style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase">Ora ritrovo</span><div style="font-size:16px;font-weight:800;color:#0E5A3C">🕐 ${data.meetingTime}</div></div>` : ""}
+      ${data.meetingPlace ? `<div><span style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase">Luogo ritrovo</span><div style="font-size:16px;font-weight:800;color:#0E5A3C">📍 ${data.meetingPlace}</div></div>` : ""}
+    </div>` : ""}
     <div class="section-label">Convocati (${data.players.length})</div>
     <div class="players-grid">${playersHtml}</div>
     ${data.notes ? `<div class="notes-label">Note</div><div class="notes-box">${data.notes}</div>` : ""}
@@ -365,8 +375,12 @@ export function exportTacticalPdf(header: PdfHeader, data: TacticalPdfData) {
 }
 
 // ─── Core print ───────────────────────────────────────────────────────────────
+const CLOSE_BAR = `<div class="close-bar"><button class="close-btn" onclick="window.close()">✕ Chiudi</button></div>`;
+
 function _printHtml(html: string) {
   if (typeof window === "undefined") return;
+  // Inject close bar after <body>
+  const htmlWithClose = html.replace(/<body>/, `<body>${CLOSE_BAR}`);
   const w = window.open("", "_blank", "width=800,height=900");
   if (!w) {
     // fallback: iframe
@@ -374,15 +388,14 @@ function _printHtml(html: string) {
     iframe.style.display = "none";
     document.body.appendChild(iframe);
     iframe.contentDocument?.open();
-    iframe.contentDocument?.write(html);
+    iframe.contentDocument?.write(htmlWithClose);
     iframe.contentDocument?.close();
     setTimeout(() => { iframe.contentWindow?.print(); document.body.removeChild(iframe); }, 500);
     return;
   }
   w.document.open();
-  w.document.write(html);
+  w.document.write(htmlWithClose);
   w.document.close();
   w.onload = () => { w.focus(); w.print(); };
-  // fallback se onload non scatta
   setTimeout(() => { try { w.focus(); w.print(); } catch {} }, 800);
 }
