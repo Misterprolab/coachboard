@@ -11,8 +11,10 @@ import { useTheme } from "../../lib/themeStore";
 import type { ThemeColors } from "../../lib/themeStore";
 import { useI18n } from "../../lib/i18n";
 import {
-  ArrowLeft, Trash, X, Check, Plus, PencilSimple,
+  ArrowLeft, Trash, X, Check, Plus, PencilSimple, FilePdf,
 } from "phosphor-react-native";
+import { exportMatchPdf, exportConvocationPdf } from "../../lib/pdfExport";
+import { useProfile } from "../../lib/profile";
 
 import {
   getMatch, getPlayers, updateMatch as dbUpdateMatch, deleteMatch as dbDeleteMatch,
@@ -301,6 +303,25 @@ function InfoSection({ match, id, qc, c }: { match: Match; id: string; qc: any; 
 function ConvocatiSection({ match, allPlayers, id, qc, c }: { match: Match; allPlayers: Player[]; id: string; qc: any; c: ThemeColors }) {
   const s2 = useMemo(() => mkStyles2(c), [c]);
   const { t } = useI18n();
+  const profile = useProfile();
+
+  const handleExportPdf = () => {
+    const teamName = profile.activeTeam()?.name || profile.displayName() || "MisterProLab";
+    const logoUrl = profile.activeTeam()?.logoUri || null;
+    const convIds2 = new Set(match.convocations.map(cv => cv.playerId));
+    const players = allPlayers
+      .filter(p => convIds2.has(p.id))
+      .map(p => ({
+        name: p.name,
+        number: p.number ?? "?",
+        role: p.role,
+        jerseyNumber: match.convocations.find(cv => cv.playerId === p.id)?.jerseyNumber,
+      }));
+    exportConvocationPdf(
+      { teamName, logoUrl, title: "Convocazione", subtitle: `vs ${match.opponent}` },
+      { opponent: match.opponent, date: match.date, time: match.time, venue: match.venue, homeAway: match.homeAway, competition: match.competition, players, notes: match.notes }
+    );
+  };
   const convIds = new Set(match.convocations.map(cv => cv.playerId));
   const [selected, setSelected] = useState<Set<string>>(new Set(convIds));
   const [convJerseys, setConvJerseys] = useState<Record<string,string>>(() => {
@@ -355,9 +376,15 @@ function ConvocatiSection({ match, allPlayers, id, qc, c }: { match: Match; allP
     <View>
       <View style={s2.sectionHeader}>
         <Text style={s2.sectionTitle}>{t(`${selected.size} convocati`, `${selected.size} called up`)}</Text>
-        <TouchableOpacity style={s2.saveSmall} onPress={() => saveMutation.mutate()} disabled={saveMutation.isPending || autoSaving}>
-          {(saveMutation.isPending || autoSaving) ? <ActivityIndicator size={14} color="#000" /> : <Text style={s2.saveSmallTxt}>{t("Salva","Save")}</Text>}
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+          <TouchableOpacity onPress={handleExportPdf} style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#0E5A3C", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 }}>
+            <FilePdf color="#D4AF37" size={14} />
+            <Text style={{ color: "#D4AF37", fontSize: 11, fontWeight: "700" }}>PDF</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s2.saveSmall} onPress={() => saveMutation.mutate()} disabled={saveMutation.isPending || autoSaving}>
+            {(saveMutation.isPending || autoSaving) ? <ActivityIndicator size={14} color="#000" /> : <Text style={s2.saveSmallTxt}>{t("Salva","Save")}</Text>}
+          </TouchableOpacity>
+        </View>
       </View>
       <Text style={{ fontSize: 11, color: c.textDim, marginBottom: 10, fontStyle: "italic" }}>
         {t("Tocca per selezionare · Modifica il numero maglia per questa partita","Tap to select · Edit jersey number for this match")}
@@ -1396,6 +1423,56 @@ function RisultatoSection({ match, allPlayers, id, qc, c }: { match: Match; allP
 function RiepilogoSection({ match, allPlayers, id: _id, qc: _qc, c }: { match: Match; allPlayers: Player[]; id: string; qc: any; c: ThemeColors }) {
   const s2 = useMemo(() => mkStyles2(c), [c]);
   const { lang } = useI18n();
+  const profile = useProfile();
+  const teamName = profile.activeTeam()?.name || profile.displayName() || "MisterProLab";
+  const logoUrl = profile.activeTeam()?.logoUri || null;
+
+  const handleExportPdf = () => {
+    const startersList = match.lineup.map(l => {
+      const p = allPlayers.find(pl => pl.id === l.playerId);
+      const jerseyNum = match.convocations.find(cv => cv.playerId === l.playerId)?.jerseyNumber ?? l.jerseyNumber ?? p?.number ?? "?";
+      return {
+        name: p?.name ?? "?",
+        number: jerseyNum,
+        role: p?.role ?? "difensore",
+        posRole: l.positionRole ?? "",
+        isCaptain: !!l.isCaptain,
+        isViceCaptain: !!l.isViceCaptain,
+      };
+    });
+    const convIds2 = new Set(match.convocations.map(cv => cv.playerId));
+    const inLineup2 = new Set(match.lineup.map(l => l.playerId));
+    const benchList = allPlayers
+      .filter(p => convIds2.has(p.id) && !inLineup2.has(p.id))
+      .map(p => ({
+        name: p.name,
+        number: match.convocations.find(cv => cv.playerId === p.id)?.jerseyNumber ?? p.number ?? "?",
+        role: p.role,
+      }));
+    const specName = (pl: typeof match.lineup) =>
+      pl.map(l => allPlayers.find(p => p.id === l.playerId)?.name?.split(" ").pop() ?? "?").join(", ");
+    exportMatchPdf(
+      { teamName, logoUrl, title: "Foglio Partita", subtitle: `vs ${match.opponent}` },
+      {
+        opponent: match.opponent,
+        date: match.date,
+        time: match.time,
+        venue: match.venue,
+        homeAway: match.homeAway,
+        competition: match.competition,
+        formation: match.formation ?? "4-3-3",
+        starters: startersList,
+        bench: benchList,
+        captain: specName(match.lineup.filter(l => l.isCaptain)),
+        viceCaptain: specName(match.lineup.filter(l => l.isViceCaptain)),
+        cornerTakers: match.lineup.filter(l => l.isCornerTaker).map(l => allPlayers.find(p => p.id === l.playerId)?.name?.split(" ").pop() ?? "?"),
+        freekickTakers: match.lineup.filter(l => l.isFreekickTaker).map(l => allPlayers.find(p => p.id === l.playerId)?.name?.split(" ").pop() ?? "?"),
+        penaltyTakers: match.lineup.filter(l => l.isPenaltyTaker).map(l => allPlayers.find(p => p.id === l.playerId)?.name?.split(" ").pop() ?? "?"),
+        wallPlayers: match.lineup.filter(l => l.isWallPlayer).map(l => allPlayers.find(p => p.id === l.playerId)?.name?.split(" ").pop() ?? "?"),
+        notes: match.notes,
+      }
+    );
+  };
   const W = Dimensions.get("window").width - 32;
   const PITCH_W = W * 0.72;
   const PITCH_H = PITCH_W * 1.08;
@@ -1443,9 +1520,15 @@ function RiepilogoSection({ match, allPlayers, id: _id, qc: _qc, c }: { match: M
             <Text style={s2.competitionBadgeTxt}>{match.competition.toUpperCase()}</Text>
           </View>
         ) : null}
-        <Text style={s2.sheetVs} numberOfLines={1}>
-          vs <Text style={s2.sheetOpponent}>{match.opponent}</Text>
-        </Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <Text style={[s2.sheetVs, { flex: 1 }]} numberOfLines={1}>
+            vs <Text style={s2.sheetOpponent}>{match.opponent}</Text>
+          </Text>
+          <TouchableOpacity onPress={handleExportPdf} style={{ flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "#0E5A3C", borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6 }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <FilePdf color="#D4AF37" size={15} />
+            <Text style={{ color: "#D4AF37", fontSize: 12, fontWeight: "700" }}>PDF</Text>
+          </TouchableOpacity>
+        </View>
         <Text style={s2.compactMeta}>{formatDate(match.date)}{match.time ? `  ${match.time}` : ""}</Text>
         {match.venue ? <Text style={s2.compactMeta} numberOfLines={1}>📍 {match.venue}</Text> : null}
         <View style={[s2.homeAwayBadge, match.homeAway === "home" ? s2.homeAwayHome : s2.homeAwayAway]}>

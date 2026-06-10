@@ -10,7 +10,9 @@ import { getEmail } from "../lib/authStore";
 import { useTheme } from "../lib/themeStore";
 import type { ThemeColors } from "../lib/themeStore";
 import { useI18n } from "../lib/i18n";
-import { ArrowLeft, Eraser, ArrowCounterClockwise, ArrowRight, Minus, Cursor, FloppyDisk, FolderOpen } from "phosphor-react-native";
+import { ArrowLeft, Eraser, ArrowCounterClockwise, ArrowRight, Minus, Cursor, FloppyDisk, FolderOpen, FilePdf } from "phosphor-react-native";
+import { exportTacticalPdf } from "../lib/pdfExport";
+import { useProfile } from "../lib/profile";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import Svg, { Circle, Line, Rect, Path, G } from "react-native-svg";
 
@@ -347,6 +349,7 @@ export default function TacticalScreen() {
   useEffect(() => { fieldTextsRef.current = fieldTexts; }, [fieldTexts]);
   const textPRs = useRef<Record<number, PanResponder>>({});
 
+  const profile = useProfile();
   const [saveModalVisible, setSaveModalVisible] = useState(false);
   const [saveName, setSaveName] = useState("");
   const [currentBoardId, setCurrentBoardId] = useState<string | null>(null);
@@ -617,6 +620,87 @@ export default function TacticalScreen() {
     return <FieldThreeQuarter fh={fh} fw={fw} />;
   };
 
+  const handleExportPdf = () => {
+    const team = profile.activeTeam?.();
+    // Build SVG string from current state
+    const W = 260;
+    const ratio2 = RATIO_MAP[fieldType];
+    const H = W * (ratio2 / (FW / W));
+    // Simplified: use fixed ratio for the PDF pitch
+    const pH = fieldType === "full" ? 380 : fieldType === "half" ? 210 : 290;
+    const pW = 260;
+
+    const stripes = Array.from({ length: 10 }, (_, i) =>
+      `<rect x="0" y="${i * pH / 10}" width="${pW}" height="${pH / 20}" fill="${i % 2 === 0 ? "#1a4a22" : "#1e5428"}" opacity="0.5"/>`
+    ).join("");
+
+    const lc = "rgba(255,255,255,0.45)";
+    const fieldSvgLines = `
+      <rect x="8" y="8" width="${pW - 16}" height="${pH - 16}" fill="none" stroke="${lc}" stroke-width="1.5" rx="3"/>
+      ${fieldType !== "half" ? `<line x1="8" y1="${pH / 2}" x2="${pW - 8}" y2="${pH / 2}" stroke="${lc}" stroke-width="1.2"/>` : ""}
+      <rect x="${pW * 0.21}" y="8" width="${pW * 0.58}" height="${pH * 0.16}" fill="none" stroke="${lc}" stroke-width="1.2"/>
+      <rect x="${pW * 0.34}" y="8" width="${pW * 0.32}" height="${pH * 0.07}" fill="none" stroke="${lc}" stroke-width="1.2"/>
+      ${fieldType !== "half" ? `
+        <rect x="${pW * 0.21}" y="${pH - 8 - pH * 0.16}" width="${pW * 0.58}" height="${pH * 0.16}" fill="none" stroke="${lc}" stroke-width="1.2"/>
+        <rect x="${pW * 0.34}" y="${pH - 8 - pH * 0.07}" width="${pW * 0.32}" height="${pH * 0.07}" fill="none" stroke="${lc}" stroke-width="1.2"/>
+        <circle cx="${pW / 2}" cy="${pH / 2}" r="${pW * 0.13}" fill="none" stroke="${lc}" stroke-width="1.2"/>
+      ` : ""}
+    `;
+
+    // Scale player coords from fh/FW to pH/pW
+    const scaleX = pW / FW;
+    const scaleY = pH / fh;
+
+    const playerTokens = players.map(p => {
+      const px = p.x * scaleX;
+      const py = p.y * scaleY;
+      const isBall = p.team === "ball";
+      const fill = isBall ? "rgba(255,255,255,0.3)" : p.color;
+      const stroke = isBall ? "rgba(255,255,255,0.8)" : "rgba(255,255,255,0.6)";
+      const labelText = p.label || (isBall ? "⚽" : "");
+      return `
+        <circle cx="${px}" cy="${py}" r="10" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>
+        ${labelText ? `<text x="${px}" y="${py + 3.5}" text-anchor="middle" font-size="7" font-weight="900" fill="#fff">${labelText}</text>` : ""}
+      `;
+    }).join("");
+
+    const lineTokens = lines.map(l => {
+      const x1 = l.x1 * scaleX; const y1 = l.y1 * scaleY;
+      const x2 = l.x2 * scaleX; const y2 = l.y2 * scaleY;
+      const color = l.type === "arrow" ? "#ff6b6b" : "#f1c40f";
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      const L = 10; const spread = 0.42;
+      const ax = x2 - L * Math.cos(angle - spread);
+      const ay = y2 - L * Math.sin(angle - spread);
+      const bx = x2 - L * Math.cos(angle + spread);
+      const by = y2 - L * Math.sin(angle + spread);
+      return `
+        <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="2" stroke-dasharray="${l.type === "line" ? "6,4" : "none"}" opacity="0.9"/>
+        ${l.type === "arrow" ? `<polygon points="${x2},${y2} ${ax},${ay} ${bx},${by}" fill="${color}" opacity="0.9"/>` : ""}
+      `;
+    }).join("");
+
+    const textTokens = fieldTexts.map(ft => {
+      const px = ft.x * scaleX;
+      const py = ft.y * scaleY;
+      return `<text x="${px}" y="${py}" font-size="9" font-weight="700" fill="#fff" style="paint-order:stroke" stroke="rgba(0,0,0,0.6)" stroke-width="2">${ft.text}</text>`;
+    }).join("");
+
+    const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${pW}" height="${pH}" viewBox="0 0 ${pW} ${pH}" style="border-radius:10px;overflow:hidden;display:block">
+      <rect x="0" y="0" width="${pW}" height="${pH}" fill="#1a4a22" rx="10"/>
+      ${stripes}${fieldSvgLines}${lineTokens}${playerTokens}${textTokens}
+    </svg>`;
+
+    exportTacticalPdf(
+      {
+        teamName: team?.name || "MisterProLab",
+        logoUrl: team?.logoUri,
+        title: currentBoardName || t("Campo Tattico", "Tactical Board"),
+      },
+      { boardName: currentBoardName || undefined, svgContent }
+    );
+  };
+
   const handleSave = async (name: string) => {
     const board: TacticBoard = {
       id: currentBoardId ?? `board_${Date.now()}`,
@@ -790,6 +874,9 @@ export default function TacticalScreen() {
           </TouchableOpacity>
           <TouchableOpacity style={s.iconBtn} onPress={() => router.replace("/tactical-library")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <FolderOpen color={c.textMuted} size={18} />
+          </TouchableOpacity>
+          <TouchableOpacity style={[s.iconBtn, { backgroundColor: "#2a2000", borderColor: "#D4AF3760" }]} onPress={handleExportPdf} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <FilePdf color="#D4AF37" size={18} weight="fill" />
           </TouchableOpacity>
           <TouchableOpacity style={[s.iconBtn, { backgroundColor: c.primary, borderColor: c.primary }]} onPress={() => { setSaveName(currentBoardName || ""); setSaveModalVisible(true); }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <FloppyDisk color="#fff" size={18} />

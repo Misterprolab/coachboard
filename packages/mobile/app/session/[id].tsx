@@ -4,11 +4,13 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { categoryColors, categoryLabels } from "../../lib/theme";
 import { useI18n } from "../../lib/i18n";
-import { ArrowLeft, Timer, CalendarBlank, Note, Trash, X, Check } from "phosphor-react-native";
+import { ArrowLeft, Timer, CalendarBlank, Note, Trash, X, Check, FilePdf } from "phosphor-react-native";
 import { useState, useMemo } from "react";
 import { useTheme } from "../../lib/themeStore";
 import type { ThemeColors } from "../../lib/themeStore";
 import { getSessionWithExercises, deleteSession as dbDeleteSession } from "../../lib/db/queries";
+import { exportSessionPdf } from "../../lib/pdfExport";
+import { useProfile } from "../../lib/profile";
 
 export default function SessionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -18,6 +20,7 @@ export default function SessionDetailScreen() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const c = useTheme((s) => s.colors);
   const s = useMemo(() => mkStyles(c), [c]);
+  const profile = useProfile();
 
   const session = useQuery({
     queryKey: ["session", id],
@@ -53,6 +56,35 @@ export default function SessionDetailScreen() {
   const exercises: any[] = data.exercises || [];
   const totalDuration = exercises.reduce((sum: number, e: any) => sum + ((e.customDuration || e.exercise?.duration) || 0), 0);
 
+  const handleExportPdf = () => {
+    const team = profile.activeTeam?.();
+    exportSessionPdf(
+      {
+        teamName: team?.name || "MisterProLab",
+        logoUrl: team?.logoUri,
+        title: "Seduta di Allenamento",
+        subtitle: data.title,
+      },
+      {
+        title: data.title,
+        date: data.date,
+        duration: data.duration || totalDuration,
+        notes: data.notes,
+        exercises: exercises
+          .sort((a: any, b: any) => a.order - b.order)
+          .map((e: any) => ({
+            order: e.order,
+            name: lang === "it" ? e.exercise.name : (e.exercise.nameEn || e.exercise.name),
+            category: e.exercise.category,
+            categoryLabel: (categoryLabels[e.exercise.category]?.it || e.exercise.category),
+            categoryColor: (categoryColors[e.exercise.category] || "#0E5A3C"),
+            duration: e.customDuration || e.exercise.duration,
+            notes: e.notes,
+          })),
+      }
+    );
+  };
+
   return (
     <SafeAreaView style={s.safe} edges={["top", "left", "right"]}>
       <View style={s.topBar}>
@@ -61,6 +93,11 @@ export default function SessionDetailScreen() {
         </TouchableOpacity>
         <Text numberOfLines={1} style={s.pageTitle}>{t('Dettaglio Seduta', 'Session Detail')}</Text>
 
+        {!confirmDelete && (
+          <TouchableOpacity onPress={handleExportPdf} style={s.pdfBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <FilePdf color="#D4AF37" size={22} weight="fill" />
+          </TouchableOpacity>
+        )}
         {confirmDelete ? (
           <View style={s.confirmRow}>
             <TouchableOpacity onPress={() => setConfirmDelete(false)} style={[s.actionBtn, s.cancelBtn]} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -175,6 +212,7 @@ function mkStyles(c: ThemeColors) {
     back: { padding: 4 },
     pageTitle: { flex: 1, fontSize: 16, fontWeight: '700', color: c.textMuted },
     trashBtn: { padding: 4 },
+    pdfBtn: { padding: 4 },
     confirmRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     actionBtn: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
     cancelBtn: { backgroundColor: c.border },
