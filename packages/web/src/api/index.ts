@@ -1581,7 +1581,7 @@ const app = new Hono()
     return c.json({ message: 'seeded', count: defaultExercises.length + extraExercises.length }, 200);
   })
 
-  .post('/seed-v2', authMiddleware, async (c) => {
+  .get('/seed-v2', async (c) => {
     const now = Date.now();
     const v2Exercises = [
       {
