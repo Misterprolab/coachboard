@@ -30,6 +30,7 @@ export type TacticBoard = {
   fieldType: FieldType;
   players: PlayerToken[];
   lines: DrawnLine[];
+  fieldTexts?: FieldText[];
   savedAt: number;
 };
 
@@ -428,6 +429,7 @@ export default function TacticalScreen() {
         setFormation(board.formation);
         setPlayers(board.players);
         setLines(board.lines);
+        setFieldTexts(board.fieldTexts ?? []);
         setCurrentBoardId(board.id);
         setCurrentBoardName(board.name);
         playerPRs.current = {};
@@ -709,6 +711,7 @@ export default function TacticalScreen() {
       fieldType,
       players,
       lines,
+      fieldTexts,
       savedAt: Date.now(),
     };
     await saveBoardToStorage(board);
