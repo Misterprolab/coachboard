@@ -5,7 +5,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useFocusEffect, useRouter, useLocalSearchParams } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { categoryColors, categoryLabels, intensityColors, intensityLabels } from "../../lib/theme";
 import { useI18n } from "../../lib/i18n";
@@ -13,6 +13,7 @@ import { MagnifyingGlass, Plus, Star, Trash, X, Football } from "phosphor-react-
 import { useTheme } from "../../lib/themeStore";
 import type { ThemeColors } from "../../lib/themeStore";
 import { getExercises, createExercise as dbCreateExercise, deleteExercise as dbDeleteExercise } from "../../lib/db/queries";
+import { useDiagramStore } from "../../lib/diagramStore";
 import { SvgXml } from "react-native-svg";
 
 type Exercise = {
@@ -53,10 +54,12 @@ async function saveFavorites(ids: Set<string>): Promise<void> {
 export default function LibraryScreen() {
   const { t, lang } = useI18n();
   const router = useRouter();
-  const params = useLocalSearchParams<{ diagramSvg?: string }>();
   const qc = useQueryClient();
   const c = useTheme((s) => s.colors);
   const s = useMemo(() => mkStyles(c), [c]);
+
+  const pendingDiagram = useDiagramStore((s) => s.pendingDiagram);
+  const setPendingDiagram = useDiagramStore((s) => s.setPendingDiagram);
 
   const [activeTab, setActiveTab] = useState<Tab>("all");
   const [activeCategory, setActiveCategory] = useState("tutti");
@@ -79,13 +82,13 @@ export default function LibraryScreen() {
   useFocusEffect(
     useCallback(() => {
       loadFavorites().then(setFavorites);
-      // When returning from tactical with a diagram
-      if (params.diagramSvg) {
-        const svg = decodeURIComponent(params.diagramSvg);
-        setForm(f => ({ ...f, diagramImage: svg }));
+      // When returning from tactical with a diagram (via Zustand store)
+      if (pendingDiagram) {
+        setForm(f => ({ ...f, diagramImage: pendingDiagram }));
+        setPendingDiagram(null);
         setAddOpen(true);
       }
-    }, [params.diagramSvg])
+    }, [pendingDiagram])
   );
 
   const exercises = useQuery({

@@ -258,17 +258,17 @@ export default function TacticalLibraryScreen() {
     setNewCategory("");
     setAddModalOpen(false);
     // open the tactical board for this new entry
-    router.replace({ pathname: "/tactical", params: { boardData: encodeURIComponent(JSON.stringify(board)) } });
+    router.push({ pathname: "/tactical", params: { boardData: encodeURIComponent(JSON.stringify(board)) } } as any);
   };
 
   const openBoard = (board: TacticBoard) => {
-    router.replace({
+    router.push({
       pathname: "/tactical",
       params: { boardData: encodeURIComponent(JSON.stringify(board)) },
-    });
+    } as any);
   };
 
-  const newBoard = () => router.replace("/tactical");
+  const newBoard = () => router.push("/tactical" as any);
 
   const SCREEN_W = 375;
   const FW_REF = SCREEN_W - 32;
@@ -393,7 +393,7 @@ export default function TacticalLibraryScreen() {
       {/* ── Top bar ────────────────────────────────────────────────────── */}
       <View style={s.topBar}>
         <TouchableOpacity
-          onPress={() => router.replace("/(tabs)")}
+          onPress={() => router.back()}
           style={s.back}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >

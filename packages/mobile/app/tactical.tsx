@@ -15,6 +15,7 @@ import { exportTacticalPdf } from "../lib/pdfExport";
 import { useProfile } from "../lib/profile";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { createExercise as dbCreateExercise } from "../lib/db/queries";
+import { useDiagramStore } from "../lib/diagramStore";
 import Svg, { Circle, Line, Rect, Path, G } from "react-native-svg";
 
 // ─── Storage helpers ──────────────────────────────────────────────────────────
@@ -335,6 +336,7 @@ export default function TacticalScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ boardId?: string; boardData?: string; mode?: string }>();
   const isIllustrationMode = params.mode === "illustrate";
+  const setPendingDiagram = useDiagramStore((s) => s.setPendingDiagram);
 
   const [fieldType, setFieldType] = useState<FieldType>("full");
   const [formation, setFormation] = useState("4-3-3");
@@ -702,7 +704,8 @@ export default function TacticalScreen() {
 
   const handleUseAsIllustration = () => {
     const svg = generateSvgSnapshot();
-    router.replace({ pathname: "/(tabs)/library", params: { diagramSvg: encodeURIComponent(svg) } } as any);
+    setPendingDiagram(svg);
+    router.back();
   };
 
   const handleExportPdf = () => {
@@ -986,7 +989,7 @@ export default function TacticalScreen() {
 
       {/* Top bar */}
       <View style={s.topBar}>
-        <TouchableOpacity onPress={() => router.replace("/(tabs)")} style={s.back} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <TouchableOpacity onPress={() => router.back()} style={s.back} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <ArrowLeft color={c.text} size={22} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
@@ -999,7 +1002,7 @@ export default function TacticalScreen() {
           <TouchableOpacity style={s.iconBtn} onPress={() => { pushUndo({ players: playersRef.current, lines: linesRef.current, fieldTexts: fieldTextsRef.current }); setLines([]); setPlayers([]); setFieldTexts([]); playerPRs.current = {}; textPRs.current = {}; }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Eraser color={c.textMuted} size={18} />
           </TouchableOpacity>
-          <TouchableOpacity style={s.iconBtn} onPress={() => router.replace("/tactical-library")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity style={s.iconBtn} onPress={() => router.push("/tactical-library" as any)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <FolderOpen color={c.textMuted} size={18} />
           </TouchableOpacity>
           {isIllustrationMode ? (
