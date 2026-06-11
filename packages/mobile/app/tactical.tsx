@@ -339,7 +339,6 @@ export default function TacticalScreen() {
   const fromRoute = params.from;
   const setPendingDiagram = useDiagramStore((s) => s.setPendingDiagram);
   const goBack = () => {
-    if (router.canGoBack()) { router.back(); return; }
     if (fromRoute === "library") { router.replace("/(tabs)/library" as any); }
     else if (fromRoute === "tactical-library") { router.replace("/tactical-library" as any); }
     else { router.replace("/(tabs)" as any); }
@@ -714,8 +713,7 @@ export default function TacticalScreen() {
   const handleUseAsIllustration = () => {
     const svg = generateSvgSnapshot();
     setPendingDiagram(svg);
-    if (router.canGoBack()) { router.back(); }
-    else { router.replace("/(tabs)/library" as any); }
+    router.replace("/(tabs)/library" as any);
   };
 
   const handleExportPdf = () => {
@@ -848,9 +846,9 @@ export default function TacticalScreen() {
       {/* Modal salva in libreria */}
       <Modal visible={saveLibraryModalVisible} transparent animationType="fade" onRequestClose={() => setSaveLibraryModalVisible(false)}>
         <View style={s.modalOverlay}>
-          <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }} keyboardShouldPersistTaps="handled">
-          <View style={[s.modalCard, { maxHeight: "90%" }]}>
-            <Text style={s.modalTitle}>{t("Salva in Libreria", "Save to Library")}</Text>
+          <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 16 }} keyboardShouldPersistTaps="handled">
+          <View style={[s.modalCard, { maxHeight: 480, paddingVertical: 12, paddingHorizontal: 14 }]}>
+            <Text style={[s.modalTitle, { marginBottom: 8 }]}>{t("Salva in Libreria", "Save to Library")}</Text>
             <TextInput
               style={s.modalInput}
               value={libraryForm.name}
@@ -860,7 +858,7 @@ export default function TacticalScreen() {
               autoFocus
             />
             <TextInput
-              style={[s.modalInput, { height: 60, textAlignVertical: "top" }]}
+              style={[s.modalInput, { height: 48, textAlignVertical: "top", marginBottom: 6 }]}
               value={libraryForm.description}
               onChangeText={v => setLibraryForm(f => ({ ...f, description: v }))}
               placeholder={t("Descrizione (opzionale)...", "Description (optional)...")}
@@ -892,7 +890,7 @@ export default function TacticalScreen() {
               placeholder={t("Materiali (opzionale)...", "Materials (optional)...")}
               placeholderTextColor={c.textMuted}
             />
-            <Text style={[s.modalTitle, { fontSize: 12, marginTop: 6, marginBottom: 4 }]}>{t("Categoria", "Category")}</Text>
+            <Text style={[s.modalTitle, { fontSize: 11, marginTop: 4, marginBottom: 3 }]}>{t("Categoria", "Category")}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: "row", gap: 8, paddingBottom: 4 }}>
               {["riscaldamento","tecnica","tattica","atletico","partitella","calci_piazzati","portieri"].map(cat => (
                 <TouchableOpacity
@@ -904,7 +902,7 @@ export default function TacticalScreen() {
                 </TouchableOpacity>
               ))}
             </ScrollView>
-            <Text style={[s.modalTitle, { fontSize: 12, marginTop: 6, marginBottom: 4 }]}>{t("Intensità", "Intensity")}</Text>
+            <Text style={[s.modalTitle, { fontSize: 11, marginTop: 4, marginBottom: 3 }]}>{t("Intensità", "Intensity")}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: "row", gap: 8, paddingBottom: 4 }}>
               {["bassa","media","alta"].map(int => (
                 <TouchableOpacity

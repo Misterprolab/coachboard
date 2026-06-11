@@ -393,7 +393,7 @@ export default function TacticalLibraryScreen() {
       {/* ── Top bar ────────────────────────────────────────────────────── */}
       <View style={s.topBar}>
         <TouchableOpacity
-          onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)' as any)}
+          onPress={() => router.replace('/(tabs)' as any)}
           style={s.back}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >

@@ -62,7 +62,7 @@ export default function ExerciseDetailScreen() {
   return (
     <SafeAreaView style={s.safe} edges={["top", "left", "right"]}>
       <View style={s.topBar}>
-        <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/library' as any)} style={s.back}>
+        <TouchableOpacity onPress={() => router.replace('/(tabs)/library' as any)} style={s.back}>
           <ArrowLeft color={c.text} size={24} />
         </TouchableOpacity>
         <Text style={s.pageTitle}>{t('Dettaglio Esercizio', 'Exercise Detail')}</Text>
