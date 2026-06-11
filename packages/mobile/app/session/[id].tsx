@@ -32,7 +32,7 @@ export default function SessionDetailScreen() {
     mutationFn: () => dbDeleteSession(id!),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["sessions"] });
-      router.back();
+      router.canGoBack() ? router.back() : router.replace('/(tabs)' as any);
     },
   });
 
@@ -88,7 +88,7 @@ export default function SessionDetailScreen() {
   return (
     <SafeAreaView style={s.safe} edges={["top", "left", "right"]}>
       <View style={s.topBar}>
-        <TouchableOpacity onPress={() => router.back()} style={s.back}>
+        <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)' as any)} style={s.back}>
           <ArrowLeft color={c.text} size={24} />
         </TouchableOpacity>
         <Text numberOfLines={1} style={s.pageTitle}>{t('Dettaglio Seduta', 'Session Detail')}</Text>

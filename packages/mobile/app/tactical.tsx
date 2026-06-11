@@ -705,7 +705,7 @@ export default function TacticalScreen() {
   const handleUseAsIllustration = () => {
     const svg = generateSvgSnapshot();
     setPendingDiagram(svg);
-    router.back();
+    router.canGoBack() ? router.back() : router.replace('/(tabs)/library' as any);
   };
 
   const handleExportPdf = () => {
@@ -989,7 +989,7 @@ export default function TacticalScreen() {
 
       {/* Top bar */}
       <View style={s.topBar}>
-        <TouchableOpacity onPress={() => router.back()} style={s.back} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)' as any)} style={s.back} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <ArrowLeft color={c.text} size={22} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
