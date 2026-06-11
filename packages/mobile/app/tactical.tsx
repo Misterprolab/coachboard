@@ -843,91 +843,109 @@ export default function TacticalScreen() {
         </View>
       </Modal>
 
-      {/* Modal salva in libreria */}
-      <Modal visible={saveLibraryModalVisible} transparent animationType="fade" onRequestClose={() => setSaveLibraryModalVisible(false)}>
-        <View style={s.modalOverlay}>
-          <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 16 }} keyboardShouldPersistTaps="handled">
-          <View style={[s.modalCard, { maxHeight: 480, paddingVertical: 12, paddingHorizontal: 14 }]}>
-            <Text style={[s.modalTitle, { marginBottom: 8 }]}>{t("Salva in Libreria", "Save to Library")}</Text>
-            <TextInput
-              style={s.modalInput}
-              value={libraryForm.name}
-              onChangeText={v => setLibraryForm(f => ({ ...f, name: v }))}
-              placeholder={t("Nome esercitazione...", "Exercise name...")}
-              placeholderTextColor={c.textMuted}
-              autoFocus
-            />
-            <TextInput
-              style={[s.modalInput, { height: 48, textAlignVertical: "top", marginBottom: 6 }]}
-              value={libraryForm.description}
-              onChangeText={v => setLibraryForm(f => ({ ...f, description: v }))}
-              placeholder={t("Descrizione (opzionale)...", "Description (optional)...")}
-              placeholderTextColor={c.textMuted}
-              multiline
-            />
-            <View style={{ flexDirection: "row", gap: 8 }}>
-              <TextInput
-                style={[s.modalInput, { flex: 1 }]}
-                value={libraryForm.duration}
-                onChangeText={v => setLibraryForm(f => ({ ...f, duration: v.replace(/[^0-9]/g,"") }))}
-                placeholder={t("Durata (min)", "Duration (min)")}
-                placeholderTextColor={c.textMuted}
-                keyboardType="numeric"
-              />
-              <TextInput
-                style={[s.modalInput, { flex: 1 }]}
-                value={libraryForm.players}
-                onChangeText={v => setLibraryForm(f => ({ ...f, players: v.replace(/[^0-9]/g,"") }))}
-                placeholder={t("Giocatori", "Players")}
-                placeholderTextColor={c.textMuted}
-                keyboardType="numeric"
-              />
+      {/* Modal salva in libreria - bottom sheet */}
+      <Modal visible={saveLibraryModalVisible} transparent animationType="slide" onRequestClose={() => setSaveLibraryModalVisible(false)}>
+        <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.55)" }}>
+          <View style={{ backgroundColor: c.bgCard, borderTopLeftRadius: 20, borderTopRightRadius: 20, borderTopWidth: 1, borderColor: c.border, maxHeight: "80%" }}>
+            {/* Handle bar */}
+            <View style={{ alignItems: "center", paddingTop: 10, paddingBottom: 4 }}>
+              <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: c.border }} />
             </View>
-            <TextInput
-              style={s.modalInput}
-              value={libraryForm.materials}
-              onChangeText={v => setLibraryForm(f => ({ ...f, materials: v }))}
-              placeholder={t("Materiali (opzionale)...", "Materials (optional)...")}
-              placeholderTextColor={c.textMuted}
-            />
-            <Text style={[s.modalTitle, { fontSize: 11, marginTop: 4, marginBottom: 3 }]}>{t("Categoria", "Category")}</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: "row", gap: 8, paddingBottom: 4 }}>
-              {["riscaldamento","tecnica","tattica","atletico","partitella","calci_piazzati","portieri"].map(cat => (
+            <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}>
+              <Text style={{ fontSize: 15, fontWeight: "700", color: c.text, marginBottom: 10 }}>{t("Salva in Libreria", "Save to Library")}</Text>
+              {/* Nome */}
+              <TextInput
+                style={[s.libInput]}
+                value={libraryForm.name}
+                onChangeText={v => setLibraryForm(f => ({ ...f, name: v }))}
+                placeholder={t("Nome esercitazione...", "Exercise name...")}
+                placeholderTextColor={c.textMuted}
+                autoFocus
+              />
+              {/* Descrizione */}
+              <TextInput
+                style={[s.libInput, { height: 44, textAlignVertical: "top" }]}
+                value={libraryForm.description}
+                onChangeText={v => setLibraryForm(f => ({ ...f, description: v }))}
+                placeholder={t("Descrizione (opzionale)", "Description (optional)")}
+                placeholderTextColor={c.textMuted}
+                multiline
+              />
+              {/* Durata + Giocatori */}
+              <View style={{ flexDirection: "row", gap: 8 }}>
+                <TextInput
+                  style={[s.libInput, { flex: 1 }]}
+                  value={libraryForm.duration}
+                  onChangeText={v => setLibraryForm(f => ({ ...f, duration: v.replace(/[^0-9]/g,"") }))}
+                  placeholder={t("Durata (min)", "Min")}
+                  placeholderTextColor={c.textMuted}
+                  keyboardType="numeric"
+                />
+                <TextInput
+                  style={[s.libInput, { flex: 1 }]}
+                  value={libraryForm.players}
+                  onChangeText={v => setLibraryForm(f => ({ ...f, players: v.replace(/[^0-9]/g,"") }))}
+                  placeholder={t("Giocatori", "Players")}
+                  placeholderTextColor={c.textMuted}
+                  keyboardType="numeric"
+                />
+              </View>
+              {/* Materiali */}
+              <TextInput
+                style={[s.libInput]}
+                value={libraryForm.materials}
+                onChangeText={v => setLibraryForm(f => ({ ...f, materials: v }))}
+                placeholder={t("Materiali (opzionale)", "Materials (optional)")}
+                placeholderTextColor={c.textMuted}
+              />
+              {/* Categoria */}
+              <Text style={{ fontSize: 11, fontWeight: "600", color: c.textMuted, marginBottom: 4 }}>{t("CATEGORIA", "CATEGORY")}</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: "row", gap: 6, marginBottom: 8 }}>
+                {["riscaldamento","tecnica","tattica","atletico","partitella","calci_piazzati","portieri"].map(cat => (
+                  <TouchableOpacity
+                    key={cat}
+                    style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, borderWidth: 1,
+                      borderColor: libraryForm.category === cat ? c.primary : c.border,
+                      backgroundColor: libraryForm.category === cat ? c.primary : "transparent" }}
+                    onPress={() => setLibraryForm(f => ({ ...f, category: cat }))}
+                  >
+                    <Text style={{ fontSize: 11, fontWeight: "600", color: libraryForm.category === cat ? "#fff" : c.textMuted }}>{cat}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              {/* Intensità */}
+              <Text style={{ fontSize: 11, fontWeight: "600", color: c.textMuted, marginBottom: 4 }}>{t("INTENSITÀ", "INTENSITY")}</Text>
+              <View style={{ flexDirection: "row", gap: 6, marginBottom: 12 }}>
+                {["bassa","media","alta"].map(int => (
+                  <TouchableOpacity
+                    key={int}
+                    style={{ flex: 1, alignItems: "center", paddingVertical: 6, borderRadius: 20, borderWidth: 1,
+                      borderColor: libraryForm.intensity === int ? c.primary : c.border,
+                      backgroundColor: libraryForm.intensity === int ? c.primary : "transparent" }}
+                    onPress={() => setLibraryForm(f => ({ ...f, intensity: int }))}
+                  >
+                    <Text style={{ fontSize: 12, fontWeight: "600", color: libraryForm.intensity === int ? "#fff" : c.textMuted }}>{int}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              {/* Bottoni */}
+              <View style={{ flexDirection: "row", gap: 10 }}>
                 <TouchableOpacity
-                  key={cat}
-                  style={[s.modalBtnCancel, libraryForm.category === cat && { backgroundColor: c.primary, borderColor: c.primary }]}
-                  onPress={() => setLibraryForm(f => ({ ...f, category: cat }))}
+                  style={{ flex: 1, alignItems: "center", paddingVertical: 11, borderRadius: 12, borderWidth: 1, borderColor: c.border }}
+                  onPress={() => setSaveLibraryModalVisible(false)}
                 >
-                  <Text style={[s.modalBtnCancelTxt, { fontSize: 11 }, libraryForm.category === cat && { color: "#fff" }]}>{cat}</Text>
+                  <Text style={{ fontSize: 14, fontWeight: "600", color: c.textMuted }}>{t("Annulla", "Cancel")}</Text>
                 </TouchableOpacity>
-              ))}
-            </ScrollView>
-            <Text style={[s.modalTitle, { fontSize: 11, marginTop: 4, marginBottom: 3 }]}>{t("Intensità", "Intensity")}</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: "row", gap: 8, paddingBottom: 4 }}>
-              {["bassa","media","alta"].map(int => (
                 <TouchableOpacity
-                  key={int}
-                  style={[s.modalBtnCancel, libraryForm.intensity === int && { backgroundColor: c.primary, borderColor: c.primary }]}
-                  onPress={() => setLibraryForm(f => ({ ...f, intensity: int }))}
+                  style={{ flex: 1, alignItems: "center", paddingVertical: 11, borderRadius: 12, backgroundColor: c.primary, opacity: (!libraryForm.name.trim() || savingLibrary) ? 0.4 : 1 }}
+                  onPress={handleSaveToLibrary}
+                  disabled={!libraryForm.name.trim() || savingLibrary}
                 >
-                  <Text style={[s.modalBtnCancelTxt, { fontSize: 11 }, libraryForm.intensity === int && { color: "#fff" }]}>{int}</Text>
+                  <Text style={{ fontSize: 14, fontWeight: "700", color: "#fff" }}>{t("Salva", "Save")}</Text>
                 </TouchableOpacity>
-              ))}
+              </View>
             </ScrollView>
-            <View style={s.modalBtns}>
-              <TouchableOpacity style={s.modalBtnCancel} onPress={() => setSaveLibraryModalVisible(false)}>
-                <Text style={s.modalBtnCancelTxt}>{t("Annulla", "Cancel")}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[s.modalBtnSave, (!libraryForm.name.trim() || savingLibrary) && { opacity: 0.4 }]}
-                onPress={handleSaveToLibrary}
-                disabled={!libraryForm.name.trim() || savingLibrary}
-              >
-                <Text style={s.modalBtnSaveTxt}>{t("Salva", "Save")}</Text>
-              </TouchableOpacity>
-            </View>
           </View>
-          </ScrollView>
         </View>
       </Modal>
 
@@ -1293,6 +1311,7 @@ function mkStyles(c: ThemeColors) {
     modalCard: { width: "100%", backgroundColor: c.bgCard, borderRadius: 18, padding: 24, borderWidth: 1, borderColor: c.border },
     modalTitle: { fontSize: 18, fontWeight: "700", color: c.text, marginBottom: 16 },
     modalInput: { backgroundColor: c.bg, borderWidth: 1.5, borderColor: c.border, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: c.text, marginBottom: 20 },
+    libInput: { backgroundColor: c.bg, borderWidth: 1.5, borderColor: c.border, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9, fontSize: 14, color: c.text, marginBottom: 8 },
     modalBtns: { flexDirection: "row", gap: 10 },
     modalBtnCancel: { flex: 1, alignItems: "center", paddingVertical: 13, borderRadius: 12, borderWidth: 1, borderColor: c.border },
     modalBtnCancelTxt: { fontSize: 15, fontWeight: "600", color: c.textMuted },
