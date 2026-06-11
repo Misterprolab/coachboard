@@ -242,7 +242,7 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        <TouchableOpacity style={s.fieldCard} onPress={() => router.push('/tactical')} activeOpacity={0.8}>
+        <TouchableOpacity style={s.fieldCard} onPress={() => router.push({ pathname: '/tactical', params: { from: 'home' } } as any)} activeOpacity={0.8}>
           <View style={s.fieldInner}>
             <Clipboard color={c.accent} size={32} weight="fill" />
             <View style={{ marginLeft: 14 }}>

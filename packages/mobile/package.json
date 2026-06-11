@@ -8,7 +8,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:web": "npx expo export --platform web --output-dir ../web/expo-dist && sed -i \"s/initial-scale=1, shrink-to-fit=no/initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no/\" ../web/expo-dist/index.html"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.0",

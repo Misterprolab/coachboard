@@ -334,9 +334,16 @@ export default function TacticalScreen() {
   const s = useMemo(() => mkStyles(c), [c]);
   const { t } = useI18n();
   const router = useRouter();
-  const params = useLocalSearchParams<{ boardId?: string; boardData?: string; mode?: string }>();
+  const params = useLocalSearchParams<{ boardId?: string; boardData?: string; mode?: string; from?: string }>();
   const isIllustrationMode = params.mode === "illustrate";
+  const fromRoute = params.from;
   const setPendingDiagram = useDiagramStore((s) => s.setPendingDiagram);
+  const goBack = () => {
+    if (router.canGoBack()) { router.back(); return; }
+    if (fromRoute === "library") { router.replace("/(tabs)/library" as any); }
+    else if (fromRoute === "tactical-library") { router.replace("/tactical-library" as any); }
+    else { router.replace("/(tabs)" as any); }
+  };
 
   const [fieldType, setFieldType] = useState<FieldType>("full");
   const [formation, setFormation] = useState("4-3-3");
@@ -361,7 +368,7 @@ export default function TacticalScreen() {
   const [currentBoardName, setCurrentBoardName] = useState<string>("");
   // Modal salva in libreria
   const [saveLibraryModalVisible, setSaveLibraryModalVisible] = useState(false);
-  const [libraryForm, setLibraryForm] = useState({ name: "", category: "tattica", duration: "30", intensity: "media" });
+  const [libraryForm, setLibraryForm] = useState({ name: "", category: "tattica", description: "", duration: "30", players: "", intensity: "media", materials: "" });
   const [savingLibrary, setSavingLibrary] = useState(false);
 
   // Modal edit label pedina
@@ -686,15 +693,17 @@ export default function TacticalScreen() {
       await dbCreateExercise({
         name: libraryForm.name.trim(),
         category: libraryForm.category,
-        description: `Schema tattico: ${libraryForm.name.trim()}`,
+        description: libraryForm.description.trim() || `Schema tattico: ${libraryForm.name.trim()}`,
         duration: parseInt(libraryForm.duration) || 30,
+        players: libraryForm.players ? parseInt(libraryForm.players) : null,
         intensity: libraryForm.intensity,
+        materials: libraryForm.materials.trim() || null,
         isCustom: true,
         diagramImage: svg,
       });
       setSaveLibraryModalVisible(false);
-      setLibraryForm({ name: "", category: "tattica", duration: "30", intensity: "media" });
-      Alert.alert(t("Salvato in libreria!", "Saved to library!"), `"${libraryForm.name.trim()}"`);
+      setLibraryForm({ name: "", category: "tattica", description: "", duration: "30", players: "", intensity: "media", materials: "" });
+      router.replace("/(tabs)/library" as any);
     } catch {
       Alert.alert(t("Errore", "Error"), t("Impossibile salvare nella libreria.", "Could not save to library."));
     } finally {
@@ -705,7 +714,8 @@ export default function TacticalScreen() {
   const handleUseAsIllustration = () => {
     const svg = generateSvgSnapshot();
     setPendingDiagram(svg);
-    router.canGoBack() ? router.back() : router.replace('/(tabs)/library' as any);
+    if (router.canGoBack()) { router.back(); }
+    else { router.replace("/(tabs)/library" as any); }
   };
 
   const handleExportPdf = () => {
@@ -838,7 +848,8 @@ export default function TacticalScreen() {
       {/* Modal salva in libreria */}
       <Modal visible={saveLibraryModalVisible} transparent animationType="fade" onRequestClose={() => setSaveLibraryModalVisible(false)}>
         <View style={s.modalOverlay}>
-          <View style={s.modalCard}>
+          <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }} keyboardShouldPersistTaps="handled">
+          <View style={[s.modalCard, { maxHeight: "90%" }]}>
             <Text style={s.modalTitle}>{t("Salva in Libreria", "Save to Library")}</Text>
             <TextInput
               style={s.modalInput}
@@ -848,7 +859,40 @@ export default function TacticalScreen() {
               placeholderTextColor={c.textMuted}
               autoFocus
             />
-            <Text style={[s.modalTitle, { fontSize: 12, marginTop: 10, marginBottom: 4 }]}>{t("Categoria", "Category")}</Text>
+            <TextInput
+              style={[s.modalInput, { height: 60, textAlignVertical: "top" }]}
+              value={libraryForm.description}
+              onChangeText={v => setLibraryForm(f => ({ ...f, description: v }))}
+              placeholder={t("Descrizione (opzionale)...", "Description (optional)...")}
+              placeholderTextColor={c.textMuted}
+              multiline
+            />
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              <TextInput
+                style={[s.modalInput, { flex: 1 }]}
+                value={libraryForm.duration}
+                onChangeText={v => setLibraryForm(f => ({ ...f, duration: v.replace(/[^0-9]/g,"") }))}
+                placeholder={t("Durata (min)", "Duration (min)")}
+                placeholderTextColor={c.textMuted}
+                keyboardType="numeric"
+              />
+              <TextInput
+                style={[s.modalInput, { flex: 1 }]}
+                value={libraryForm.players}
+                onChangeText={v => setLibraryForm(f => ({ ...f, players: v.replace(/[^0-9]/g,"") }))}
+                placeholder={t("Giocatori", "Players")}
+                placeholderTextColor={c.textMuted}
+                keyboardType="numeric"
+              />
+            </View>
+            <TextInput
+              style={s.modalInput}
+              value={libraryForm.materials}
+              onChangeText={v => setLibraryForm(f => ({ ...f, materials: v }))}
+              placeholder={t("Materiali (opzionale)...", "Materials (optional)...")}
+              placeholderTextColor={c.textMuted}
+            />
+            <Text style={[s.modalTitle, { fontSize: 12, marginTop: 6, marginBottom: 4 }]}>{t("Categoria", "Category")}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: "row", gap: 8, paddingBottom: 4 }}>
               {["riscaldamento","tecnica","tattica","atletico","partitella","calci_piazzati","portieri"].map(cat => (
                 <TouchableOpacity
@@ -857,6 +901,18 @@ export default function TacticalScreen() {
                   onPress={() => setLibraryForm(f => ({ ...f, category: cat }))}
                 >
                   <Text style={[s.modalBtnCancelTxt, { fontSize: 11 }, libraryForm.category === cat && { color: "#fff" }]}>{cat}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <Text style={[s.modalTitle, { fontSize: 12, marginTop: 6, marginBottom: 4 }]}>{t("Intensità", "Intensity")}</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: "row", gap: 8, paddingBottom: 4 }}>
+              {["bassa","media","alta"].map(int => (
+                <TouchableOpacity
+                  key={int}
+                  style={[s.modalBtnCancel, libraryForm.intensity === int && { backgroundColor: c.primary, borderColor: c.primary }]}
+                  onPress={() => setLibraryForm(f => ({ ...f, intensity: int }))}
+                >
+                  <Text style={[s.modalBtnCancelTxt, { fontSize: 11 }, libraryForm.intensity === int && { color: "#fff" }]}>{int}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -873,6 +929,7 @@ export default function TacticalScreen() {
               </TouchableOpacity>
             </View>
           </View>
+          </ScrollView>
         </View>
       </Modal>
 
@@ -989,7 +1046,7 @@ export default function TacticalScreen() {
 
       {/* Top bar */}
       <View style={s.topBar}>
-        <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)' as any)} style={s.back} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <TouchableOpacity onPress={goBack} style={s.back} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <ArrowLeft color={c.text} size={22} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>

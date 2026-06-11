@@ -258,7 +258,7 @@ export default function TacticalLibraryScreen() {
     setNewCategory("");
     setAddModalOpen(false);
     // open the tactical board for this new entry
-    router.push({ pathname: "/tactical", params: { boardData: encodeURIComponent(JSON.stringify(board)) } } as any);
+    router.push({ pathname: "/tactical", params: { boardData: encodeURIComponent(JSON.stringify(board)), from: "tactical-library" } } as any);
   };
 
   const openBoard = (board: TacticBoard) => {
@@ -268,7 +268,7 @@ export default function TacticalLibraryScreen() {
     } as any);
   };
 
-  const newBoard = () => router.push("/tactical" as any);
+  const newBoard = () => router.push({ pathname: "/tactical", params: { from: "tactical-library" } } as any);
 
   const SCREEN_W = 375;
   const FW_REF = SCREEN_W - 32;

@@ -293,7 +293,7 @@ export default function LibraryScreen() {
                   style={[s.fieldInput, { flexDirection: "row", alignItems: "center", gap: 8, justifyContent: "center" }]}
                   onPress={() => {
                     setAddOpen(false);
-                    router.push({ pathname: "/tactical", params: { mode: "illustrate" } } as any);
+                    router.push({ pathname: "/tactical", params: { mode: "illustrate", from: "library" } } as any);
                   }}
                 >
                   <Football color={c.primary} size={18} />
