@@ -59,6 +59,7 @@ export const exercises = sqliteTable("exercises", {
   primaryObjective: text("primary_objective"),
   secondaryObjectives: text("secondary_objectives"),
   isCustom: integer("is_custom", { mode: "boolean" }).default(false),
+  diagramImage: text("diagram_image"),
   createdAt: integer("created_at").notNull(),
 });
 

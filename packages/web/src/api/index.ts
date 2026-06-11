@@ -75,6 +75,9 @@ async function runMigrations() {
   try {
     await db.$client.execute(`ALTER TABLE matches ADD COLUMN meeting_place TEXT`);
   } catch (_) { /* column already exists */ }
+  try {
+    await db.$client.execute(`ALTER TABLE exercises ADD COLUMN diagram_image TEXT`);
+  } catch (_) { /* column already exists */ }
 }
 runMigrations();
 
@@ -1755,6 +1758,7 @@ const app = new Hono()
       primaryObjective: body.primaryObjective ?? null,
       secondaryObjectives: body.secondaryObjectives ?? null,
       isCustom: true,
+      diagramImage: body.diagramImage ?? null,
       createdAt: Date.now(),
     };
     await db.insert(exercises).values(ex);

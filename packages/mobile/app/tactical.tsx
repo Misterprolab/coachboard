@@ -10,10 +10,11 @@ import { getEmail } from "../lib/authStore";
 import { useTheme } from "../lib/themeStore";
 import type { ThemeColors } from "../lib/themeStore";
 import { useI18n } from "../lib/i18n";
-import { ArrowLeft, Eraser, ArrowCounterClockwise, ArrowRight, Minus, Cursor, FloppyDisk, FolderOpen, FilePdf } from "phosphor-react-native";
+import { ArrowLeft, Eraser, ArrowCounterClockwise, ArrowRight, Minus, Cursor, FloppyDisk, FolderOpen, FilePdf, ImageSquare, BookmarkSimple } from "phosphor-react-native";
 import { exportTacticalPdf } from "../lib/pdfExport";
 import { useProfile } from "../lib/profile";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import { createExercise as dbCreateExercise } from "../lib/db/queries";
 import Svg, { Circle, Line, Rect, Path, G } from "react-native-svg";
 
 // ─── Storage helpers ──────────────────────────────────────────────────────────
@@ -332,7 +333,8 @@ export default function TacticalScreen() {
   const s = useMemo(() => mkStyles(c), [c]);
   const { t } = useI18n();
   const router = useRouter();
-  const params = useLocalSearchParams<{ boardId?: string; boardData?: string }>();
+  const params = useLocalSearchParams<{ boardId?: string; boardData?: string; mode?: string }>();
+  const isIllustrationMode = params.mode === "illustrate";
 
   const [fieldType, setFieldType] = useState<FieldType>("full");
   const [formation, setFormation] = useState("4-3-3");
@@ -355,6 +357,11 @@ export default function TacticalScreen() {
   const [saveName, setSaveName] = useState("");
   const [currentBoardId, setCurrentBoardId] = useState<string | null>(null);
   const [currentBoardName, setCurrentBoardName] = useState<string>("");
+  // Modal salva in libreria
+  const [saveLibraryModalVisible, setSaveLibraryModalVisible] = useState(false);
+  const [libraryForm, setLibraryForm] = useState({ name: "", category: "tattica", duration: "30", intensity: "media" });
+  const [savingLibrary, setSavingLibrary] = useState(false);
+
   // Modal edit label pedina
   const [editingPlayer, setEditingPlayer] = useState<{ id: number; label: string } | null>(null);
   // Modal testo libero
@@ -622,6 +629,82 @@ export default function TacticalScreen() {
     return <FieldThreeQuarter fh={fh} fw={fw} />;
   };
 
+  const generateSvgSnapshot = (): string => {
+    const pW = 260;
+    const pH = fieldType === "full" ? 380 : fieldType === "half" ? 210 : 290;
+    const stripes = Array.from({ length: 10 }, (_, i) =>
+      `<rect x="0" y="${i * pH / 10}" width="${pW}" height="${pH / 20}" fill="${i % 2 === 0 ? "#1a4a22" : "#1e5428"}" opacity="0.5"/>`
+    ).join("");
+    const lc = "rgba(255,255,255,0.45)";
+    const fieldSvgLines = `
+      <rect x="8" y="8" width="${pW - 16}" height="${pH - 16}" fill="none" stroke="${lc}" stroke-width="1.5" rx="3"/>
+      ${fieldType !== "half" ? `<line x1="8" y1="${pH / 2}" x2="${pW - 8}" y2="${pH / 2}" stroke="${lc}" stroke-width="1.2"/>` : ""}
+      <rect x="${pW * 0.21}" y="8" width="${pW * 0.58}" height="${pH * 0.16}" fill="none" stroke="${lc}" stroke-width="1.2"/>
+      <rect x="${pW * 0.34}" y="8" width="${pW * 0.32}" height="${pH * 0.07}" fill="none" stroke="${lc}" stroke-width="1.2"/>
+      ${fieldType !== "half" ? `
+        <rect x="${pW * 0.21}" y="${pH - 8 - pH * 0.16}" width="${pW * 0.58}" height="${pH * 0.16}" fill="none" stroke="${lc}" stroke-width="1.2"/>
+        <rect x="${pW * 0.34}" y="${pH - 8 - pH * 0.07}" width="${pW * 0.32}" height="${pH * 0.07}" fill="none" stroke="${lc}" stroke-width="1.2"/>
+        <circle cx="${pW / 2}" cy="${pH / 2}" r="${pW * 0.13}" fill="none" stroke="${lc}" stroke-width="1.2"/>
+      ` : ""}
+    `;
+    const scaleX = pW / FW;
+    const scaleY = pH / fh;
+    const playerTokens = players.map(p => {
+      const px = p.x * scaleX; const py = p.y * scaleY;
+      const isBall = p.team === "ball";
+      const fill = isBall ? "rgba(255,255,255,0.3)" : p.color;
+      const stroke = isBall ? "rgba(255,255,255,0.8)" : "rgba(255,255,255,0.6)";
+      const labelText = p.label || (isBall ? "⚽" : "");
+      return `<circle cx="${px}" cy="${py}" r="10" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>
+        ${labelText ? `<text x="${px}" y="${py + 3.5}" text-anchor="middle" font-size="7" font-weight="900" fill="#fff">${labelText}</text>` : ""}`;
+    }).join("");
+    const lineTokens = lines.map(l => {
+      const x1 = l.x1 * scaleX; const y1 = l.y1 * scaleY;
+      const x2 = l.x2 * scaleX; const y2 = l.y2 * scaleY;
+      const color = l.type === "arrow" ? "#ff6b6b" : "#f1c40f";
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      const L = 10; const spread = 0.42;
+      const ax = x2 - L * Math.cos(angle - spread); const ay = y2 - L * Math.sin(angle - spread);
+      const bx = x2 - L * Math.cos(angle + spread); const by = y2 - L * Math.sin(angle + spread);
+      return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="2" stroke-dasharray="${l.type === "line" ? "6,4" : "none"}" opacity="0.9"/>
+        ${l.type === "arrow" ? `<polygon points="${x2},${y2} ${ax},${ay} ${bx},${by}" fill="${color}" opacity="0.9"/>` : ""}`;
+    }).join("");
+    const textTokens = fieldTexts.map(ft => {
+      const px = ft.x * scaleX; const py = ft.y * scaleY;
+      return `<text x="${px}" y="${py}" font-size="9" font-weight="700" fill="#fff" stroke="rgba(0,0,0,0.6)" stroke-width="2">${ft.text}</text>`;
+    }).join("");
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${pW}" height="${pH}" viewBox="0 0 ${pW} ${pH}"><rect x="0" y="0" width="${pW}" height="${pH}" fill="#1a4a22" rx="10"/>${stripes}${fieldSvgLines}${lineTokens}${playerTokens}${textTokens}</svg>`;
+  };
+
+  const handleSaveToLibrary = async () => {
+    if (!libraryForm.name.trim()) return;
+    setSavingLibrary(true);
+    try {
+      const svg = generateSvgSnapshot();
+      await dbCreateExercise({
+        name: libraryForm.name.trim(),
+        category: libraryForm.category,
+        description: `Schema tattico: ${libraryForm.name.trim()}`,
+        duration: parseInt(libraryForm.duration) || 30,
+        intensity: libraryForm.intensity,
+        isCustom: true,
+        diagramImage: svg,
+      });
+      setSaveLibraryModalVisible(false);
+      setLibraryForm({ name: "", category: "tattica", duration: "30", intensity: "media" });
+      Alert.alert(t("Salvato in libreria!", "Saved to library!"), `"${libraryForm.name.trim()}"`);
+    } catch {
+      Alert.alert(t("Errore", "Error"), t("Impossibile salvare nella libreria.", "Could not save to library."));
+    } finally {
+      setSavingLibrary(false);
+    }
+  };
+
+  const handleUseAsIllustration = () => {
+    const svg = generateSvgSnapshot();
+    router.replace({ pathname: "/(tabs)/library", params: { diagramSvg: encodeURIComponent(svg) } } as any);
+  };
+
   const handleExportPdf = () => {
     const team = profile.activeTeam?.();
     // Build SVG string from current state
@@ -742,6 +825,47 @@ export default function TacticalScreen() {
                 <Text style={s.modalBtnCancelTxt}>{t("Annulla", "Cancel")}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={s.modalBtnSave} onPress={() => handleSave(saveName)}>
+                <Text style={s.modalBtnSaveTxt}>{t("Salva", "Save")}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal salva in libreria */}
+      <Modal visible={saveLibraryModalVisible} transparent animationType="fade" onRequestClose={() => setSaveLibraryModalVisible(false)}>
+        <View style={s.modalOverlay}>
+          <View style={s.modalCard}>
+            <Text style={s.modalTitle}>{t("Salva in Libreria", "Save to Library")}</Text>
+            <TextInput
+              style={s.modalInput}
+              value={libraryForm.name}
+              onChangeText={v => setLibraryForm(f => ({ ...f, name: v }))}
+              placeholder={t("Nome esercitazione...", "Exercise name...")}
+              placeholderTextColor={c.textMuted}
+              autoFocus
+            />
+            <Text style={[s.modalTitle, { fontSize: 12, marginTop: 10, marginBottom: 4 }]}>{t("Categoria", "Category")}</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: "row", gap: 8, paddingBottom: 4 }}>
+              {["riscaldamento","tecnica","tattica","atletico","partitella","calci_piazzati","portieri"].map(cat => (
+                <TouchableOpacity
+                  key={cat}
+                  style={[s.modalBtnCancel, libraryForm.category === cat && { backgroundColor: c.primary, borderColor: c.primary }]}
+                  onPress={() => setLibraryForm(f => ({ ...f, category: cat }))}
+                >
+                  <Text style={[s.modalBtnCancelTxt, { fontSize: 11 }, libraryForm.category === cat && { color: "#fff" }]}>{cat}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <View style={s.modalBtns}>
+              <TouchableOpacity style={s.modalBtnCancel} onPress={() => setSaveLibraryModalVisible(false)}>
+                <Text style={s.modalBtnCancelTxt}>{t("Annulla", "Cancel")}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[s.modalBtnSave, (!libraryForm.name.trim() || savingLibrary) && { opacity: 0.4 }]}
+                onPress={handleSaveToLibrary}
+                disabled={!libraryForm.name.trim() || savingLibrary}
+              >
                 <Text style={s.modalBtnSaveTxt}>{t("Salva", "Save")}</Text>
               </TouchableOpacity>
             </View>
@@ -878,12 +1002,23 @@ export default function TacticalScreen() {
           <TouchableOpacity style={s.iconBtn} onPress={() => router.replace("/tactical-library")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <FolderOpen color={c.textMuted} size={18} />
           </TouchableOpacity>
-          <TouchableOpacity style={[s.iconBtn, { backgroundColor: "#2a2000", borderColor: "#D4AF3760" }]} onPress={handleExportPdf} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <FilePdf color="#D4AF37" size={18} weight="fill" />
-          </TouchableOpacity>
-          <TouchableOpacity style={[s.iconBtn, { backgroundColor: c.primary, borderColor: c.primary }]} onPress={() => { setSaveName(currentBoardName || ""); setSaveModalVisible(true); }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <FloppyDisk color="#fff" size={18} />
-          </TouchableOpacity>
+          {isIllustrationMode ? (
+            <TouchableOpacity style={[s.iconBtn, { backgroundColor: c.primary, borderColor: c.primary }]} onPress={handleUseAsIllustration} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <ImageSquare color="#fff" size={18} />
+            </TouchableOpacity>
+          ) : (
+            <>
+              <TouchableOpacity style={[s.iconBtn, { backgroundColor: "#2a2000", borderColor: "#D4AF3760" }]} onPress={handleExportPdf} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <FilePdf color="#D4AF37" size={18} weight="fill" />
+              </TouchableOpacity>
+              <TouchableOpacity style={[s.iconBtn, { backgroundColor: "#0e2a20", borderColor: "#2d6a4f" }]} onPress={() => setSaveLibraryModalVisible(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <BookmarkSimple color="#52b788" size={18} />
+              </TouchableOpacity>
+              <TouchableOpacity style={[s.iconBtn, { backgroundColor: c.primary, borderColor: c.primary }]} onPress={() => { setSaveName(currentBoardName || ""); setSaveModalVisible(true); }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <FloppyDisk color="#fff" size={18} />
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </View>
 

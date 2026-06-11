@@ -79,7 +79,7 @@ export async function createExercise(data: {
   name: string; nameEn?: string | null; category: string; description: string;
   descriptionEn?: string | null; duration: number; players?: number | null;
   intensity: string; materials?: string | null; primaryObjective?: string | null;
-  secondaryObjectives?: string | null; isCustom?: boolean;
+  secondaryObjectives?: string | null; isCustom?: boolean; diagramImage?: string | null;
 }) {
   const id = uid();
   await db.insert(exercises).values({ id, ...data, isCustom: true, createdAt: Date.now() });

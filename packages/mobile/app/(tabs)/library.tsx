@@ -5,15 +5,15 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter, useLocalSearchParams } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { categoryColors, categoryLabels, intensityColors, intensityLabels } from "../../lib/theme";
 import { useI18n } from "../../lib/i18n";
-import { MagnifyingGlass, Plus, Star, Trash, X } from "phosphor-react-native";
-import { useRouter } from "expo-router";
+import { MagnifyingGlass, Plus, Star, Trash, X, Football } from "phosphor-react-native";
 import { useTheme } from "../../lib/themeStore";
 import type { ThemeColors } from "../../lib/themeStore";
 import { getExercises, createExercise as dbCreateExercise, deleteExercise as dbDeleteExercise } from "../../lib/db/queries";
+import { SvgXml } from "react-native-svg";
 
 type Exercise = {
   id: string;
@@ -27,6 +27,7 @@ type Exercise = {
   intensity: string;
   materials?: string | null;
   isCustom?: boolean | null;
+  diagramImage?: string | null;
 };
 
 type Tab = "all" | "favorites";
@@ -52,6 +53,7 @@ async function saveFavorites(ids: Set<string>): Promise<void> {
 export default function LibraryScreen() {
   const { t, lang } = useI18n();
   const router = useRouter();
+  const params = useLocalSearchParams<{ diagramSvg?: string }>();
   const qc = useQueryClient();
   const c = useTheme((s) => s.colors);
   const s = useMemo(() => mkStyles(c), [c]);
@@ -71,12 +73,19 @@ export default function LibraryScreen() {
     players: "",
     intensity: "media",
     materials: "",
+    diagramImage: null as string | null,
   });
 
   useFocusEffect(
     useCallback(() => {
       loadFavorites().then(setFavorites);
-    }, [])
+      // When returning from tactical with a diagram
+      if (params.diagramSvg) {
+        const svg = decodeURIComponent(params.diagramSvg);
+        setForm(f => ({ ...f, diagramImage: svg }));
+        setAddOpen(true);
+      }
+    }, [params.diagramSvg])
   );
 
   const exercises = useQuery({
@@ -97,6 +106,7 @@ export default function LibraryScreen() {
         intensity: form.intensity,
         materials: form.materials.trim() || null,
         isCustom: true,
+        diagramImage: form.diagramImage || null,
       });
     },
     onSuccess: () => {
@@ -126,6 +136,7 @@ export default function LibraryScreen() {
     description: "", descriptionEn: "",
     duration: "30", players: "",
     intensity: "media", materials: "",
+    diagramImage: null,
   });
 
   const toggleFavorite = useCallback(async (id: string, e: any) => {
@@ -262,6 +273,31 @@ export default function LibraryScreen() {
               <Text style={s.fieldLabel}>{t("Materiali", "Materials")}</Text>
               <TextInput style={s.fieldInput} value={form.materials} onChangeText={v => setForm(f => ({ ...f, materials: v }))} placeholder={t("Coni, palloni...", "Cones, balls...")} placeholderTextColor={c.textMuted} />
 
+              <Text style={s.fieldLabel}>{t("Diagramma tattico", "Tactical Diagram")}</Text>
+              {form.diagramImage ? (
+                <View style={{ alignItems: "center", marginBottom: 4 }}>
+                  <SvgXml xml={form.diagramImage} width={200} height={form.diagramImage.includes('height="210"') ? 140 : 200} style={{ borderRadius: 8 }} />
+                  <TouchableOpacity
+                    style={{ marginTop: 6, flexDirection: "row", alignItems: "center", gap: 4 }}
+                    onPress={() => setForm(f => ({ ...f, diagramImage: null }))}
+                  >
+                    <X color={c.danger} size={14} />
+                    <Text style={{ color: c.danger, fontSize: 12 }}>{t("Rimuovi diagramma", "Remove diagram")}</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={[s.fieldInput, { flexDirection: "row", alignItems: "center", gap: 8, justifyContent: "center" }]}
+                  onPress={() => {
+                    setAddOpen(false);
+                    router.push({ pathname: "/tactical", params: { mode: "illustrate" } } as any);
+                  }}
+                >
+                  <Football color={c.primary} size={18} />
+                  <Text style={{ color: c.primary, fontWeight: "700", fontSize: 14 }}>{t("Apri Campo Tattico", "Open Tactical Field")}</Text>
+                </TouchableOpacity>
+              )}
+
               <View style={s.modalBtns}>
                 <TouchableOpacity style={s.btnCancel} onPress={() => { setAddOpen(false); resetForm(); }}>
                   <Text style={s.btnCancelTxt}>{t("Annulla", "Cancel")}</Text>
@@ -372,34 +408,43 @@ export default function LibraryScreen() {
                 >
                   <View style={[s.catBar, { backgroundColor: categoryColors[ex.category] }]} />
                   <View style={s.cardBody}>
-                    <View style={s.cardTop}>
-                      <Text style={s.cardName} numberOfLines={1}>{name}</Text>
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                        {ex.isCustom && (
-                          <TouchableOpacity
-                            onPress={(e) => { e.stopPropagation?.(); setDeleteTarget(ex); }}
-                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                          >
-                            <Trash size={16} color={c.danger} />
-                          </TouchableOpacity>
-                        )}
-                        <TouchableOpacity onPress={(e) => toggleFavorite(ex.id, e)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={s.starBtn}>
-                          <Star size={18} weight={isFav ? "fill" : "regular"} color={isFav ? "#f59e0b" : c.textMuted} />
-                        </TouchableOpacity>
+                    <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+                      <View style={{ flex: 1 }}>
+                        <View style={s.cardTop}>
+                          <Text style={s.cardName} numberOfLines={1}>{name}</Text>
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                            {ex.isCustom && (
+                              <TouchableOpacity
+                                onPress={(e) => { e.stopPropagation?.(); setDeleteTarget(ex); }}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                              >
+                                <Trash size={16} color={c.danger} />
+                              </TouchableOpacity>
+                            )}
+                            <TouchableOpacity onPress={(e) => toggleFavorite(ex.id, e)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={s.starBtn}>
+                              <Star size={18} weight={isFav ? "fill" : "regular"} color={isFav ? "#f59e0b" : c.textMuted} />
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                        <Text style={s.cardCat}>{lang === "it" ? categoryLabels[ex.category]?.it : categoryLabels[ex.category]?.en}</Text>
+                        <View style={s.meta}>
+                          <Text style={s.metaTxt}>⏱ {ex.duration} min</Text>
+                          {ex.players && <Text style={s.metaTxt}>👥 {ex.players}+</Text>}
+                          <View style={[s.intBadge, { borderColor: intensityColors[ex.intensity] }]}>
+                            <Text style={[s.intTxt, { color: intensityColors[ex.intensity] }]}>
+                              {lang === "it" ? intensityLabels[ex.intensity]?.it : intensityLabels[ex.intensity]?.en}
+                            </Text>
+                          </View>
+                          {ex.isCustom && (
+                            <View style={s.customBadge}>
+                              <Text style={s.customBadgeTxt}>{t("Custom", "Custom")}</Text>
+                            </View>
+                          )}
+                        </View>
                       </View>
-                    </View>
-                    <Text style={s.cardCat}>{lang === "it" ? categoryLabels[ex.category]?.it : categoryLabels[ex.category]?.en}</Text>
-                    <View style={s.meta}>
-                      <Text style={s.metaTxt}>⏱ {ex.duration} min</Text>
-                      {ex.players && <Text style={s.metaTxt}>👥 {ex.players}+</Text>}
-                      <View style={[s.intBadge, { borderColor: intensityColors[ex.intensity] }]}>
-                        <Text style={[s.intTxt, { color: intensityColors[ex.intensity] }]}>
-                          {lang === "it" ? intensityLabels[ex.intensity]?.it : intensityLabels[ex.intensity]?.en}
-                        </Text>
-                      </View>
-                      {ex.isCustom && (
-                        <View style={s.customBadge}>
-                          <Text style={s.customBadgeTxt}>{t("Custom", "Custom")}</Text>
+                      {ex.diagramImage && (
+                        <View style={s.diagramThumb}>
+                          <SvgXml xml={ex.diagramImage} width={56} height={56} />
                         </View>
                       )}
                     </View>
@@ -451,6 +496,7 @@ function mkStyles(c: ThemeColors) {
     intTxt: { fontSize: 10, fontWeight: "700" },
     customBadge: { backgroundColor: c.primary + "25", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
     customBadgeTxt: { fontSize: 10, color: c.primary, fontWeight: "700" },
+    diagramThumb: { marginLeft: 8, borderRadius: 6, overflow: "hidden", borderWidth: 1, borderColor: c.border },
     emptyWrap: { alignItems: "center", paddingTop: 80, gap: 12, paddingHorizontal: 32 },
     emptyTitle: { fontSize: 17, fontWeight: "700", color: c.text, textAlign: "center" },
     emptyBody: { fontSize: 13, color: c.textMuted, textAlign: "center", lineHeight: 19 },

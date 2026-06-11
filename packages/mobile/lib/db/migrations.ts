@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS exercises (
   primary_objective TEXT,
   secondary_objectives TEXT,
   is_custom INTEGER DEFAULT 0,
+  diagram_image TEXT,
   created_at INTEGER NOT NULL
 );
 

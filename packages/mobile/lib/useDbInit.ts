@@ -23,6 +23,8 @@ export function useDbInit() {
           for (const stmt of stmts) {
             expo.execSync(stmt + ";");
           }
+          // Migrations for existing DBs
+          try { expo.execSync("ALTER TABLE exercises ADD COLUMN diagram_image TEXT;"); } catch (_) {}
           await seedDefaultExercises();
         }
       } catch (e) {

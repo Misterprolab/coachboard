@@ -9,6 +9,7 @@ import type { ThemeColors } from "../../lib/themeStore";
 import { useI18n } from "../../lib/i18n";
 import { ArrowLeft, Timer, Users, Barbell, Tag } from "phosphor-react-native";
 import { getExercises } from "../../lib/db/queries";
+import { SvgXml } from "react-native-svg";
 
 type Exercise = {
   id: string;
@@ -22,6 +23,7 @@ type Exercise = {
   intensity: string;
   materials?: string | null;
   isCustom?: boolean | null;
+  diagramImage?: string | null;
 };
 
 export default function ExerciseDetailScreen() {
@@ -110,6 +112,15 @@ export default function ExerciseDetailScreen() {
             <View style={s.materialRow}>
               <Tag color={c.accent} size={16} />
               <Text style={s.materialText}>{exercise.materials}</Text>
+            </View>
+          </View>
+        )}
+
+        {exercise.diagramImage && (
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>{t('Diagramma Tattico', 'Tactical Diagram')}</Text>
+            <View style={{ alignItems: "center" }}>
+              <SvgXml xml={exercise.diagramImage} width="100%" height={exercise.diagramImage.includes('height="210"') ? 160 : 220} style={{ borderRadius: 10 }} />
             </View>
           </View>
         )}
