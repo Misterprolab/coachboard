@@ -299,7 +299,7 @@ export default function CalendarScreen() {
                       style={[s.card, isConf && s.cardConf]}
                       onPress={() => {
                         if (isConf) setConfirmingId(null);
-                        else router.push(`/match/${match.id}` as any);
+                        else router.push(`/match/${match.id}?from=calendar` as any);
                       }}
                       activeOpacity={0.8}
                     >

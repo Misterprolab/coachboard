@@ -121,9 +121,13 @@ function formatDate(d: string) {
 export default function MatchDetailScreen() {
   const c = useTheme((s) => s.colors);
   const s = useMemo(() => mkStyles(c), [c]);
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
   const { t } = useI18n();
   const router = useRouter();
+  const goBack = () => {
+    if (from === 'calendar') router.replace('/(tabs)/calendar' as any);
+    else router.replace('/(tabs)/calendar' as any);
+  };
   const qc = useQueryClient();
   const [section, setSection] = useState<Section>("info");
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -133,7 +137,7 @@ export default function MatchDetailScreen() {
   const allPlayersQ = useQuery<Player[]>({ queryKey: ["players"], queryFn: () => getPlayers() as Promise<Player[]> });
   const deleteMatch = useMutation({
     mutationFn: () => dbDeleteMatch(id!),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["matches"] }); router.back(); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["matches"] }); goBack(); },
   });
 
   if (matchQ.isLoading || allPlayersQ.isLoading) {
@@ -152,7 +156,7 @@ export default function MatchDetailScreen() {
   return (
     <SafeAreaView style={s.safe} edges={["top","left","right"]}>
       <View style={s.topBar}>
-        <TouchableOpacity onPress={() => router.back()} style={s.back}><ArrowLeft color={c.text} size={24} /></TouchableOpacity>
+        <TouchableOpacity onPress={goBack} style={s.back}><ArrowLeft color={c.text} size={24} /></TouchableOpacity>
         <View style={s.topTitle}>
           <Text style={s.topOpponent} numberOfLines={1}>vs {match.opponent}</Text>
           <Text style={s.topDate}>{formatDate(match.date)}{match.time ? ` · ${match.time}` : ""}</Text>
