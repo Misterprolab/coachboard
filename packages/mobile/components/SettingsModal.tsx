@@ -560,8 +560,8 @@ export default function SettingsModal({ visible, onClose }: Props) {
       {/* Contact */}
       <View style={s.infoBlock}>
         <Text style={s.infoLabel}>{t('Contatti', 'Contact')}</Text>
-        <TouchableOpacity style={s.infoLinkRow} onPress={() => Linking.openURL('mailto:misterprolab@outlook.com')}>
-          <Text style={s.infoLink}>misterprolab@outlook.com</Text>
+        <TouchableOpacity style={s.infoLinkRow} onPress={() => Linking.openURL('mailto:Info@misterprolab.it')}>
+          <Text style={s.infoLink}>Info@misterprolab.it</Text>
         </TouchableOpacity>
       </View>
 
