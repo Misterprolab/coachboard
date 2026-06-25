@@ -623,23 +623,36 @@ function FormazioneSection({ match, allPlayers, id, qc, c, scrollRef }: { match:
   const bench = eligible.filter(p => !inLineupIds.has(p.id));
 
   const saveMutation = useMutation({
-    mutationFn: () => dbSetLineup(id, lineup.map(l => ({
-      playerId: l.playerId, positionRole: l.positionRole || null,
-      jerseyNumber: l.jerseyNumber ? parseInt(l.jerseyNumber) : null,
-      isCaptain: l.isCaptain, isViceCaptain: l.isViceCaptain,
-      isFreekickTaker: l.isFreekickTaker, isCornerTaker: l.isCornerTaker,
-      isPenaltyTaker: l.isPenaltyTaker, isWallPlayer: l.isWallPlayer,
-      posX: customPositions[l.playerId]?.x ?? null,
-      posY: customPositions[l.playerId]?.y ?? null,
-    }))),
+    mutationFn: () => {
+      const bn = benchNumsRef.current;
+      const convIds2 = new Set(match.convocations.map(cv => cv.playerId));
+      const updatedConvs = [...convIds2].map(pid => ({
+        playerId: pid,
+        jerseyNumber: bn[pid] ? parseInt(bn[pid]) : (match.convocations.find(cv => cv.playerId === pid)?.jerseyNumber ?? null),
+      }));
+      return Promise.all([
+        dbSetLineup(id, lineup.map(l => ({
+          playerId: l.playerId, positionRole: l.positionRole || null,
+          jerseyNumber: l.jerseyNumber ? parseInt(l.jerseyNumber) : (bn[l.playerId] ? parseInt(bn[l.playerId]) : null),
+          isCaptain: l.isCaptain, isViceCaptain: l.isViceCaptain,
+          isFreekickTaker: l.isFreekickTaker, isCornerTaker: l.isCornerTaker,
+          isPenaltyTaker: l.isPenaltyTaker, isWallPlayer: l.isWallPlayer,
+          posX: customPositions[l.playerId]?.x ?? null,
+          posY: customPositions[l.playerId]?.y ?? null,
+        }))),
+        setConvocations(id, updatedConvs),
+      ]);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["match", id] }),
   });
 
   // Auto-save refs for lineup
   const lineupRef = useRef(lineup);
   const customPositionsRef = useRef(customPositions);
+  const benchNumsRef = useRef(benchNums);
   lineupRef.current = lineup;
   customPositionsRef.current = customPositions;
+  benchNumsRef.current = benchNums;
   const [lineupAutoSaving, setLineupAutoSaving] = useState(false);
   const lineupAutoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scheduleLineupAutoSave = () => {
@@ -648,15 +661,27 @@ function FormazioneSection({ match, allPlayers, id, qc, c, scrollRef }: { match:
     lineupAutoSaveTimer.current = setTimeout(() => {
       const lu = lineupRef.current;
       const cp = customPositionsRef.current;
-      dbSetLineup(id, lu.map(l => ({
+      const bn = benchNumsRef.current;
+      // Merge benchNums into lineup jerseys and update convocations
+      const luWithNums = lu.map(l => ({
         playerId: l.playerId, positionRole: l.positionRole || null,
-        jerseyNumber: l.jerseyNumber ? parseInt(l.jerseyNumber) : null,
+        jerseyNumber: l.jerseyNumber ? parseInt(l.jerseyNumber) : (bn[l.playerId] ? parseInt(bn[l.playerId]) : null),
         isCaptain: l.isCaptain, isViceCaptain: l.isViceCaptain,
         isFreekickTaker: l.isFreekickTaker, isCornerTaker: l.isCornerTaker,
         isPenaltyTaker: l.isPenaltyTaker, isWallPlayer: l.isWallPlayer,
         posX: cp[l.playerId]?.x ?? null,
         posY: cp[l.playerId]?.y ?? null,
-      })))
+      }));
+      // Persist bench nums into convocations (all convocated players with their updated jersey numbers)
+      const convIds2 = new Set(match.convocations.map(cv => cv.playerId));
+      const updatedConvs = [...convIds2].map(pid => ({
+        playerId: pid,
+        jerseyNumber: bn[pid] ? parseInt(bn[pid]) : (match.convocations.find(cv => cv.playerId === pid)?.jerseyNumber ?? null),
+      }));
+      Promise.all([
+        dbSetLineup(id, luWithNums),
+        setConvocations(id, updatedConvs),
+      ])
         .then(() => { qc.invalidateQueries({ queryKey: ["match", id] }); setLineupAutoSaving(false); })
         .catch(() => { setLineupAutoSaving(false); });
     }, 800);
@@ -854,7 +879,7 @@ function FormazioneSection({ match, allPlayers, id, qc, c, scrollRef }: { match:
         <TouchableOpacity key={p.id} style={s2.benchCard} onPress={() => handleBenchTap(p)} activeOpacity={0.75}>
           <View style={[s2.benchDot, { backgroundColor: ROLE_COLORS[p.role] || c.primary }]} />
           <Text style={s2.benchName}>{p.name}</Text>
-          <TextInput style={s2.benchNumInput} value={benchNums[p.id] ?? (p.number != null ? String(p.number) : "")} onChangeText={v => setBenchNums(prev => ({ ...prev, [p.id]: v }))} keyboardType="number-pad" placeholder="#" placeholderTextColor={c.textDim} maxLength={3} />
+          <TextInput style={s2.benchNumInput} value={benchNums[p.id] ?? (p.number != null ? String(p.number) : "")} onChangeText={v => { setBenchNums(prev => ({ ...prev, [p.id]: v })); scheduleLineupAutoSave(); }} keyboardType="number-pad" placeholder="#" placeholderTextColor={c.textDim} maxLength={3} />
         </TouchableOpacity>
       ))}
       {bench.length === 0 && eligible.length > 0 && <Text style={s2.emptyTxt}>{t("Tutti i convocati sono in campo","All convocated players are on the pitch")}</Text>}
