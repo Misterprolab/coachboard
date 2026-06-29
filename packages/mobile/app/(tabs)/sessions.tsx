@@ -79,7 +79,7 @@ export default function SessionsScreen() {
                     if (isConfirming) {
                       setConfirmingId(null);
                     } else {
-                      router.push(`/session/${session.id}` as any);
+                      router.push({ pathname: `/session/${session.id}`, params: { from: 'sessions' } } as any);
                     }
                   }}
                   activeOpacity={0.8}

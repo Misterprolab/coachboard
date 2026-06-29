@@ -13,9 +13,14 @@ import { exportSessionPdf } from "../../lib/pdfExport";
 import { useProfile } from "../../lib/profile";
 
 export default function SessionDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
   const { t, lang } = useI18n();
   const router = useRouter();
+  const goBack = () => {
+    if (from === 'sessions') router.replace('/(tabs)/sessions' as any);
+    else if (from === 'home') router.replace('/(tabs)' as any);
+    else router.replace('/(tabs)/sessions' as any);
+  };
   const qc = useQueryClient();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const c = useTheme((s) => s.colors);
@@ -32,7 +37,7 @@ export default function SessionDetailScreen() {
     mutationFn: () => dbDeleteSession(id!),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["sessions"] });
-      router.replace('/(tabs)' as any);
+      goBack();
     },
   });
 
@@ -88,7 +93,7 @@ export default function SessionDetailScreen() {
   return (
     <SafeAreaView style={s.safe} edges={["top", "left", "right"]}>
       <View style={s.topBar}>
-        <TouchableOpacity onPress={() => router.replace('/(tabs)' as any)} style={s.back}>
+        <TouchableOpacity onPress={goBack} style={s.back}>
           <ArrowLeft color={c.text} size={24} />
         </TouchableOpacity>
         <Text numberOfLines={1} style={s.pageTitle}>{t('Dettaglio Seduta', 'Session Detail')}</Text>
@@ -166,7 +171,7 @@ export default function SessionDetailScreen() {
                 <TouchableOpacity
                   key={item.id}
                   style={s.exCard}
-                  onPress={() => router.push(`/exercise/${ex.id}` as any)}
+                  onPress={() => router.push({ pathname: `/exercise/${ex.id}`, params: { from: 'session', sessionId: id } } as any)}
                   activeOpacity={0.8}
                 >
                   <View style={s.exNum}>

@@ -406,7 +406,7 @@ export default function LibraryScreen() {
                 <TouchableOpacity
                   key={ex.id}
                   style={[s.card, isFav && s.cardFav]}
-                  onPress={() => router.push(`/exercise/${ex.id}` as any)}
+                  onPress={() => router.push({ pathname: `/exercise/${ex.id}`, params: { from: 'library' } } as any)}
                   activeOpacity={0.8}
                 >
                   <View style={[s.catBar, { backgroundColor: categoryColors[ex.category] }]} />

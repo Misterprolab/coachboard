@@ -3,13 +3,15 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useI18n } from "../lib/i18n";
 import { Play, Pause, ArrowCounterClockwise, ArrowLeft } from "phosphor-react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { useTheme } from "../lib/themeStore";
 import type { ThemeColors } from "../lib/themeStore";
 
 export default function TimerScreen() {
   const { t } = useI18n();
   const router = useRouter();
+  const { from } = useLocalSearchParams<{ from?: string }>();
+  const goBack = () => router.replace('/(tabs)' as any);
   const c = useTheme((s) => s.colors);
   const s = useMemo(() => mkStyles(c), [c]);
 
@@ -59,7 +61,7 @@ export default function TimerScreen() {
   return (
     <SafeAreaView style={s.safe} edges={["top", "left", "right"]}>
       <View style={s.topBar}>
-        <TouchableOpacity onPress={() => router.back()} style={s.back}>
+        <TouchableOpacity onPress={goBack} style={s.back}>
           <ArrowLeft color={c.text} size={24} />
         </TouchableOpacity>
         <Text style={s.pageTitle}>{t('Timer Allenamento', 'Training Timer')}</Text>

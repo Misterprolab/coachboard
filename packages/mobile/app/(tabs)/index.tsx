@@ -106,7 +106,7 @@ export default function HomeScreen() {
     { icon: <Lightning color={c.accent} size={28} weight="fill" />, label: t('Genera Seduta', 'Generate'), onPress: () => router.push('/(tabs)/generator') },
     { icon: <BookOpen color={c.primary} size={28} weight="fill" />, label: t('Libreria', 'Library'), onPress: () => router.push('/(tabs)/library') },
     { icon: <Users color={c.tecnica} size={28} weight="fill" />, label: t('Rosa', 'Roster'), onPress: () => router.push('/(tabs)/roster') },
-    { icon: <Timer color={c.riscaldamento} size={28} weight="fill" />, label: t('Timer', 'Timer'), onPress: () => router.push('/timer') },
+    { icon: <Timer color={c.riscaldamento} size={28} weight="fill" />, label: t('Timer', 'Timer'), onPress: () => router.push({ pathname: '/timer', params: { from: 'home' } } as any) },
   ];
 
   return (
@@ -259,7 +259,7 @@ export default function HomeScreen() {
             <Text style={s.emptySub}>{t('Genera la tua prima seduta!', 'Generate your first session!')}</Text>
           </View>
         ) : recentSessions.map((sess: any) => (
-          <TouchableOpacity key={sess.id} style={s.sessionCard} onPress={() => router.push(`/session/${sess.id}` as any)} activeOpacity={0.8}>
+          <TouchableOpacity key={sess.id} style={s.sessionCard} onPress={() => router.push({ pathname: `/session/${sess.id}`, params: { from: 'home' } } as any)} activeOpacity={0.8}>
             <Text style={s.sessionTitle}>{sess.title}</Text>
             <Text style={s.sessionDate}>{sess.date} · {sess.duration ? `${sess.duration} min` : ''}</Text>
           </TouchableOpacity>

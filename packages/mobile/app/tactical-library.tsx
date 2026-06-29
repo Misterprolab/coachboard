@@ -4,7 +4,7 @@ import {
   Modal, TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useTheme } from "../lib/themeStore";
@@ -192,6 +192,11 @@ export default function TacticalLibraryScreen() {
   const s = useMemo(() => mkStyles(c), [c]);
   const { t } = useI18n();
   const router = useRouter();
+  const { from } = useLocalSearchParams<{ from?: string }>();
+  const goBack = () => {
+    if (from === 'tactical') router.replace('/tactical' as any);
+    else router.replace('/(tabs)' as any);
+  };
 
   const [boards, setBoards] = useState<TacticBoard[]>([]);
   const [activeTab, setActiveTab] = useState<Tab>("all");
@@ -393,7 +398,7 @@ export default function TacticalLibraryScreen() {
       {/* ── Top bar ────────────────────────────────────────────────────── */}
       <View style={s.topBar}>
         <TouchableOpacity
-          onPress={() => router.replace('/(tabs)' as any)}
+          onPress={goBack}
           style={s.back}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >

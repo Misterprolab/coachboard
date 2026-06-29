@@ -1075,7 +1075,7 @@ export default function TacticalScreen() {
           <TouchableOpacity style={s.iconBtn} onPress={() => { pushUndo({ players: playersRef.current, lines: linesRef.current, fieldTexts: fieldTextsRef.current }); setLines([]); setPlayers([]); setFieldTexts([]); playerPRs.current = {}; textPRs.current = {}; }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Eraser color={c.textMuted} size={18} />
           </TouchableOpacity>
-          <TouchableOpacity style={s.iconBtn} onPress={() => router.push("/tactical-library" as any)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity style={s.iconBtn} onPress={() => router.push({ pathname: "/tactical-library", params: { from: "tactical" } } as any)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <FolderOpen color={c.textMuted} size={18} />
           </TouchableOpacity>
           {isIllustrationMode ? (

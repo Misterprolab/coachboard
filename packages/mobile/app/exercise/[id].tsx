@@ -29,9 +29,13 @@ type Exercise = {
 export default function ExerciseDetailScreen() {
   const c = useTheme((s) => s.colors);
   const s = useMemo(() => mkStyles(c), [c]);
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, from, sessionId } = useLocalSearchParams<{ id: string; from?: string; sessionId?: string }>();
   const { t, lang } = useI18n();
   const router = useRouter();
+  const goBack = () => {
+    if (from === 'session' && sessionId) router.replace({ pathname: `/session/${sessionId}`, params: { from: 'sessions' } } as any);
+    else router.replace('/(tabs)/library' as any);
+  };
 
   const exercises = useQuery({
     queryKey: ["exercises"],
@@ -62,7 +66,7 @@ export default function ExerciseDetailScreen() {
   return (
     <SafeAreaView style={s.safe} edges={["top", "left", "right"]}>
       <View style={s.topBar}>
-        <TouchableOpacity onPress={() => router.replace('/(tabs)/library' as any)} style={s.back}>
+        <TouchableOpacity onPress={goBack} style={s.back}>
           <ArrowLeft color={c.text} size={24} />
         </TouchableOpacity>
         <Text style={s.pageTitle}>{t('Dettaglio Esercizio', 'Exercise Detail')}</Text>
