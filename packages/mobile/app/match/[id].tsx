@@ -1508,6 +1508,8 @@ function RiepilogoSection({ match, allPlayers, id: _id, qc: _qc, c }: { match: M
         posRole: l.positionRole ?? "",
         isCaptain: !!l.isCaptain,
         isViceCaptain: !!l.isViceCaptain,
+        posX: l.posX ?? null,
+        posY: l.posY ?? null,
       };
     });
     const convIds2 = new Set(match.convocations.map(cv => cv.playerId));

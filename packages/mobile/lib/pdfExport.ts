@@ -132,6 +132,8 @@ export interface MatchPdfData {
     posRole: string;
     isCaptain?: boolean;
     isViceCaptain?: boolean;
+    posX?: number | null;
+    posY?: number | null;
   }>;
   bench: Array<{ name: string; number: number | string; role: string }>;
   captain?: string;
@@ -182,7 +184,7 @@ function pitchSvg(starters: MatchPdfData["starters"], formation: string): string
   `;
 
   const tokens = starters.map((p, i) => {
-    const pos = positions[i] ?? { x: 50, y: 50 };
+    const pos = (p.posX != null && p.posY != null) ? { x: p.posX, y: p.posY } : (positions[i] ?? { x: 50, y: 50 });
     const px = (pos.x / 100) * W;
     const py = (pos.y / 100) * H;
     const color = ROLE_COLORS[p.role] ?? "#888";
