@@ -432,7 +432,7 @@ function ConvocatiSection({ match, allPlayers, id, qc, c }: { match: Match; allP
         </View>
       </View>
       <Text style={{ fontSize: 11, color: c.textDim, marginBottom: 10, fontStyle: "italic" }}>
-        {t("Tocca per selezionare · Modifica il numero maglia per questa partita","Tap to select · Edit jersey number for this match")}
+        {t("Tocca per selezionare · Il numero di maglia si assegna nella sezione Formazione","Tap to select · Jersey number is assigned in the Formation section")}
       </Text>
       {allPlayers.length === 0 ? <Text style={s2.emptyTxt}>{t("Nessun giocatore in rosa","No players in roster")}</Text> : (
         groups.map(g => (
@@ -446,7 +446,9 @@ function ConvocatiSection({ match, allPlayers, id, qc, c }: { match: Match; allP
                     <View style={[s2.playerDot, { backgroundColor: ROLE_COLORS[p.role] || c.primary }]} />
                     <Text style={[s2.playerName, checked && { color: c.text }]}>{p.name}</Text>
                   </TouchableOpacity>
-                  <TextInput style={[s2.convNumInput, !checked && s2.convNumInputDim]} value={convJerseys[p.id] ?? ""} onChangeText={v => { setConvJerseys(prev => ({ ...prev, [p.id]: v })); scheduleAutoSave(); }} keyboardType="number-pad" placeholder="#" placeholderTextColor={c.textDim} maxLength={3} editable={checked} />
+                  <View style={[s2.convNumInput, !checked && s2.convNumInputDim, { alignItems: "center", justifyContent: "center" }]}>
+                    <Text style={{ color: checked ? c.text : c.textDim, fontSize: 14, fontWeight: "700" }}>{convJerseys[p.id] || "-"}</Text>
+                  </View>
                   <TouchableOpacity onPress={() => toggle(p.id)} style={[s2.checkbox, checked && s2.checkboxChecked]}>
                     {checked && <Check color="#000" size={12} weight="bold" />}
                   </TouchableOpacity>
