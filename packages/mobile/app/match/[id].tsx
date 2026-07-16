@@ -333,9 +333,7 @@ function ConvocatiSection({ match, allPlayers, id, qc, c }: { match: Match; allP
       .filter(p => convIds2.has(p.id))
       .map(p => ({
         name: p.name,
-        number: p.number ?? "?",
         role: p.role,
-        jerseyNumber: match.convocations.find(cv => cv.playerId === p.id)?.jerseyNumber,
       }));
     exportConvocationPdf(
       { teamName, logoUrl, title: "Convocazione", subtitle: `vs ${match.opponent}` },
@@ -1500,9 +1498,24 @@ function RiepilogoSection({ match, allPlayers, id: _id, qc: _qc, c }: { match: M
   const logoUrl = profile.activeTeam()?.logoUri || null;
 
   const handleExportPdf = () => {
+    // Compute the exact same default positions (formation-based, sorted by role/line)
+    // used by the Formazione and Riepilogo screens, so the PDF matches 1:1.
+    const pdfFormation = match.formation ?? "4-3-3";
+    const pdfDefaultPositions = getFormationPositions(pdfFormation);
+    const pdfSorted = [...match.lineup].sort((a, b) => {
+      const ai = a.positionRole === "POR" ? -1 : posRoleToLineIdx(a.positionRole, pdfFormation);
+      const bi = b.positionRole === "POR" ? -1 : posRoleToLineIdx(b.positionRole, pdfFormation);
+      return ai - bi;
+    });
+    const pdfFinalPos: Record<string, { x: number; y: number }> = {};
+    pdfSorted.forEach((l, slotIdx) => {
+      const defaultPos = pdfDefaultPositions.length > 0 ? pdfDefaultPositions[Math.min(slotIdx, pdfDefaultPositions.length - 1)] : { x: 50, y: 50 };
+      pdfFinalPos[l.playerId] = (l.posX != null && l.posY != null) ? { x: l.posX, y: l.posY } : (defaultPos ?? { x: 50, y: 50 });
+    });
     const startersList = match.lineup.map(l => {
       const p = allPlayers.find(pl => pl.id === l.playerId);
       const jerseyNum = match.convocations.find(cv => cv.playerId === l.playerId)?.jerseyNumber ?? l.jerseyNumber ?? p?.number ?? "?";
+      const pos = pdfFinalPos[l.playerId] ?? { x: 50, y: 50 };
       return {
         name: p?.name ?? "?",
         number: jerseyNum,
@@ -1510,8 +1523,8 @@ function RiepilogoSection({ match, allPlayers, id: _id, qc: _qc, c }: { match: M
         posRole: l.positionRole ?? "",
         isCaptain: !!l.isCaptain,
         isViceCaptain: !!l.isViceCaptain,
-        posX: l.posX ?? null,
-        posY: l.posY ?? null,
+        posX: pos.x,
+        posY: pos.y,
       };
     });
     const convIds2 = new Set(match.convocations.map(cv => cv.playerId));

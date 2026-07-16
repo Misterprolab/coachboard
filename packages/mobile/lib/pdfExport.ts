@@ -69,6 +69,7 @@ const BASE_CSS = `
   .players-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 8px 0; }
   .player-row { display: flex; align-items: center; gap: 7px; padding: 4px 8px; border-radius: 6px; background: #f8f8f8; }
   .player-num { width: 22px; height: 22px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; color: #fff; flex-shrink: 0; }
+  .player-dot { width: 10px; height: 10px; border-radius: 5px; flex-shrink: 0; }
   .player-name { font-size: 11px; font-weight: 600; color: #333; }
   .player-role { font-size: 9px; color: #888; margin-left: 2px; }
   .captain-badge { font-size: 9px; background: #D4AF37; color: #fff; border-radius: 3px; padding: 0 3px; margin-left: 3px; }
@@ -325,7 +326,7 @@ export interface ConvocationPdfData {
   venue?: string;
   homeAway: "home" | "away";
   competition?: string;
-  players: Array<{ name: string; number: number | string; role: string; jerseyNumber?: number | string | null }>;
+  players: Array<{ name: string; role: string }>;
   notes?: string;
   meetingTime?: string;
   meetingPlace?: string;
@@ -336,7 +337,7 @@ export function exportConvocationPdf(header: PdfHeader, data: ConvocationPdfData
 
   const playersHtml = data.players.map(p => `
     <div class="player-row">
-      <div class="player-num" style="background:${ROLE_COLORS[p.role] ?? "#888"}">${p.jerseyNumber ?? p.number}</div>
+      <div class="player-dot" style="background:${ROLE_COLORS[p.role] ?? "#888"}"></div>
       <span class="player-name">${p.name}</span>
     </div>`).join("");
 
