@@ -28,6 +28,7 @@ type LineupPlayer = {
   playerId: string; positionRole: string; jerseyNumber: number | null;
   isCaptain: boolean; isViceCaptain: boolean; isFreekickTaker: boolean;
   isCornerTaker: boolean; isPenaltyTaker: boolean; isWallPlayer: boolean;
+  wallOrder?: number | null; cornerOrder?: number | null; freekickOrder?: number | null; penaltyOrder?: number | null;
   posX?: number | null; posY?: number | null; player?: Player;
 };
 type Goal = { id?: string; playerId: string | null; minute: number | null; type: "goal" | "autogoal" | "rigore"; notes: string; player?: Player };
@@ -575,8 +576,8 @@ function DraggableToken({ playerId, num, name, color, isCaptain, isViceCaptain, 
 function FormazioneSection({ match, allPlayers, id, qc, c, scrollRef }: { match: Match; allPlayers: Player[]; id: string; qc: any; c: ThemeColors; scrollRef?: React.RefObject<any> }) {
   const s2 = useMemo(() => mkStyles2(c), [c]);
   const { t } = useI18n();
-  type LP = { playerId: string; positionRole: string; jerseyNumber: string; isCaptain: boolean; isViceCaptain: boolean; isFreekickTaker: boolean; isCornerTaker: boolean; isPenaltyTaker: boolean; isWallPlayer: boolean };
-  const toLP = (l: LineupPlayer): LP => ({ playerId: l.playerId, positionRole: l.positionRole || "", jerseyNumber: l.jerseyNumber != null ? String(l.jerseyNumber) : "", isCaptain: l.isCaptain, isViceCaptain: l.isViceCaptain, isFreekickTaker: l.isFreekickTaker, isCornerTaker: l.isCornerTaker, isPenaltyTaker: l.isPenaltyTaker, isWallPlayer: l.isWallPlayer });
+  type LP = { playerId: string; positionRole: string; jerseyNumber: string; isCaptain: boolean; isViceCaptain: boolean; isFreekickTaker: boolean; isCornerTaker: boolean; isPenaltyTaker: boolean; isWallPlayer: boolean; wallOrder: number | null; cornerOrder: number | null; freekickOrder: number | null; penaltyOrder: number | null };
+  const toLP = (l: LineupPlayer): LP => ({ playerId: l.playerId, positionRole: l.positionRole || "", jerseyNumber: l.jerseyNumber != null ? String(l.jerseyNumber) : "", isCaptain: l.isCaptain, isViceCaptain: l.isViceCaptain, isFreekickTaker: l.isFreekickTaker, isCornerTaker: l.isCornerTaker, isPenaltyTaker: l.isPenaltyTaker, isWallPlayer: l.isWallPlayer, wallOrder: l.wallOrder ?? null, cornerOrder: l.cornerOrder ?? null, freekickOrder: l.freekickOrder ?? null, penaltyOrder: l.penaltyOrder ?? null });
   const [lineup, setLineup] = useState<LP[]>(match.lineup.map(toLP));
   const [benchNums, setBenchNums] = useState<Record<string, string>>(() => {
     const m: Record<string, string> = {};
@@ -637,6 +638,8 @@ function FormazioneSection({ match, allPlayers, id, qc, c, scrollRef }: { match:
           isCaptain: l.isCaptain, isViceCaptain: l.isViceCaptain,
           isFreekickTaker: l.isFreekickTaker, isCornerTaker: l.isCornerTaker,
           isPenaltyTaker: l.isPenaltyTaker, isWallPlayer: l.isWallPlayer,
+          wallOrder: l.wallOrder ?? null, cornerOrder: l.cornerOrder ?? null,
+          freekickOrder: l.freekickOrder ?? null, penaltyOrder: l.penaltyOrder ?? null,
           posX: customPositions[l.playerId]?.x ?? null,
           posY: customPositions[l.playerId]?.y ?? null,
         }))),
@@ -669,6 +672,8 @@ function FormazioneSection({ match, allPlayers, id, qc, c, scrollRef }: { match:
         isCaptain: l.isCaptain, isViceCaptain: l.isViceCaptain,
         isFreekickTaker: l.isFreekickTaker, isCornerTaker: l.isCornerTaker,
         isPenaltyTaker: l.isPenaltyTaker, isWallPlayer: l.isWallPlayer,
+        wallOrder: l.wallOrder ?? null, cornerOrder: l.cornerOrder ?? null,
+        freekickOrder: l.freekickOrder ?? null, penaltyOrder: l.penaltyOrder ?? null,
         posX: cp[l.playerId]?.x ?? null,
         posY: cp[l.playerId]?.y ?? null,
       }));
@@ -693,7 +698,7 @@ function FormazioneSection({ match, allPlayers, id, qc, c, scrollRef }: { match:
   const addFromBench = (p: Player) => {
     // Max 11 starters
     if (lineup.length >= 11) return;
-    setLineup(prev => [...prev, { playerId: p.id, positionRole: p.role === "portiere" ? "POR" : p.role === "difensore" ? "DC" : p.role === "centrocampista" ? "CC" : "PC", jerseyNumber: benchNums[p.id] ?? (p.number != null ? String(p.number) : ""), isCaptain: false, isViceCaptain: false, isFreekickTaker: false, isCornerTaker: false, isPenaltyTaker: false, isWallPlayer: false }]);
+    setLineup(prev => [...prev, { playerId: p.id, positionRole: p.role === "portiere" ? "POR" : p.role === "difensore" ? "DC" : p.role === "centrocampista" ? "CC" : "PC", jerseyNumber: benchNums[p.id] ?? (p.number != null ? String(p.number) : ""), isCaptain: false, isViceCaptain: false, isFreekickTaker: false, isCornerTaker: false, isPenaltyTaker: false, isWallPlayer: false, wallOrder: null, cornerOrder: null, freekickOrder: null, penaltyOrder: null }]);
     setShowAdd(false);
     scheduleLineupAutoSave();
   };
@@ -960,22 +965,57 @@ function FormazioneSection({ match, allPlayers, id, qc, c, scrollRef }: { match:
 function SpecialistiSection({ match, allPlayers, id, qc, c }: { match: Match; allPlayers: Player[]; id: string; qc: any; c: ThemeColors }) {
   const s2 = useMemo(() => mkStyles2(c), [c]);
   const { t } = useI18n();
-  type LP = { playerId: string; positionRole: string; jerseyNumber: string; isCaptain: boolean; isViceCaptain: boolean; isFreekickTaker: boolean; isCornerTaker: boolean; isPenaltyTaker: boolean; isWallPlayer: boolean };
-  const toLP = (l: LineupPlayer): LP => ({ playerId: l.playerId, positionRole: l.positionRole || "", jerseyNumber: l.jerseyNumber != null ? String(l.jerseyNumber) : "", isCaptain: l.isCaptain, isViceCaptain: l.isViceCaptain, isFreekickTaker: l.isFreekickTaker, isCornerTaker: l.isCornerTaker, isPenaltyTaker: l.isPenaltyTaker, isWallPlayer: l.isWallPlayer });
+  type LP = { playerId: string; positionRole: string; jerseyNumber: string; isCaptain: boolean; isViceCaptain: boolean; isFreekickTaker: boolean; isCornerTaker: boolean; isPenaltyTaker: boolean; isWallPlayer: boolean; wallOrder: number | null; cornerOrder: number | null; freekickOrder: number | null; penaltyOrder: number | null };
+  const toLP = (l: LineupPlayer): LP => ({ playerId: l.playerId, positionRole: l.positionRole || "", jerseyNumber: l.jerseyNumber != null ? String(l.jerseyNumber) : "", isCaptain: l.isCaptain, isViceCaptain: l.isViceCaptain, isFreekickTaker: l.isFreekickTaker, isCornerTaker: l.isCornerTaker, isPenaltyTaker: l.isPenaltyTaker, isWallPlayer: l.isWallPlayer, wallOrder: l.wallOrder ?? null, cornerOrder: l.cornerOrder ?? null, freekickOrder: l.freekickOrder ?? null, penaltyOrder: l.penaltyOrder ?? null });
   const [lineup, setLineup] = useState<LP[]>(match.lineup.map(toLP));
+  const toPayload = (lu: LP[]) => lu.map(l => ({
+    playerId: l.playerId, positionRole: l.positionRole || null,
+    jerseyNumber: l.jerseyNumber ? parseInt(l.jerseyNumber) : null,
+    isCaptain: l.isCaptain, isViceCaptain: l.isViceCaptain,
+    isFreekickTaker: l.isFreekickTaker, isCornerTaker: l.isCornerTaker,
+    isPenaltyTaker: l.isPenaltyTaker, isWallPlayer: l.isWallPlayer,
+    wallOrder: l.wallOrder, cornerOrder: l.cornerOrder,
+    freekickOrder: l.freekickOrder, penaltyOrder: l.penaltyOrder,
+  }));
   const saveMutation = useMutation({
-    mutationFn: () => dbSetLineup(id, lineup.map(l => ({
-      playerId: l.playerId, positionRole: l.positionRole || null,
-      jerseyNumber: l.jerseyNumber ? parseInt(l.jerseyNumber) : null,
-      isCaptain: l.isCaptain, isViceCaptain: l.isViceCaptain,
-      isFreekickTaker: l.isFreekickTaker, isCornerTaker: l.isCornerTaker,
-      isPenaltyTaker: l.isPenaltyTaker, isWallPlayer: l.isWallPlayer,
-    }))),
+    mutationFn: () => dbSetLineup(id, toPayload(lineup)),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["match", id] }),
   });
+  // Auto-save so specialist order/selection isn't lost when navigating away without pressing "Salva"
+  const lineupRef = useRef(lineup);
+  lineupRef.current = lineup;
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scheduleAutoSave = () => {
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(() => {
+      dbSetLineup(id, toPayload(lineupRef.current)).then(() => qc.invalidateQueries({ queryKey: ["match", id] }));
+    }, 800);
+  };
   const getPlayer = (pid: string) => allPlayers.find(p => p.id === pid);
-  const setExclusive = (field: "isCaptain"|"isViceCaptain", playerId: string | null) => setLineup(prev => prev.map(l => ({ ...l, [field]: l.playerId === playerId })));
-  const toggleMulti = (field: "isFreekickTaker"|"isCornerTaker"|"isPenaltyTaker", playerId: string) => setLineup(prev => prev.map(l => l.playerId === playerId ? { ...l, [field]: !l[field] } : l));
+  const setExclusive = (field: "isCaptain"|"isViceCaptain", playerId: string | null) => { setLineup(prev => prev.map(l => ({ ...l, [field]: l.playerId === playerId }))); scheduleAutoSave(); };
+  const ORDER_FIELD: Record<string, "wallOrder"|"cornerOrder"|"freekickOrder"|"penaltyOrder"> = {
+    isWallPlayer: "wallOrder", isCornerTaker: "cornerOrder", isFreekickTaker: "freekickOrder", isPenaltyTaker: "penaltyOrder",
+  };
+  const toggleMulti = (field: "isFreekickTaker"|"isCornerTaker"|"isPenaltyTaker"|"isWallPlayer", playerId: string) => {
+    const orderField = ORDER_FIELD[field];
+    setLineup(prev => {
+      const target = prev.find(l => l.playerId === playerId);
+      if (!target) return prev;
+      if (target[field]) {
+        // Turning off: clear its order and compact the remaining ones
+        const removedOrder = target[orderField] ?? 0;
+        return prev.map(l => {
+          if (l.playerId === playerId) return { ...l, [field]: false, [orderField]: null };
+          if (l[orderField] != null && l[orderField]! > removedOrder) return { ...l, [orderField]: l[orderField]! - 1 };
+          return l;
+        });
+      }
+      // Turning on: assign next available order number
+      const maxOrder = prev.reduce((max, l) => (l[orderField] != null ? Math.max(max, l[orderField]!) : max), 0);
+      return prev.map(l => l.playerId === playerId ? { ...l, [field]: true, [orderField]: maxOrder + 1 } : l);
+    });
+    scheduleAutoSave();
+  };
   const benchNums = useMemo<Record<string, string>>(() => {
     const m: Record<string, string> = {};
     match.convocations.forEach(cv => { if (cv.jerseyNumber != null) m[cv.playerId] = String(cv.jerseyNumber); });
@@ -983,14 +1023,20 @@ function SpecialistiSection({ match, allPlayers, id, qc, c }: { match: Match; al
     allPlayers.forEach(p => { if (m[p.id] == null && p.number != null) m[p.id] = String(p.number); });
     return m;
   }, [match]);
-  const [wallOrder, setWallOrder] = useState<string[]>(() => lineup.filter(l => l.isWallPlayer).map(l => l.playerId));
-  const toggleWall = (playerId: string) => setWallOrder(prev => {
-    if (prev.includes(playerId)) { setLineup(ll => ll.map(l => l.playerId === playerId ? { ...l, isWallPlayer: false } : l)); return prev.filter(id => id !== playerId); }
-    setLineup(ll => ll.map(l => l.playerId === playerId ? { ...l, isWallPlayer: true } : l)); return [...prev, playerId];
-  });
+  const toggleWall = (playerId: string) => toggleMulti("isWallPlayer", playerId);
+  const clearMulti = (field: "isFreekickTaker"|"isCornerTaker"|"isPenaltyTaker"|"isWallPlayer") => {
+    const orderField = ORDER_FIELD[field];
+    setLineup(prev => prev.map(l => ({ ...l, [field]: false, [orderField]: null })));
+    scheduleAutoSave();
+  };
   const getExclusive = (field: "isCaptain"|"isViceCaptain") => lineup.find(l => l[field])?.playerId ?? null;
-  const getMulti = (field: "isFreekickTaker"|"isCornerTaker"|"isPenaltyTaker") => lineup.filter(l => l[field]).map(l => l.playerId);
-  const getWall = () => wallOrder.filter(id => lineup.some(l => l.playerId === id));
+  const getMulti = (field: "isFreekickTaker"|"isCornerTaker"|"isPenaltyTaker") => {
+    const orderField = ORDER_FIELD[field];
+    return lineup.filter(l => l[field]).sort((a, b) => (a[orderField] ?? 0) - (b[orderField] ?? 0)).map(l => l.playerId);
+  };
+  const getWall = () => {
+    return lineup.filter(l => l.isWallPlayer).sort((a, b) => (a.wallOrder ?? 0) - (b.wallOrder ?? 0)).map(l => l.playerId);
+  };
   if (lineup.length === 0) return <Text style={s2.emptyTxt}>{t("Prima schiera i titolari nella sezione Formazione","Set starters in Formation first")}</Text>;
 
   type SpecRole = { kind: "exclusive"|"multi"; field: any; it: string; en: string; emoji: string; color: string };
@@ -1025,7 +1071,7 @@ function SpecialistiSection({ match, allPlayers, id, qc, c }: { match: Match; al
                 {role.kind === "multi" && selectedIds.length > 0 && <Text style={s2.specCurrent}>{selectedIds.map(i => getPlayer(i)?.name.split(" ").pop()).join(", ")}</Text>}
               </View>
               {(role.kind === "exclusive" ? !!currentId : selectedIds.length > 0) && (
-                <TouchableOpacity onPress={() => role.kind === "exclusive" ? setExclusive(field, null) : setLineup(prev => prev.map(l => ({ ...l, [field]: false })))} hitSlop={{ top:8,bottom:8,left:8,right:8 }}>
+                <TouchableOpacity onPress={() => role.kind === "exclusive" ? setExclusive(field, null) : clearMulti(field)} hitSlop={{ top:8,bottom:8,left:8,right:8 }}>
                   <X color={c.textDim} size={16} />
                 </TouchableOpacity>
               )}
@@ -1059,7 +1105,7 @@ function SpecialistiSection({ match, allPlayers, id, qc, c }: { match: Match; al
             <Text style={[s2.specTitle, { color: c.textMuted }]}>{t("Barriera","Wall players")}</Text>
             <Text style={s2.specCurrent}>{getWall().length} {t("selezionati (in ordine)","selected (in order)")}</Text>
           </View>
-          {getWall().length > 0 && <TouchableOpacity onPress={() => { setWallOrder([]); setLineup(prev => prev.map(l => ({ ...l, isWallPlayer: false }))); }} hitSlop={{ top:8,bottom:8,left:8,right:8 }}><X color={c.textDim} size={16} /></TouchableOpacity>}
+          {getWall().length > 0 && <TouchableOpacity onPress={() => clearMulti("isWallPlayer")} hitSlop={{ top:8,bottom:8,left:8,right:8 }}><X color={c.textDim} size={16} /></TouchableOpacity>}
         </View>
         <View style={s2.specWallGrid}>
           {lineup.map(lp => {
@@ -1552,10 +1598,10 @@ function RiepilogoSection({ match, allPlayers, id: _id, qc: _qc, c }: { match: M
         bench: benchList,
         captain: specName(match.lineup.filter(l => l.isCaptain)),
         viceCaptain: specName(match.lineup.filter(l => l.isViceCaptain)),
-        cornerTakers: match.lineup.filter(l => l.isCornerTaker).map(l => allPlayers.find(p => p.id === l.playerId)?.name?.split(" ").pop() ?? "?"),
-        freekickTakers: match.lineup.filter(l => l.isFreekickTaker).map(l => allPlayers.find(p => p.id === l.playerId)?.name?.split(" ").pop() ?? "?"),
-        penaltyTakers: match.lineup.filter(l => l.isPenaltyTaker).map(l => allPlayers.find(p => p.id === l.playerId)?.name?.split(" ").pop() ?? "?"),
-        wallPlayers: match.lineup.filter(l => l.isWallPlayer).map(l => allPlayers.find(p => p.id === l.playerId)?.name?.split(" ").pop() ?? "?"),
+        cornerTakers: [...match.lineup].filter(l => l.isCornerTaker).sort((a, b) => (a.cornerOrder ?? 0) - (b.cornerOrder ?? 0)).map(l => allPlayers.find(p => p.id === l.playerId)?.name?.split(" ").pop() ?? "?"),
+        freekickTakers: [...match.lineup].filter(l => l.isFreekickTaker).sort((a, b) => (a.freekickOrder ?? 0) - (b.freekickOrder ?? 0)).map(l => allPlayers.find(p => p.id === l.playerId)?.name?.split(" ").pop() ?? "?"),
+        penaltyTakers: [...match.lineup].filter(l => l.isPenaltyTaker).sort((a, b) => (a.penaltyOrder ?? 0) - (b.penaltyOrder ?? 0)).map(l => allPlayers.find(p => p.id === l.playerId)?.name?.split(" ").pop() ?? "?"),
+        wallPlayers: [...match.lineup].filter(l => l.isWallPlayer).sort((a, b) => (a.wallOrder ?? 0) - (b.wallOrder ?? 0)).map(l => allPlayers.find(p => p.id === l.playerId)?.name?.split(" ").pop() ?? "?"),
         notes: match.notes,
       }
     );
@@ -1573,10 +1619,10 @@ function RiepilogoSection({ match, allPlayers, id: _id, qc: _qc, c }: { match: M
 
   const captain = starters.find(l => l.isCaptain);
   const viceCaptain = starters.find(l => l.isViceCaptain);
-  const cornerTakers = starters.filter(l => l.isCornerTaker);
-  const freekickTakers = starters.filter(l => l.isFreekickTaker);
-  const penaltyTakers = starters.filter(l => l.isPenaltyTaker);
-  const wallPlayers = starters.filter(l => l.isWallPlayer);
+  const cornerTakers = [...starters].filter(l => l.isCornerTaker).sort((a, b) => (a.cornerOrder ?? 0) - (b.cornerOrder ?? 0));
+  const freekickTakers = [...starters].filter(l => l.isFreekickTaker).sort((a, b) => (a.freekickOrder ?? 0) - (b.freekickOrder ?? 0));
+  const penaltyTakers = [...starters].filter(l => l.isPenaltyTaker).sort((a, b) => (a.penaltyOrder ?? 0) - (b.penaltyOrder ?? 0));
+  const wallPlayers = [...starters].filter(l => l.isWallPlayer).sort((a, b) => (a.wallOrder ?? 0) - (b.wallOrder ?? 0));
 
   const formation = match.formation ?? "4-3-3";
   const positions = getFormationPositions(formation);

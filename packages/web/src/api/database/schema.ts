@@ -132,6 +132,11 @@ export const matchLineup = sqliteTable("match_lineup", {
   isCornerTaker: integer("is_corner_taker", { mode: "boolean" }).default(false),
   isPenaltyTaker: integer("is_penalty_taker", { mode: "boolean" }).default(false),
   isWallPlayer: integer("is_wall_player", { mode: "boolean" }).default(false),
+  // Ordine di selezione per gli specialisti (1°, 2°, 3° ...) — persistito per non perdersi tra sessioni
+  wallOrder: integer("wall_order"),
+  cornerOrder: integer("corner_order"),
+  freekickOrder: integer("freekick_order"),
+  penaltyOrder: integer("penalty_order"),
   // Posizione sul campo (0-1 coords per il campo visivo)
   posX: real("pos_x"),
   posY: real("pos_y"),

@@ -78,6 +78,18 @@ async function runMigrations() {
   try {
     await db.$client.execute(`ALTER TABLE exercises ADD COLUMN diagram_image TEXT`);
   } catch (_) { /* column already exists */ }
+  try {
+    await db.$client.execute(`ALTER TABLE match_lineup ADD COLUMN wall_order INTEGER`);
+  } catch (_) { /* column already exists */ }
+  try {
+    await db.$client.execute(`ALTER TABLE match_lineup ADD COLUMN corner_order INTEGER`);
+  } catch (_) { /* column already exists */ }
+  try {
+    await db.$client.execute(`ALTER TABLE match_lineup ADD COLUMN freekick_order INTEGER`);
+  } catch (_) { /* column already exists */ }
+  try {
+    await db.$client.execute(`ALTER TABLE match_lineup ADD COLUMN penalty_order INTEGER`);
+  } catch (_) { /* column already exists */ }
 }
 runMigrations();
 
@@ -2039,7 +2051,7 @@ const app = new Hono()
     if (!match) return c.json({ error: 'not found' }, 404);
 
     const convocations = await db.select().from(matchConvocations).where(eq(matchConvocations.matchId, id));
-    const lineup = await db.select().from(matchLineup).where(eq(matchLineup.matchId, id));
+    const lineup = (await db.select().from(matchLineup).where(eq(matchLineup.matchId, id))).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     const goals = await db.select().from(matchGoals).where(eq(matchGoals.matchId, id));
 
     const allPlayerIds = [...new Set([
@@ -2159,6 +2171,10 @@ const app = new Hono()
           isCornerTaker: p.isCornerTaker ?? false,
           isPenaltyTaker: p.isPenaltyTaker ?? false,
           isWallPlayer: p.isWallPlayer ?? false,
+          wallOrder: p.wallOrder ?? null,
+          cornerOrder: p.cornerOrder ?? null,
+          freekickOrder: p.freekickOrder ?? null,
+          penaltyOrder: p.penaltyOrder ?? null,
           posX: p.posX ?? null,
           posY: p.posY ?? null,
           order: i,
