@@ -2,7 +2,7 @@
  * Web implementation — uses the remote Turso API with JWT auth.
  * Replaces the old localStorage-backed store.
  */
-import { apiGet, apiPost, apiPut, apiDelete } from "../authStore";
+import { apiGet, apiPost, apiPut, apiPatch, apiDelete } from "../authStore";
 
 // ─── PROFILE (synced to server per-user) ─────────────────────────────────────
 type Profile = { id: number; name: string; teamName: string; logoUrl?: string | null; createdAt: number };
@@ -137,6 +137,18 @@ export async function removeConvocation(matchId: string, playerId: string) {
 // ─── LINEUP ───────────────────────────────────────────────────────────────────
 export async function setLineup(matchId: string, entries: any[]) {
   await apiPut(`/matches/${matchId}/lineup`, { players: entries });
+}
+// Partial update: only touches the fields provided per player, never clobbers
+// columns owned by another section (e.g. specialist toggles vs. position/number edits).
+export async function patchLineup(matchId: string, entries: any[]) {
+  await apiPatch(`/matches/${matchId}/lineup`, { players: entries });
+}
+// Structural changes (add/remove a starter) — isolated so they never touch other players' rows.
+export async function addLineupPlayer(matchId: string, playerId: string, data: { positionRole?: string | null; jerseyNumber?: number | null }) {
+  return apiPost(`/matches/${matchId}/lineup/${playerId}`, data);
+}
+export async function removeLineupPlayer(matchId: string, playerId: string) {
+  await apiDelete(`/matches/${matchId}/lineup/${playerId}`);
 }
 export async function updateLineupPlayer(lineupId: string, data: any) {
   return apiPut(`/lineup/${lineupId}`, data);

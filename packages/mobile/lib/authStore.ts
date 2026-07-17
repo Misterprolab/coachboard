@@ -120,6 +120,16 @@ export async function apiPut(path: string, body: any) {
   return res.json();
 }
 
+export async function apiPatch(path: string, body: any) {
+  const res = await fetch(`${API_BASE}/api${path}`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`API error ${res.status} on PATCH ${path}`);
+  return res.json();
+}
+
 export async function apiDelete(path: string) {
   const res = await fetch(`${API_BASE}/api${path}`, {
     method: "DELETE",

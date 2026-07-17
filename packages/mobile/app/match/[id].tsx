@@ -20,7 +20,8 @@ import {
   getMatch, getPlayers, updateMatch as dbUpdateMatch, deleteMatch as dbDeleteMatch,
   updateMatchSubstitutions as dbUpdateMatchSubstitutions, updateMatchCards as dbUpdateMatchCards,
   updateMatchRatings as dbUpdateMatchRatings,
-  setConvocations, setLineup as dbSetLineup, replaceGoals as dbReplaceGoals,
+  setConvocations, patchLineup as dbPatchLineup,
+  addLineupPlayer as dbAddLineupPlayer, removeLineupPlayer as dbRemoveLineupPlayer, replaceGoals as dbReplaceGoals,
 } from "../../lib/db/queries";
 
 type Player = { id: string; name: string; number?: number; role: string };
@@ -631,15 +632,13 @@ function FormazioneSection({ match, allPlayers, id, qc, c, scrollRef }: { match:
         playerId: pid,
         jerseyNumber: bn[pid] ? parseInt(bn[pid]) : (match.convocations.find(cv => cv.playerId === pid)?.jerseyNumber ?? null),
       }));
+      // Only patch the fields Formazione owns (position/number/coords) — never touch
+      // specialist fields (captain, corner/freekick/penalty/wall + their order), which
+      // belong exclusively to the Specialisti section.
       return Promise.all([
-        dbSetLineup(id, lineup.map(l => ({
+        dbPatchLineup(id, lineup.map(l => ({
           playerId: l.playerId, positionRole: l.positionRole || null,
           jerseyNumber: l.jerseyNumber ? parseInt(l.jerseyNumber) : (bn[l.playerId] ? parseInt(bn[l.playerId]) : null),
-          isCaptain: l.isCaptain, isViceCaptain: l.isViceCaptain,
-          isFreekickTaker: l.isFreekickTaker, isCornerTaker: l.isCornerTaker,
-          isPenaltyTaker: l.isPenaltyTaker, isWallPlayer: l.isWallPlayer,
-          wallOrder: l.wallOrder ?? null, cornerOrder: l.cornerOrder ?? null,
-          freekickOrder: l.freekickOrder ?? null, penaltyOrder: l.penaltyOrder ?? null,
           posX: customPositions[l.playerId]?.x ?? null,
           posY: customPositions[l.playerId]?.y ?? null,
         }))),
@@ -665,15 +664,10 @@ function FormazioneSection({ match, allPlayers, id, qc, c, scrollRef }: { match:
       const lu = lineupRef.current;
       const cp = customPositionsRef.current;
       const bn = benchNumsRef.current;
-      // Merge benchNums into lineup jerseys and update convocations
+      // Only patch position/number/coords fields — never touch specialist fields.
       const luWithNums = lu.map(l => ({
         playerId: l.playerId, positionRole: l.positionRole || null,
         jerseyNumber: l.jerseyNumber ? parseInt(l.jerseyNumber) : (bn[l.playerId] ? parseInt(bn[l.playerId]) : null),
-        isCaptain: l.isCaptain, isViceCaptain: l.isViceCaptain,
-        isFreekickTaker: l.isFreekickTaker, isCornerTaker: l.isCornerTaker,
-        isPenaltyTaker: l.isPenaltyTaker, isWallPlayer: l.isWallPlayer,
-        wallOrder: l.wallOrder ?? null, cornerOrder: l.cornerOrder ?? null,
-        freekickOrder: l.freekickOrder ?? null, penaltyOrder: l.penaltyOrder ?? null,
         posX: cp[l.playerId]?.x ?? null,
         posY: cp[l.playerId]?.y ?? null,
       }));
@@ -684,30 +678,47 @@ function FormazioneSection({ match, allPlayers, id, qc, c, scrollRef }: { match:
         jerseyNumber: bn[pid] ? parseInt(bn[pid]) : (match.convocations.find(cv => cv.playerId === pid)?.jerseyNumber ?? null),
       }));
       Promise.all([
-        dbSetLineup(id, luWithNums),
+        dbPatchLineup(id, luWithNums),
         setConvocations(id, updatedConvs),
       ])
         .then(() => { qc.invalidateQueries({ queryKey: ["match", id] }); setLineupAutoSaving(false); })
         .catch(() => { setLineupAutoSaving(false); });
     }, 800);
   };
+  // Dedicated, immediate save for captain/vice-captain toggled from this section's edit modal
+  // (only these two fields — never touches specialist order fields owned by Specialisti).
+  const saveCaptainFields = (lu: LP[]) => {
+    dbPatchLineup(id, lu.map(l => ({ playerId: l.playerId, isCaptain: l.isCaptain, isViceCaptain: l.isViceCaptain })))
+      .then(() => qc.invalidateQueries({ queryKey: ["match", id] }));
+  };
 
   const getPlayer = (pid: string) => allPlayers.find(p => p.id === pid);
   const updateLP = (idx: number, patch: Partial<LP>) => { setLineup(prev => prev.map((l, i) => i === idx ? { ...l, ...patch } : l)); scheduleLineupAutoSave(); };
-  const setOnlyOne = (idx: number, field: "isCaptain"|"isViceCaptain", val: boolean) => { setLineup(prev => prev.map((l, i) => ({ ...l, [field]: val ? i === idx : (i === idx ? false : l[field]) }))); scheduleLineupAutoSave(); };
+  const setOnlyOne = (idx: number, field: "isCaptain"|"isViceCaptain", val: boolean) => {
+    setLineup(prev => {
+      const next = prev.map((l, i) => ({ ...l, [field]: val ? i === idx : (i === idx ? false : l[field]) }));
+      saveCaptainFields(next);
+      return next;
+    });
+  };
   const addFromBench = (p: Player) => {
     // Max 11 starters
     if (lineup.length >= 11) return;
-    setLineup(prev => [...prev, { playerId: p.id, positionRole: p.role === "portiere" ? "POR" : p.role === "difensore" ? "DC" : p.role === "centrocampista" ? "CC" : "PC", jerseyNumber: benchNums[p.id] ?? (p.number != null ? String(p.number) : ""), isCaptain: false, isViceCaptain: false, isFreekickTaker: false, isCornerTaker: false, isPenaltyTaker: false, isWallPlayer: false, wallOrder: null, cornerOrder: null, freekickOrder: null, penaltyOrder: null }]);
+    const positionRole = p.role === "portiere" ? "POR" : p.role === "difensore" ? "DC" : p.role === "centrocampista" ? "CC" : "PC";
+    const jerseyNumber = benchNums[p.id] ?? (p.number != null ? String(p.number) : "");
+    setLineup(prev => [...prev, { playerId: p.id, positionRole, jerseyNumber, isCaptain: false, isViceCaptain: false, isFreekickTaker: false, isCornerTaker: false, isPenaltyTaker: false, isWallPlayer: false, wallOrder: null, cornerOrder: null, freekickOrder: null, penaltyOrder: null }]);
     setShowAdd(false);
-    scheduleLineupAutoSave();
+    // Structural change: create just this one row, don't touch the others.
+    dbAddLineupPlayer(id, p.id, { positionRole, jerseyNumber: jerseyNumber ? parseInt(jerseyNumber) : null })
+      .then(() => qc.invalidateQueries({ queryKey: ["match", id] }));
   };
   const removeFromLineup = (idx: number) => {
     const pid = lineup[idx]?.playerId;
     setLineup(prev => prev.filter((_, i) => i !== idx));
     if (pid) setCustomPositions(prev => { const n = { ...prev }; delete n[pid]; return n; });
     setEditIdx(null);
-    scheduleLineupAutoSave();
+    // Structural change: delete just this one row, don't touch the others.
+    if (pid) dbRemoveLineupPlayer(id, pid).then(() => qc.invalidateQueries({ queryKey: ["match", id] }));
   };
   const handleBenchTap = (p: Player) => { addFromBench(p); };
 
@@ -968,9 +979,11 @@ function SpecialistiSection({ match, allPlayers, id, qc, c }: { match: Match; al
   type LP = { playerId: string; positionRole: string; jerseyNumber: string; isCaptain: boolean; isViceCaptain: boolean; isFreekickTaker: boolean; isCornerTaker: boolean; isPenaltyTaker: boolean; isWallPlayer: boolean; wallOrder: number | null; cornerOrder: number | null; freekickOrder: number | null; penaltyOrder: number | null };
   const toLP = (l: LineupPlayer): LP => ({ playerId: l.playerId, positionRole: l.positionRole || "", jerseyNumber: l.jerseyNumber != null ? String(l.jerseyNumber) : "", isCaptain: l.isCaptain, isViceCaptain: l.isViceCaptain, isFreekickTaker: l.isFreekickTaker, isCornerTaker: l.isCornerTaker, isPenaltyTaker: l.isPenaltyTaker, isWallPlayer: l.isWallPlayer, wallOrder: l.wallOrder ?? null, cornerOrder: l.cornerOrder ?? null, freekickOrder: l.freekickOrder ?? null, penaltyOrder: l.penaltyOrder ?? null });
   const [lineup, setLineup] = useState<LP[]>(match.lineup.map(toLP));
+  // Only ever send the fields this section owns — never positionRole/jerseyNumber/posX/posY,
+  // which belong exclusively to the Formazione section. This prevents the two sections from
+  // clobbering each other's data via stale local snapshots.
   const toPayload = (lu: LP[]) => lu.map(l => ({
-    playerId: l.playerId, positionRole: l.positionRole || null,
-    jerseyNumber: l.jerseyNumber ? parseInt(l.jerseyNumber) : null,
+    playerId: l.playerId,
     isCaptain: l.isCaptain, isViceCaptain: l.isViceCaptain,
     isFreekickTaker: l.isFreekickTaker, isCornerTaker: l.isCornerTaker,
     isPenaltyTaker: l.isPenaltyTaker, isWallPlayer: l.isWallPlayer,
@@ -978,7 +991,7 @@ function SpecialistiSection({ match, allPlayers, id, qc, c }: { match: Match; al
     freekickOrder: l.freekickOrder, penaltyOrder: l.penaltyOrder,
   }));
   const saveMutation = useMutation({
-    mutationFn: () => dbSetLineup(id, toPayload(lineup)),
+    mutationFn: () => dbPatchLineup(id, toPayload(lineup)),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["match", id] }),
   });
   // Auto-save so specialist order/selection isn't lost when navigating away without pressing "Salva"
@@ -988,7 +1001,7 @@ function SpecialistiSection({ match, allPlayers, id, qc, c }: { match: Match; al
   const scheduleAutoSave = () => {
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = setTimeout(() => {
-      dbSetLineup(id, toPayload(lineupRef.current)).then(() => qc.invalidateQueries({ queryKey: ["match", id] }));
+      dbPatchLineup(id, toPayload(lineupRef.current)).then(() => qc.invalidateQueries({ queryKey: ["match", id] }));
     }, 800);
   };
   const getPlayer = (pid: string) => allPlayers.find(p => p.id === pid);

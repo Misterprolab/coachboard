@@ -264,6 +264,32 @@ export async function setLineup(matchId: string, entries: {
   }
 }
 
+// Partial update: only touches the fields provided per player, never clobbers
+// columns owned by another section (e.g. specialist toggles vs. position/number edits).
+export async function patchLineup(matchId: string, entries: { playerId: string; [key: string]: any }[]) {
+  const rows = await db.select().from(matchLineup).where(eq(matchLineup.matchId, matchId));
+  for (const e of entries) {
+    const { playerId, ...fields } = e;
+    if (Object.keys(fields).length === 0) continue;
+    const row = rows.find(r => r.playerId === playerId);
+    if (row) await db.update(matchLineup).set(fields).where(eq(matchLineup.id, row.id));
+  }
+}
+
+export async function addLineupPlayer(matchId: string, playerId: string, data: { positionRole?: string | null; jerseyNumber?: number | null }) {
+  const rows = await db.select().from(matchLineup).where(eq(matchLineup.matchId, matchId));
+  const existing = rows.find(r => r.playerId === playerId);
+  if (existing) return existing;
+  const row = { id: uid(), matchId, playerId, positionRole: data.positionRole ?? null, jerseyNumber: data.jerseyNumber ?? null, order: rows.length };
+  await db.insert(matchLineup).values(row);
+  return row;
+}
+export async function removeLineupPlayer(matchId: string, playerId: string) {
+  const rows = await db.select().from(matchLineup).where(eq(matchLineup.matchId, matchId));
+  const row = rows.find(r => r.playerId === playerId);
+  if (row) await db.delete(matchLineup).where(eq(matchLineup.id, row.id));
+}
+
 export async function updateLineupPlayer(lineupId: string, data: Partial<{
   positionRole: string | null; jerseyNumber: number | null;
   isCaptain: boolean; isViceCaptain: boolean;

@@ -2153,6 +2153,27 @@ const app = new Hono()
   })
 
   // Lineup
+  // Partial update — only touches the fields provided, never clobbers other columns
+  // (used for specialist toggles and position/number edits so they don't overwrite each other)
+  .patch('/matches/:id/lineup', authMiddleware, async (c) => {
+    const matchId = c.req.param('id');
+    const body = await c.req.json(); // { players: [{ playerId, ...partialFields }] }
+    const ALLOWED = new Set([
+      'positionRole', 'jerseyNumber', 'isCaptain', 'isViceCaptain',
+      'isFreekickTaker', 'isCornerTaker', 'isPenaltyTaker', 'isWallPlayer',
+      'wallOrder', 'cornerOrder', 'freekickOrder', 'penaltyOrder', 'posX', 'posY',
+    ]);
+    for (const p of (body.players || [])) {
+      if (!p.playerId) continue;
+      const fields: Record<string, any> = {};
+      for (const k of Object.keys(p)) {
+        if (ALLOWED.has(k)) fields[k] = p[k];
+      }
+      if (Object.keys(fields).length === 0) continue;
+      await db.update(matchLineup).set(fields).where(and(eq(matchLineup.matchId, matchId), eq(matchLineup.playerId, p.playerId)));
+    }
+    return c.json({ success: true }, 200);
+  })
   .put('/matches/:id/lineup', authMiddleware, async (c) => {
     const matchId = c.req.param('id');
     const body = await c.req.json(); // { players: LineupPlayer[] }
@@ -2181,6 +2202,30 @@ const app = new Hono()
         }))
       );
     }
+    return c.json({ success: true }, 200);
+  })
+  // Add a single player to the starting lineup without touching the other rows
+  .post('/matches/:id/lineup/:playerId', authMiddleware, async (c) => {
+    const matchId = c.req.param('id');
+    const playerId = c.req.param('playerId');
+    const body = await c.req.json().catch(() => ({}));
+    const existing = await db.select().from(matchLineup).where(and(eq(matchLineup.matchId, matchId), eq(matchLineup.playerId, playerId)));
+    if (existing.length > 0) return c.json(existing[0], 200);
+    const current = await db.select().from(matchLineup).where(eq(matchLineup.matchId, matchId));
+    const row = {
+      id: randomUUID(), matchId, playerId,
+      positionRole: body.positionRole ?? null,
+      jerseyNumber: body.jerseyNumber ?? null,
+      order: current.length,
+    };
+    await db.insert(matchLineup).values(row);
+    return c.json(row, 201);
+  })
+  // Remove a single player from the starting lineup without touching the other rows
+  .delete('/matches/:id/lineup/:playerId', authMiddleware, async (c) => {
+    const matchId = c.req.param('id');
+    const playerId = c.req.param('playerId');
+    await db.delete(matchLineup).where(and(eq(matchLineup.matchId, matchId), eq(matchLineup.playerId, playerId)));
     return c.json({ success: true }, 200);
   })
 
