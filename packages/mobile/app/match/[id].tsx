@@ -592,11 +592,16 @@ function FormazioneSection({ match, allPlayers, id, qc, c, scrollRef }: { match:
     allPlayers.forEach(p => { if (m[p.id] == null && p.number != null) m[p.id] = String(p.number); });
     return m;
   });
+  // Players whose jersey number was edited locally but not yet confirmed saved.
+  // Server refetches must NOT overwrite these, otherwise a fresh edit is reverted
+  // to the old number as soon as any query invalidation lands.
+  const dirtyNums = useRef<Set<string>>(new Set());
   // Sync benchNums when convocations are updated from server (after save)
   useEffect(() => {
     setBenchNums(prev => {
       const m: Record<string, string> = { ...prev };
       match.convocations.forEach(cv => {
+        if (dirtyNums.current.has(cv.playerId)) return;
         if (cv.jerseyNumber != null) m[cv.playerId] = String(cv.jerseyNumber);
       });
       return m;
@@ -638,14 +643,14 @@ function FormazioneSection({ match, allPlayers, id, qc, c, scrollRef }: { match:
       return Promise.all([
         dbPatchLineup(id, lineup.map(l => ({
           playerId: l.playerId, positionRole: l.positionRole || null,
-          jerseyNumber: l.jerseyNumber ? parseInt(l.jerseyNumber) : (bn[l.playerId] ? parseInt(bn[l.playerId]) : null),
+          jerseyNumber: bn[l.playerId] ? parseInt(bn[l.playerId]) : (l.jerseyNumber ? parseInt(l.jerseyNumber) : null),
           posX: customPositions[l.playerId]?.x ?? null,
           posY: customPositions[l.playerId]?.y ?? null,
         }))),
         setConvocations(id, updatedConvs),
       ]);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["match", id] }),
+    onSuccess: () => { dirtyNums.current.clear(); qc.invalidateQueries({ queryKey: ["match", id] }); },
   });
 
   // Auto-save refs for lineup
@@ -667,7 +672,7 @@ function FormazioneSection({ match, allPlayers, id, qc, c, scrollRef }: { match:
       // Only patch position/number/coords fields — never touch specialist fields.
       const luWithNums = lu.map(l => ({
         playerId: l.playerId, positionRole: l.positionRole || null,
-        jerseyNumber: l.jerseyNumber ? parseInt(l.jerseyNumber) : (bn[l.playerId] ? parseInt(bn[l.playerId]) : null),
+        jerseyNumber: bn[l.playerId] ? parseInt(bn[l.playerId]) : (l.jerseyNumber ? parseInt(l.jerseyNumber) : null),
         posX: cp[l.playerId]?.x ?? null,
         posY: cp[l.playerId]?.y ?? null,
       }));
@@ -681,9 +686,18 @@ function FormazioneSection({ match, allPlayers, id, qc, c, scrollRef }: { match:
         dbPatchLineup(id, luWithNums),
         setConvocations(id, updatedConvs),
       ])
-        .then(() => { qc.invalidateQueries({ queryKey: ["match", id] }); setLineupAutoSaving(false); })
+        .then(() => { dirtyNums.current.clear(); qc.invalidateQueries({ queryKey: ["match", id] }); setLineupAutoSaving(false); })
         .catch(() => { setLineupAutoSaving(false); });
     }, 800);
+  };
+  // Single entry point for changing a match jersey number: keeps benchNums (the source
+  // of truth for this section) and the lineup row in sync, so pitch thumbnail,
+  // specialists table, Riepilogo and PDF all read the same value.
+  const setJerseyNumber = (playerId: string, value: string) => {
+    dirtyNums.current.add(playerId);
+    setBenchNums(prev => ({ ...prev, [playerId]: value }));
+    setLineup(prev => prev.map(l => l.playerId === playerId ? { ...l, jerseyNumber: value } : l));
+    scheduleLineupAutoSave();
   };
   // Dedicated, immediate save for captain/vice-captain toggled from this section's edit modal
   // (only these two fields — never touches specialist order fields owned by Specialisti).
@@ -895,7 +909,7 @@ function FormazioneSection({ match, allPlayers, id, qc, c, scrollRef }: { match:
         <TouchableOpacity key={p.id} style={s2.benchCard} onPress={() => handleBenchTap(p)} activeOpacity={0.75}>
           <View style={[s2.benchDot, { backgroundColor: ROLE_COLORS[p.role] || c.primary }]} />
           <Text style={s2.benchName}>{p.name}</Text>
-          <TextInput style={s2.benchNumInput} value={benchNums[p.id] ?? (p.number != null ? String(p.number) : "")} onChangeText={v => { setBenchNums(prev => ({ ...prev, [p.id]: v })); scheduleLineupAutoSave(); }} keyboardType="number-pad" placeholder="#" placeholderTextColor={c.textDim} maxLength={3} />
+          <TextInput style={s2.benchNumInput} value={benchNums[p.id] ?? (p.number != null ? String(p.number) : "")} onChangeText={v => setJerseyNumber(p.id, v)} keyboardType="number-pad" placeholder="#" placeholderTextColor={c.textDim} maxLength={3} />
         </TouchableOpacity>
       ))}
       {bench.length === 0 && eligible.length > 0 && <Text style={s2.emptyTxt}>{t("Tutti i convocati sono in campo","All convocated players are on the pitch")}</Text>}
@@ -917,7 +931,7 @@ function FormazioneSection({ match, allPlayers, id, qc, c, scrollRef }: { match:
                   </View>
                   <ScrollView showsVerticalScrollIndicator={false}>
                     <Text style={s2.label}>{t("Numero maglia","Jersey #")}</Text>
-                    <TextInput style={s2.input} value={editLP.jerseyNumber} onChangeText={v => updateLP(editIdx!, { jerseyNumber: v })} keyboardType="number-pad" placeholder="—" placeholderTextColor={c.textDim} />
+                    <TextInput style={s2.input} value={benchNums[editLP.playerId] ?? editLP.jerseyNumber} onChangeText={v => setJerseyNumber(editLP.playerId, v)} keyboardType="number-pad" placeholder="—" placeholderTextColor={c.textDim} />
                     <Text style={s2.label}>{t("Ruolo in campo","Position")}</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 4 }}>
                       <View style={{ flexDirection: "row", gap: 6 }}>
