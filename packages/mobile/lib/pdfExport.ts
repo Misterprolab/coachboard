@@ -88,6 +88,25 @@ const BASE_CSS = `
   .spec-val { color: #1a1a1a; font-weight: 600; }
   .spec-table tr:nth-child(even) td { background: #fafafa; }
 
+  /* Rosa */
+  .roster-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 4px; }
+  .roster-table thead th { background: #0E5A3C; color: #fff; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; text-align: left; padding: 7px 8px; }
+  .roster-table thead th:first-child { border-radius: 6px 0 0 0; }
+  .roster-table thead th:last-child { border-radius: 0 6px 0 0; }
+  .roster-table tbody td { padding: 6px 8px; font-size: 11px; color: #333; border-bottom: 1px solid #ededed; vertical-align: middle; overflow-wrap: break-word; }
+  .roster-table tbody tr { page-break-inside: avoid; }
+  .rt-group-row td { background: #f4f6f5 !important; padding: 6px 8px !important; border-bottom: 1px solid #e2e2e2; }
+  .rt-group-name { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #444; }
+  .rt-group-count { font-size: 9px; font-weight: 700; color: #fff; background: #999; border-radius: 8px; padding: 1px 6px; margin-left: 6px; }
+  .rt-num { text-align: center; font-weight: 800; color: #0E5A3C; font-variant-numeric: tabular-nums; }
+  .rt-name { font-weight: 700; color: #1a1a1a; }
+  .rt-c { text-align: center; }
+  .rt-tag { display: inline-block; font-size: 9px; font-weight: 800; letter-spacing: 0.3px; border: 1px solid #ddd; border-radius: 4px; padding: 1px 6px; }
+  .rt-tag-sec { color: #777; background: #f5f5f5; border-color: #e2e2e2; font-weight: 700; }
+  .rt-notes { font-size: 10px; color: #777; font-style: italic; line-height: 1.35; }
+  .rt-dim { color: #bbb; }
+  .rt-footer { margin-top: 10px; font-size: 10.5px; color: #666; text-align: right; }
+
   /* Note */
   .notes-box { background: #f9f9f9; border-left: 3px solid #0E5A3C; border-radius: 0 6px 6px 0; padding: 8px 12px; margin-top: 10px; font-size: 12px; color: #444; line-height: 1.5; }
   .notes-label { font-size: 10px; font-weight: 700; color: #888; text-transform: uppercase; margin-bottom: 4px; }
@@ -375,7 +394,6 @@ export interface RosterPdfData {
       roleLabel: string;         // ruolo/sottoruolo principale
       secondaryLabel?: string | null;
       dateOfBirth?: string | null;
-      age?: number | null;
       foot?: string | null;      // già tradotto
       notes?: string | null;
     }>;
@@ -384,48 +402,58 @@ export interface RosterPdfData {
 }
 
 export function exportRosterPdf(header: PdfHeader, data: RosterPdfData) {
-  const fmtDate = (d?: string | null) => {
-    if (!d) return "—";
-    const [y, m, day] = d.split("-");
-    return y && m && day ? `${day}/${m}/${y}` : d;
+  const birthYear = (d?: string | null) => {
+    const y = String(d ?? "").trim().slice(0, 4);
+    return /^\d{4}$/.test(y) ? y : "—";
   };
 
-  const groupsHtml = data.groups.filter(g => g.players.length > 0).map(g => {
+  const groups = data.groups.filter(g => g.players.length > 0);
+  const allPlayers = groups.flatMap(g => g.players);
+  // Colonne opzionali: mostrate solo se almeno un giocatore le usa (meno vuoti = più ordine)
+  const showSecondary = allPlayers.some(p => !!p.secondaryLabel);
+  const showNotes = allPlayers.some(p => !!p.notes);
+  const colCount = 5 + (showSecondary ? 1 : 0) + (showNotes ? 1 : 0);
+
+  const body = groups.map(g => {
     const color = ROLE_COLORS[g.role] ?? "#888";
+    const groupRow = `
+      <tr class="rt-group-row">
+        <td colspan="${colCount}" style="border-left:3px solid ${color}">
+          <span class="rt-group-name">${g.roleLabel}</span>
+          <span class="rt-group-count">${g.players.length}</span>
+        </td>
+      </tr>`;
     const rows = g.players.map(p => `
       <tr>
-        <td class="rt-num">${p.number != null ? p.number : "—"}</td>
+        <td class="rt-num">${p.number != null ? p.number : "–"}</td>
         <td class="rt-name">${p.name}</td>
-        <td>${p.roleLabel || "—"}</td>
-        <td>${p.secondaryLabel || "—"}</td>
-        <td>${fmtDate(p.dateOfBirth)}${p.age != null ? ` <span class="rt-dim">(${p.age})</span>` : ""}</td>
-        <td>${p.foot || "—"}</td>
-        <td class="rt-notes">${p.notes || ""}</td>
+        <td class="rt-c"><span class="rt-tag" style="color:${color};border-color:${color}55;background:${color}12">${p.roleLabel || "–"}</span></td>
+        ${showSecondary ? `<td class="rt-c">${p.secondaryLabel ? `<span class="rt-tag rt-tag-sec">${p.secondaryLabel}</span>` : `<span class="rt-dim">–</span>`}</td>` : ""}
+        <td class="rt-c">${birthYear(p.dateOfBirth)}</td>
+        <td class="rt-c">${p.foot || `<span class="rt-dim">–</span>`}</td>
+        ${showNotes ? `<td class="rt-notes">${p.notes || ""}</td>` : ""}
       </tr>`).join("");
-    return `
-    <div class="rt-group">
-      <div class="rt-group-title"><span class="player-dot" style="background:${color}"></span>${g.roleLabel} <span class="rt-dim">(${g.players.length})</span></div>
-      <table class="roster-table">
-        <thead>
-          <tr>
-            <th style="width:34px">#</th>
-            <th style="width:22%">Giocatore</th>
-            <th style="width:13%">Ruolo</th>
-            <th style="width:13%">Ruolo sec.</th>
-            <th style="width:16%">Nascita (età)</th>
-            <th style="width:11%">Piede</th>
-            <th>Note</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>`;
+    return groupRow + rows;
   }).join("");
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Rosa</title><style>${BASE_CSS}</style></head><body>
     ${headerHtml(header)}
-    <div class="section-label">Rosa completa (${data.total} giocatori)</div>
-    ${groupsHtml || `<div class="notes-box">Nessun giocatore in rosa</div>`}
+    ${groups.length === 0 ? `<div class="notes-box">Nessun giocatore in rosa</div>` : `
+    <table class="roster-table">
+      <thead>
+        <tr>
+          <th class="rt-c" style="width:34px">N°</th>
+          <th style="width:${showNotes ? "26%" : "34%"}">Giocatore</th>
+          <th class="rt-c" style="width:14%">Ruolo</th>
+          ${showSecondary ? `<th class="rt-c" style="width:14%">2° ruolo</th>` : ""}
+          <th class="rt-c" style="width:9%">Anno</th>
+          <th class="rt-c" style="width:12%">Piede</th>
+          ${showNotes ? `<th>Note</th>` : ""}
+        </tr>
+      </thead>
+      <tbody>${body}</tbody>
+    </table>
+    <div class="rt-footer">Totale rosa: <strong>${data.total}</strong> giocatori</div>`}
   </body></html>`;
 
   _printHtml(html);

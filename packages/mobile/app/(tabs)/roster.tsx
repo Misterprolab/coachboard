@@ -352,7 +352,6 @@ export default function RosterScreen() {
           roleLabel: roleLabel(p),
           secondaryLabel: secondaryLabel(p),
           dateOfBirth: p.dateOfBirth ?? null,
-          age: calcAge(p.dateOfBirth),
           foot: footLabel(p.foot),
           notes: p.notes ?? null,
         })),
