@@ -15,6 +15,7 @@ import {
 } from "phosphor-react-native";
 import { exportMatchPdf, exportConvocationPdf } from "../../lib/pdfExport";
 import { useProfile } from "../../lib/profile";
+import { compareBySurname } from "../../lib/playerSort";
 
 import {
   getMatch, getPlayers, updateMatch as dbUpdateMatch, deleteMatch as dbDeleteMatch,
@@ -387,7 +388,7 @@ function ConvocatiSection({ match, allPlayers, id, qc, c }: { match: Match; allP
   };
 
   const toggle = (pid: string) => { setSelected(prev => { const n = new Set(prev); n.has(pid) ? n.delete(pid) : n.add(pid); return n; }); scheduleAutoSave(); };
-  const sorted = [...allPlayers].sort((a, b) => { const ro = { portiere: 0, difensore: 1, centrocampista: 2, attaccante: 3 }; return (ro[a.role as keyof typeof ro] ?? 4) - (ro[b.role as keyof typeof ro] ?? 4); });
+  const sorted = [...allPlayers].sort((a, b) => { const ro = { portiere: 0, difensore: 1, centrocampista: 2, attaccante: 3 }; const d = (ro[a.role as keyof typeof ro] ?? 4) - (ro[b.role as keyof typeof ro] ?? 4); return d !== 0 ? d : compareBySurname(a.name, b.name); });
   const ROLE_LABELS: Record<string,string> = { portiere:"Portieri", difensore:"Difensori", centrocampista:"Centrocampisti", attaccante:"Attaccanti" };
   const groups: { role: string; players: Player[] }[] = [];
   sorted.forEach(p => { let g = groups.find(x => x.role === p.role); if (!g) { g = { role: p.role, players: [] }; groups.push(g); } g.players.push(p); });
@@ -625,7 +626,7 @@ function FormazioneSection({ match, allPlayers, id, qc, c, scrollRef }: { match:
   const [pitchEditMode, setPitchEditMode] = useState(false);
 
   const convIds = new Set(match.convocations.map(cv => cv.playerId));
-  const eligible = allPlayers.filter(p => convIds.has(p.id));
+  const eligible = allPlayers.filter(p => convIds.has(p.id)).sort((a, b) => compareBySurname(a.name, b.name));
   const inLineupIds = new Set(lineup.map(l => l.playerId));
   const bench = eligible.filter(p => !inLineupIds.has(p.id));
 
@@ -1245,7 +1246,7 @@ function RisultatoSection({ match, allPlayers, id, qc, c }: { match: Match; allP
 
   const lineupPlayerIds = new Set(match.lineup.map(l => l.playerId));
   const convPlayerIds = new Set(match.convocations.map(cv => cv.playerId));
-  const allConvocated = allPlayers.filter(p => lineupPlayerIds.has(p.id) || convPlayerIds.has(p.id));
+  const allConvocated = allPlayers.filter(p => lineupPlayerIds.has(p.id) || convPlayerIds.has(p.id)).sort((a, b) => compareBySurname(a.name, b.name));
   const scorerOptions = allConvocated;
 
   // Dynamically compute who is currently on the field / on the bench

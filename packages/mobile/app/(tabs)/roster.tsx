@@ -5,10 +5,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTheme } from "../../lib/themeStore";
 import type { ThemeColors } from "../../lib/themeStore";
 import { useI18n } from "../../lib/i18n";
-import { Plus, Trash, PencilSimple, X, User, ArrowsDownUp, ChartBar } from "phosphor-react-native";
+import { Plus, Trash, PencilSimple, X, User, ArrowsDownUp, ChartBar, FilePdf } from "phosphor-react-native";
 import {
   getPlayers, createPlayer, updatePlayer, deletePlayer as dbDeletePlayer, computePlayerStats,
 } from "../../lib/db/queries";
+import { compareBySurname } from "../../lib/playerSort";
+import { exportRosterPdf } from "../../lib/pdfExport";
+import { useProfile } from "../../lib/profile";
 
 // ─── Ruoli principali ────────────────────────────────────────────────────────
 const ROLES = ["portiere", "difensore", "centrocampista", "attaccante"];
@@ -65,7 +68,7 @@ const SUB_ROLE_DISPLAY: Record<string, string> = {
 type SortBy = "ruolo" | "nome" | "inserimento";
 const SORT_OPTIONS: { key: SortBy; it: string; en: string }[] = [
   { key: "ruolo", it: "Ruolo", en: "Role" },
-  { key: "nome", it: "Nome", en: "Name" },
+  { key: "nome", it: "Cognome", en: "Surname" },
   { key: "inserimento", it: "Recenti", en: "Recent" },
 ];
 
@@ -133,9 +136,9 @@ function sortPlayers(list: Player[], sortBy: SortBy): Player[] {
       return arr.sort((a, b) => {
         const ro = (ROLE_ORDER[a.role] ?? 9) - (ROLE_ORDER[b.role] ?? 9);
         if (ro !== 0) return ro;
-        return a.name.localeCompare(b.name);
+        return compareBySurname(a.name, b.name);
       });
-    case "nome": return arr.sort((a, b) => a.name.localeCompare(b.name));
+    case "nome": return arr.sort((a, b) => compareBySurname(a.name, b.name));
     case "inserimento": return arr.sort((a, b) => b.createdAt - a.createdAt);
   }
 }
@@ -197,6 +200,7 @@ export default function RosterScreen() {
   const s = useMemo(() => mkStyles(c), [c]);
   const { t, lang } = useI18n();
   const qc = useQueryClient();
+  const profile = useProfile();
 
   const [modal, setModal] = useState(false);
   const [editing, setEditing] = useState<Player | null>(null);
@@ -329,14 +333,52 @@ export default function RosterScreen() {
     return p.secondarySubRole ? (SUB_ROLE_DISPLAY[p.secondarySubRole] ?? p.secondarySubRole) : (mainLbl ?? p.secondaryRole);
   };
 
+  const handleExportPdf = () => {
+    const teamName = profile.activeTeam()?.name || profile.displayName() || "MisterProLab";
+    const logoUrl = profile.activeTeam()?.logoUri || null;
+    const footLabel = (f?: string | null) =>
+      !f ? null : lang === "it"
+        ? (f === "destra" ? "Destro" : f === "sinistra" ? "Mancino" : "Ambidestro")
+        : (f === "destra" ? "Right" : f === "sinistra" ? "Left" : "Both");
+    const groups = ROLES.map(role => ({
+      role,
+      roleLabel: (lang === "it" ? ROLE_LABELS[role]?.it : ROLE_LABELS[role]?.en) ?? role,
+      players: all
+        .filter(p => p.role === role)
+        .sort((a, b) => compareBySurname(a.name, b.name))
+        .map(p => ({
+          name: p.name,
+          number: p.number ?? null,
+          roleLabel: roleLabel(p),
+          secondaryLabel: secondaryLabel(p),
+          dateOfBirth: p.dateOfBirth ?? null,
+          age: calcAge(p.dateOfBirth),
+          foot: footLabel(p.foot),
+          notes: p.notes ?? null,
+        })),
+    }));
+    exportRosterPdf(
+      { teamName, logoUrl, title: t("Rosa Giocatori", "Player Roster"), subtitle: `${all.length} ${t("giocatori", "players")}` },
+      { groups, total: all.length }
+    );
+  };
+
   const listHeader = (
     <>
       <View style={s.header}>
         <Text style={s.title}>{t("Rosa Giocatori", "Player Roster")}</Text>
-        <TouchableOpacity style={s.addBtn} onPress={openAdd} activeOpacity={0.8}>
-          <Plus color={c.bg} size={18} weight="bold" />
-          <Text style={s.addBtnText}>{t("Aggiungi", "Add")}</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          {all.length > 0 && (
+            <TouchableOpacity style={s.pdfBtn} onPress={handleExportPdf} activeOpacity={0.8}>
+              <FilePdf color="#fff" size={16} weight="fill" />
+              <Text style={s.pdfBtnText}>PDF</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={s.addBtn} onPress={openAdd} activeOpacity={0.8}>
+            <Plus color={c.bg} size={18} weight="bold" />
+            <Text style={s.addBtnText}>{t("Aggiungi", "Add")}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.filterRow} style={s.filterScroll}>
@@ -757,6 +799,8 @@ function mkStyles(c: ThemeColors) {
     title: { fontSize: 24, fontWeight: "800", color: c.text },
     addBtn: { flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: c.primary, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 10 },
     addBtnText: { fontSize: 13, fontWeight: "700", color: c.bg },
+    pdfBtn: { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "#0E5A3C", paddingHorizontal: 12, paddingVertical: 9, borderRadius: 10 },
+    pdfBtnText: { fontSize: 13, fontWeight: "700", color: "#fff" },
     filterScroll: { flexGrow: 0 },
     filterRow: { flexDirection: "row", gap: 8, paddingHorizontal: 16, paddingBottom: 10 },
     chip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, borderWidth: 1, borderColor: c.border, backgroundColor: c.bgCard },

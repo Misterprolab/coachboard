@@ -363,6 +363,74 @@ export function exportConvocationPdf(header: PdfHeader, data: ConvocationPdfData
   _printHtml(html);
 }
 
+// ─── Rosa ─────────────────────────────────────────────────────────────────────
+export interface RosterPdfData {
+  /** Giocatori già ordinati (per cognome) e raggruppati per ruolo dal chiamante */
+  groups: Array<{
+    role: string;          // portiere | difensore | centrocampista | attaccante
+    roleLabel: string;
+    players: Array<{
+      name: string;
+      number?: number | null;
+      roleLabel: string;         // ruolo/sottoruolo principale
+      secondaryLabel?: string | null;
+      dateOfBirth?: string | null;
+      age?: number | null;
+      foot?: string | null;      // già tradotto
+      notes?: string | null;
+    }>;
+  }>;
+  total: number;
+}
+
+export function exportRosterPdf(header: PdfHeader, data: RosterPdfData) {
+  const fmtDate = (d?: string | null) => {
+    if (!d) return "—";
+    const [y, m, day] = d.split("-");
+    return y && m && day ? `${day}/${m}/${y}` : d;
+  };
+
+  const groupsHtml = data.groups.filter(g => g.players.length > 0).map(g => {
+    const color = ROLE_COLORS[g.role] ?? "#888";
+    const rows = g.players.map(p => `
+      <tr>
+        <td class="rt-num">${p.number != null ? p.number : "—"}</td>
+        <td class="rt-name">${p.name}</td>
+        <td>${p.roleLabel || "—"}</td>
+        <td>${p.secondaryLabel || "—"}</td>
+        <td>${fmtDate(p.dateOfBirth)}${p.age != null ? ` <span class="rt-dim">(${p.age})</span>` : ""}</td>
+        <td>${p.foot || "—"}</td>
+        <td class="rt-notes">${p.notes || ""}</td>
+      </tr>`).join("");
+    return `
+    <div class="rt-group">
+      <div class="rt-group-title"><span class="player-dot" style="background:${color}"></span>${g.roleLabel} <span class="rt-dim">(${g.players.length})</span></div>
+      <table class="roster-table">
+        <thead>
+          <tr>
+            <th style="width:34px">#</th>
+            <th style="width:22%">Giocatore</th>
+            <th style="width:13%">Ruolo</th>
+            <th style="width:13%">Ruolo sec.</th>
+            <th style="width:16%">Nascita (età)</th>
+            <th style="width:11%">Piede</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  }).join("");
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Rosa</title><style>${BASE_CSS}</style></head><body>
+    ${headerHtml(header)}
+    <div class="section-label">Rosa completa (${data.total} giocatori)</div>
+    ${groupsHtml || `<div class="notes-box">Nessun giocatore in rosa</div>`}
+  </body></html>`;
+
+  _printHtml(html);
+}
+
 // ─── Campo tattico ─────────────────────────────────────────────────────────────
 export interface TacticalPdfData {
   boardName?: string;
