@@ -382,6 +382,46 @@ export function exportConvocationPdf(header: PdfHeader, data: ConvocationPdfData
   _printHtml(html);
 }
 
+// ─── Fit-to-one-page (A4) ─────────────────────────────────────────────────────
+// Area utile A4 con margine 10mm @96dpi: 190mm x 277mm ≈ 718px x 1047px.
+const FIT_W = 718;
+const FIT_H = 1047;
+
+const FIT_PAGE_CSS = `
+  @page { size: A4 portrait; margin: 10mm; }
+  body { padding: 0; }
+  #fitwrap { width: ${FIT_W}px; height: ${FIT_H}px; overflow: hidden; }
+  #fitpage { width: ${FIT_W}px; transform-origin: top left; }
+  #fitpage .logo-placeholder, #fitpage .logo-img { width: 74px; height: 74px; border-radius: 10px; }
+  #fitpage .logo-placeholder { border-radius: 37px; font-size: 34px; }
+  #fitpage .pdf-header { margin-bottom: 8px; }
+  #fitpage .header-divider { margin-bottom: 10px; }
+  @media print { body { padding: 0; } .close-bar { display: none; } }
+`;
+
+// Riduce progressivamente la scala (allargando in proporzione il contenuto, così da
+// sfruttare tutta la larghezza del foglio) finché l'altezza sta in una singola pagina A4.
+const FIT_PAGE_SCRIPT = `<script>
+  (function () {
+    var MAX_W = ${FIT_W}, MAX_H = ${FIT_H}, MIN_S = 0.3;
+    function fit() {
+      var el = document.getElementById('fitpage');
+      if (!el) return;
+      el.style.transform = 'none';
+      el.style.width = MAX_W + 'px';
+      if (el.scrollHeight <= MAX_H) return;
+      for (var s = 0.99; s >= MIN_S; s -= 0.01) {
+        el.style.width = Math.floor(MAX_W / s) + 'px';
+        el.style.transform = 'scale(' + s + ')';
+        if (el.scrollHeight * s <= MAX_H) return;
+      }
+    }
+    fit();
+    window.addEventListener('load', fit);
+    setTimeout(fit, 250);
+  })();
+<\/script>`;
+
 // ─── Rosa ─────────────────────────────────────────────────────────────────────
 export interface RosterPdfData {
   /** Giocatori già ordinati (per cognome) e raggruppati per ruolo dal chiamante */
@@ -436,7 +476,8 @@ export function exportRosterPdf(header: PdfHeader, data: RosterPdfData) {
     return groupRow + rows;
   }).join("");
 
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Rosa</title><style>${BASE_CSS}</style></head><body>
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Rosa</title><style>${BASE_CSS}${FIT_PAGE_CSS}</style></head><body>
+    <div id="fitwrap"><div id="fitpage">
     ${headerHtml(header)}
     ${groups.length === 0 ? `<div class="notes-box">Nessun giocatore in rosa</div>` : `
     <table class="roster-table">
@@ -454,6 +495,8 @@ export function exportRosterPdf(header: PdfHeader, data: RosterPdfData) {
       <tbody>${body}</tbody>
     </table>
     <div class="rt-footer">Totale rosa: <strong>${data.total}</strong> giocatori</div>`}
+    </div></div>
+    ${FIT_PAGE_SCRIPT}
   </body></html>`;
 
   _printHtml(html);
