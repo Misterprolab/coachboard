@@ -334,6 +334,7 @@ function ConvocatiSection({ match, allPlayers, id, qc, c }: { match: Match; allP
     const convIds2 = new Set(match.convocations.map(cv => cv.playerId));
     const players = allPlayers
       .filter(p => convIds2.has(p.id))
+      .sort((a, b) => compareBySurname(a.name, b.name))
       .map(p => ({
         name: p.name,
         role: p.role,
