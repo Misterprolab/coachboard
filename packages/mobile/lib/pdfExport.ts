@@ -519,25 +519,40 @@ export function exportTacticalPdf(header: PdfHeader, data: TacticalPdfData) {
 // ─── Core print ───────────────────────────────────────────────────────────────
 const CLOSE_BAR = `<div class="close-bar"><button class="close-btn" onclick="window.close()">✕ Chiudi</button></div>`;
 
+function _printViaIframe(html: string) {
+  const iframe = document.createElement("iframe");
+  iframe.setAttribute("aria-hidden", "true");
+  iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
+  document.body.appendChild(iframe);
+  const cleanup = () => { try { document.body.removeChild(iframe); } catch {} };
+  const doc = iframe.contentDocument;
+  if (!doc || !iframe.contentWindow) { cleanup(); return; }
+  doc.open();
+  doc.write(html);
+  doc.close();
+  const cw = iframe.contentWindow;
+  cw.addEventListener("afterprint", cleanup);
+  setTimeout(() => { try { cw.focus(); cw.print(); } catch {} }, 500);
+  // Safety net: never leave the iframe around forever
+  setTimeout(cleanup, 120000);
+}
+
 function _printHtml(html: string) {
   if (typeof window === "undefined") return;
   // Inject close bar after <body>
   const htmlWithClose = html.replace(/<body>/, `<body>${CLOSE_BAR}`);
-  const w = window.open("", "_blank", "width=800,height=900");
-  if (!w) {
-    // fallback: iframe
-    const iframe = document.createElement("iframe");
-    iframe.style.display = "none";
-    document.body.appendChild(iframe);
-    iframe.contentDocument?.open();
-    iframe.contentDocument?.write(htmlWithClose);
-    iframe.contentDocument?.close();
-    setTimeout(() => { iframe.contentWindow?.print(); document.body.removeChild(iframe); }, 500);
+  let w: Window | null = null;
+  try { w = window.open("", "_blank", "width=800,height=900"); } catch { w = null; }
+  // Popup blocked (returns null, or a window that is already closed) → print through a hidden iframe
+  if (!w || w.closed || typeof w.document === "undefined") {
+    _printViaIframe(html); // no close bar needed: it's not a visible window
     return;
   }
+  let printed = false;
+  const doPrint = () => { if (printed) return; printed = true; try { w!.focus(); w!.print(); } catch {} };
   w.document.open();
   w.document.write(htmlWithClose);
   w.document.close();
-  w.onload = () => { w.focus(); w.print(); };
-  setTimeout(() => { try { w.focus(); w.print(); } catch {} }, 800);
+  w.onload = doPrint;
+  setTimeout(doPrint, 800);
 }
