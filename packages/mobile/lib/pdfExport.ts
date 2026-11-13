@@ -537,8 +537,41 @@ function _printViaIframe(html: string) {
   setTimeout(cleanup, 120000);
 }
 
+function _isIOS() {
+  if (typeof navigator === "undefined") return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && (navigator as any).maxTouchPoints > 1);
+}
+
+// iOS Safari: popups come up blank and window.print() outside a tap is ignored.
+// Show the document in a full-screen in-page viewer with its own Stampa / Chiudi
+// buttons — the print is triggered by a real tap, which Safari allows.
+function _showIOSViewer(html: string) {
+  const root = document.createElement("div");
+  root.style.cssText = "position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483647;background:#fff;display:flex;flex-direction:column";
+  const bar = document.createElement("div");
+  bar.style.cssText = "display:flex;gap:10px;justify-content:space-between;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 10px;background:#0E5A3C";
+  const btn = (label: string, bg: string, color: string) => {
+    const b = document.createElement("button");
+    b.textContent = label;
+    b.style.cssText = `background:${bg};color:${color};border:none;border-radius:10px;padding:10px 18px;font-size:15px;font-weight:700`;
+    return b;
+  };
+  const close = btn("✕ Chiudi", "#ffffff22", "#fff");
+  const print = btn("🖨 Stampa / Salva PDF", "#D4AF37", "#000");
+  bar.appendChild(close); bar.appendChild(print);
+  const frame = document.createElement("iframe");
+  frame.style.cssText = "flex:1;width:100%;border:0;background:#fff";
+  root.appendChild(bar); root.appendChild(frame);
+  document.body.appendChild(root);
+  close.onclick = () => { try { document.body.removeChild(root); } catch {} };
+  print.onclick = () => { try { frame.contentWindow?.focus(); frame.contentWindow?.print(); } catch {} };
+  const doc = frame.contentDocument;
+  if (doc) { doc.open(); doc.write(html); doc.close(); }
+}
+
 function _printHtml(html: string) {
   if (typeof window === "undefined") return;
+  if (_isIOS()) { _showIOSViewer(html); return; }
   // Inject close bar after <body>
   const htmlWithClose = html.replace(/<body>/, `<body>${CLOSE_BAR}`);
   let w: Window | null = null;
