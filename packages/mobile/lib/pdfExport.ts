@@ -563,8 +563,32 @@ function _showIOSViewer(html: string) {
   frame.style.cssText = "flex:1;width:100%;border:0;background:#fff";
   root.appendChild(bar); root.appendChild(frame);
   document.body.appendChild(root);
-  close.onclick = () => { try { document.body.removeChild(root); } catch {} };
-  print.onclick = () => { try { frame.contentWindow?.focus(); frame.contentWindow?.print(); } catch {} };
+  // The app's touch/responder system (react-native-web) listens on document and can swallow
+  // events for elements outside the React tree. Keep every pointer/touch event inside the
+  // viewer, and bind the actions to both touchend and click (deduplicated).
+  ["touchstart", "touchmove", "pointerdown", "pointerup", "mousedown", "mouseup"].forEach(ev =>
+    root.addEventListener(ev, e => e.stopPropagation(), { passive: true }));
+  root.style.touchAction = "manipulation";
+  (root.style as any).pointerEvents = "auto";
+  const bind = (el: HTMLElement, fn: () => void) => {
+    let last = 0;
+    const handler = (e: Event) => {
+      e.stopPropagation();
+      const now = Date.now();
+      if (now - last < 600) return;
+      last = now;
+      fn();
+    };
+    el.addEventListener("touchend", e => { e.preventDefault(); handler(e); });
+    el.addEventListener("click", handler);
+    el.style.cursor = "pointer";
+    (el.style as any).webkitTapHighlightColor = "transparent";
+  };
+  bind(close, () => { try { document.body.removeChild(root); } catch {} });
+  bind(print, () => {
+    try { frame.contentWindow?.focus(); frame.contentWindow?.print(); }
+    catch { try { window.print(); } catch {} }
+  });
   const doc = frame.contentDocument;
   if (doc) { doc.open(); doc.write(html); doc.close(); }
 }
